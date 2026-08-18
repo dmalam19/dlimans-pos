@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ha">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dlimans Supermarket POS</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+font-family:Arial,sans-serif;
+background:#0d0d0d;
+color:#fff;
+min-height:100vh
+}
+button,input,select{font:inherit}
+
+/* LOGIN */
+#loginScreen{
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:20px;
+background:radial-gradient(circle at top,#123b31,#0d0d0d 55%)
+}
+.login-box{
+width:100%;
+max-width:420px;
+padding:30px;
+border-radius:22px;
+background:#151515;
+border:1px solid #333;
+box-shadow:0 15px 50px #000
+}
+.logo{
+width:75px;height:75px;margin:0 auto 15px;
+border-radius:50%;
+display:flex;align-items:center;justify-content:center;
+font-size:36px;background:#00e676;color:#07140d
+}
+.login-box h1{text-align:center}
+.subtitle{text-align:center;color:#aaa;margin:7px 0 25px}
+label{display:block;margin:15px 0 7px;color:#ddd}
+input,select{
+width:100%;padding:14px;border-radius:10px;
+border:1px solid #333;background:#181818;color:#fff;
+outline:none
+}
+input:focus,select:focus{border-color:#00e676}
+.password-wrap{position:relative}
+.password-wrap input{padding-right:50px}
+.show-pass{
+position:absolute;right:5px;top:5px;
+height:42px;width:42px;border:0;
+background:transparent;color:#aaa
+}
+.remember{
+display:flex;align-items:center;gap:8px;
+margin:15px 0;color:#bbb
+}
+.remember input{width:auto}
+.login-btn{
+width:100%;padding:15px;border:0;border-radius:11px;
+background:#00e676;color:#06130b;
+font-weight:bold;cursor:pointer
+}
+.forgot{
+width:100%;border:0;background:none;
+color:#00e676;padding:15px;cursor:pointer
+}
+.message{text-align:center;min-height:22px;color:#ff5252}
+
+/* APP */
+#app{display:none;min-height:100vh;flex-direction:column}
+header{
+padding:18px;text-align:center;font-size:22px;
+font-weight:bold;
+animation:headerColor 5s infinite alternate
+}
+@keyframes headerColor{
+0%{background:#006b3c}
+33%{background:#173f75}
+66%{background:#5b174b}
+100%{background:#714500}
+}
+.container{flex:1;padding:20px}
+.page{display:none}
+.page.active{display:block}
+
+.card{
+background:#161616;border:1px solid #292929;
+border-radius:16px;padding:22px;margin-bottom:18px
+}
+.card h2{margin-bottom:10px}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:12px
+}
+.stat{
+padding:20px;background:#191919;
+border-radius:14px;border:1px solid #292929
+}
+.stat strong{
+display:block;font-size:25px;
+margin-top:8px;color:#00e676
+}
+.action{
+width:100%;padding:13px;border:0;
+border-radius:10px;background:#242424;
+color:#fff;margin-top:10px;cursor:pointer
+}
+.action.green{
+background:#00e676;color:#07140d;font-weight:bold
+}
+.logout{background:#d32f2f}
+.user-info{text-align:center;color:#aaa;margin-top:10px;font-size:13px}
+
+.nav-tabs{
+display:flex;justify-content:space-around;
+background:#151515;border-top:1px solid #303030;
+padding:10px;position:sticky;bottom:0
+}
+.nav-btn{
+border:0;background:none;color:#aaa;
+padding:10px 12px;border-radius:10px;cursor:pointer
+}
+.nav-btn.active{
+background:#222;color:#00e676
+}
+
+.menu-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:12px;margin-top:15px
+}
+.menu-item{
+background:#191919;
+border:1px solid #292929;
+padding:22px 10px;
+border-radius:14px;
+text-align:center;
+cursor:pointer
+}
+.menu-item span{
+display:block;font-size:30px;margin-bottom:8px
+}
+
+@media(max-width:380px){
+.stats,.menu-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<section id="loginScreen">
+<div class="login-box">
+
+<div class="logo">⚡</div>
+
+<h1>Dlimans POS</h1>
+
+<div class="subtitle">
+Supermarket Management System
+</div>
+
+<label>Username</label>
+<input id="username"
+type="text"
+autocomplete="username"
+placeholder="Enter username">
+
+<label>Role</label>
+<select id="role">
+<option value="admin">Admin</option>
+<option value="user">User / Cashier</option>
+</select>
+
+<label>Password</label>
+
+<div class="password-wrap">
+<input id="password"
+type="password"
+autocomplete="current-password"
+placeholder="Enter password">
+
+<button
+class="show-pass"
+type="button"
+onclick="togglePassword()"
+id="showPasswordBtn">👁</button>
+</div>
+
+<label class="remember">
+<input type="checkbox" id="remember">
+Remember Login
+</label>
+
+<button class="login-btn" onclick="login()">
+LOGIN
+</button>
+
+<button class="forgot" onclick="forgotPassword()">
+Forgot Password?
+</button>
+
+<div id="loginMessage" class="message"></div>
+
+</div>
+</section>
+
+
+<!-- MAIN APP -->
+<section id="app">
+
+<header>
+⚡ Dlimans Supermarket POS
+</header>
+
+<div class="container">
+
+<!-- DASHBOARD -->
+<div id="page-Home" class="page active">
+
+<div class="card">
+<h2>🏠 Dashboard</h2>
+<p>Welcome to Dlimans Supermarket POS.</p>
+<div class="user-info" id="welcomeUser"></div>
+</div>
+
+<div class="stats">
+
+<div class="stat">
+Total Sales
+<strong>₦0.00</strong>
+</div>
+
+<div class="stat">
+Net Profit
+<strong>₦0.00</strong>
+</div>
+
+<div class="stat">
+Products
+<strong>0</strong>
+</div>
+
+<div class="stat">
+Low Stock
+<strong>0</strong>
+</div>
+
+<div class="stat">
+Customers
+<strong>0</strong>
+</div>
+
+<div class="stat">
+Expenses
+<strong>₦0.00</strong>
+</div>
+
+</div>
+
+<div class="card">
+<h2>📋 Main Menu</h2>
+
+<div class="menu-grid">
+
+<div class="menu-item">
+<span>🛒</span>
+New Sale
+</div>
+
+<div class="menu-item">
+<span>📦</span>
+Products
+</div>
+
+<div class="menu-item">
+<span>📊</span>
+Reports
+</div>
+
+<div class="menu-item">
+<span>💰</span>
+Sales
+</div>
+
+<div class="menu-item">
+<span>👥</span>
+Customers
+</div>
+
+<div class="menu-item">
+<span>⚙️</span>
+Settings
+</div>
+
+</div>
+</div>
+
+</div>
+
+
+<!-- PROFILE -->
+<div id="page-Profile" class="page">
+
+<div class="card">
+
+<h2>👤 Profile</h2>
+
+<p id="profileInfo"></p>
+
+<button
+class="action green"
+onclick="showPage('Settings')">
+Account Settings
+</button>
+
+</div>
+
+</div>
+
+
+<!-- SETTINGS -->
+<div id="page-Settings" class="page">
+
+<div class="card">
+
+<h2>⚙️ Settings</h2>
+
+<label>New Admin Password</label>
+
+<input
+type="password"
+id="newPassword"
+placeholder="New password">
+
+<button
+class="action green"
+onclick="changeAdminPassword()">
+Change Admin Password
+</button>
+
+<button
+class="action logout"
+onclick="logout()">
+Logout
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- NAVIGATION -->
+<div class="nav-tabs">
+
+<button
+class="nav-btn active"
+id="btn-Home"
+onclick="showPage('Home')">
+🏠 Home
+</button>
+
+<button
+class="nav-btn"
+id="btn-Profile"
+onclick="showPage('Profile')">
+👤 Profile
+</button>
+
+<button
+class="nav-btn"
+id="btn-Settings"
+onclick="showPage('Settings')">
+⚙️ Settings
+</button>
+
+</div>
+
+</section>
+
+
+<script>
+
+/* ==============================
+   DEFAULT ADMIN
+============================== */
+
+const DEFAULT_ADMIN_PASSWORD="1234";
+
+
+function getAdminPassword(){
+
+return localStorage.getItem(
+"dlimans_admin_password"
+)||DEFAULT_ADMIN_PASSWORD;
+
+}
+
+
+/* ==============================
+   LOGIN
+============================== */
+
+function login(){
+
+const username=document
+.getElementById("username")
+.value.trim();
+
+const role=document
+.getElementById("role")
+.value;
+
+const password=document
+.getElementById("password")
+.value;
+
+const message=document
+.getElementById("loginMessage");
+
+message.innerText="";
+
+if(!username||!password){
+
+message.innerText=
+"Please enter username and password.";
+
+return;
+}
+
+
+/* ADMIN */
+
+if(role==="admin"){
+
+if(username.toLowerCase()!=="admin"){
+
+message.innerText=
+"Invalid Admin username.";
+
+return;
+}
+
+if(password!==getAdminPassword()){
+
+message.innerText=
+"Incorrect password.";
+
+return;
+}
+
+}
+
+
+/* USER */
+
+if(role==="user"){
+
+const userPassword=
+localStorage.getItem(
+"dlimans_user_password"
+)||"1234";
+
+if(password!==userPassword){
+
+message.innerText=
+"Incorrect User password.";
+
+return;
+}
+
+}
+
+
+/* SESSION */
+
+const session={
+username:username,
+role:role,
+loggedIn:true
+};
+
+localStorage.setItem(
+"dlimans_session",
+JSON.stringify(session)
+);
+
+
+if(document.getElementById("remember").checked){
+
+localStorage.setItem(
+"dlimans_remember",
+"true"
+);
+
+}else{
+
+localStorage.removeItem(
+"dlimans_remember"
+);
+
+}
+
+openApp();
+
+}
+
+
+/* ==============================
+   OPEN APP
+============================== */
+
+function openApp(){
+
+document.getElementById(
+"loginScreen"
+).style.display="none";
+
+document.getElementById(
+"app"
+).style.display="flex";
+
+const session=JSON.parse(
+localStorage.getItem(
+"dlimans_session"
+)
+);
+
+if(session){
+
+document.getElementById(
+"welcomeUser"
+).innerText=
+"Logged in as: "
++session.username+
+" ("+session.role+")";
+
+document.getElementById(
+"profileInfo"
+).innerText=
+"Username: "
++session.username+
+" | Role: "
++session.role;
+
+}
+
+showPageWithoutHistory("Home");
+
+}
+
+
+/* ==============================
+   LOGOUT
+============================== */
+
+function logout(){
+
+localStorage.removeItem(
+"dlimans_session"
+);
+
+document.getElementById(
+"app"
+).style.display="none";
+
+document.getElementById(
+"loginScreen"
+).style.display="flex";
+
+document.getElementById(
+"password"
+).value="";
+
+history.replaceState(
+{page:"Login"},
+"",
+"#Login"
+);
+
+}
+
+
+/* ==============================
+   PASSWORD
+============================== */
+
+function togglePassword(){
+
+const password=
+document.getElementById("password");
+
+const button=
+document.getElementById(
+"showPasswordBtn"
+);
+
+if(password.type==="password"){
+
+password.type="text";
+button.innerText="🙈";
+
+}else{
+
+password.type="password";
+button.innerText="👁";
+
+}
+
+}
+
+
+/* ==============================
+   FORGOT PASSWORD
+============================== */
+
+function forgotPassword(){
+
+alert(
+"Forgot Password\n\n"+
+"Contact the Admin to reset the password."
+);
+
+}
+
+
+/* ==============================
+   CHANGE PASSWORD
+============================== */
+
+function changeAdminPassword(){
+
+const session=JSON.parse(
+localStorage.getItem(
+"dlimans_session"
+)
+);
+
+if(!session||session.role!=="admin"){
+
+alert(
+"Only Admin can change the password."
+);
+
+return;
+}
+
+const newPassword=
+document.getElementById(
+"newPassword"
+).value;
+
+if(newPassword.length<4){
+
+alert(
+"Password must contain at least 4 characters."
+);
+
+return;
+}
+
+localStorage.setItem(
+"dlimans_admin_password",
+newPassword
+);
+
+document.getElementById(
+"newPassword"
+).value="";
+
+alert(
+"Admin password changed successfully."
+);
+
+}
+
+
+/* ==============================
+   PAGE NAVIGATION
+============================== */
+
+function showPage(pageName){
+
+if(!localStorage.getItem(
+"dlimans_session"
+)) return;
+
+showPageWithoutHistory(
+pageName
+);
+
+history.pushState(
+{page:pageName},
+"",
+"#"+pageName
+);
+
+}
+
+
+function showPageWithoutHistory(pageName){
+
+document
+.querySelectorAll(".page")
+.forEach(page=>{
+page.classList.remove("active");
+});
+
+const page=document.getElementById(
+"page-"+pageName
+);
+
+if(page){
+page.classList.add("active");
+}
+
+document
+.querySelectorAll(".nav-btn")
+.forEach(btn=>{
+btn.classList.remove("active");
+});
+
+const button=document.getElementById(
+"btn-"+pageName
+);
+
+if(button){
+button.classList.add("active");
+}
+
+}
+
+
+/* ==============================
+   BACK BUTTON
+============================== */
+
+history.replaceState(
+{page:"Home"},
+"",
+"#Home"
+);
+
+
+window.onpopstate=function(event){
+
+const session=
+localStorage.getItem(
+"dlimans_session"
+);
+
+if(!session){
+
+history.pushState(
+{page:"Login"},
+"",
+"#Login"
+);
+
+return;
+}
+
+if(
+event.state &&
+event.state.page &&
+event.state.page!=="Login"
+){
+
+showPageWithoutHistory(
+event.state.page
+);
+
+}else{
+
+showPageWithoutHistory(
+"Home"
+);
+
+}
+
+};
+
+
+/* ==============================
+   AUTO LOGIN
+============================== */
+
+window.addEventListener(
+"load",
+function(){
+
+const remember=
+localStorage.getItem(
+"dlimans_remember"
+);
+
+const session=
+localStorage.getItem(
+"dlimans_session"
+);
+
+if(
+remember==="true" &&
+session
+){
+
+openApp();
+
+}
+
+});
+
+
+/* ==============================
+   ENTER KEY LOGIN
+============================== */
+
+document
+.getElementById("password")
+.addEventListener(
+"keydown",
+function(event){
+
+if(event.key==="Enter"){
+login();
+}
+
+});
+
+</script>
+
+</body>
+  </html>

@@ -1,1238 +1,1309 @@
 <!DOCTYPE html>
-<html lang="ha">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dlimans POS</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dlimans Supermarket POS</title>
 
 <style>
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0b1220;color:#fff;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
 
-body{
-    font-family:Arial,sans-serif;
-    background:#0d0d0d;
-    color:white;
-    min-height:100vh;
-}
-
-button,input,select{
-    font:inherit;
-}
-
-/* ================= LOGIN ================= */
-
+/* LOGIN */
 #loginScreen{
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    background:
-        radial-gradient(circle at top,#123b31 0%,#0d0d0d 45%),
-        #0d0d0d;
+ min-height:100vh;display:flex;align-items:center;justify-content:center;
+ padding:20px;background:radial-gradient(circle at top,#164b3a,#08101c 65%)
 }
-
 .login-box{
-    width:100%;
-    max-width:420px;
-    padding:30px;
-    border-radius:22px;
-    background:rgba(20,20,20,.95);
-    border:1px solid rgba(255,255,255,.12);
-    box-shadow:0 15px 50px rgba(0,0,0,.6);
+ width:100%;max-width:420px;background:#111a28;border:1px solid #29364a;
+ border-radius:22px;padding:30px;box-shadow:0 20px 60px #000
 }
-
 .logo{
-    width:75px;
-    height:75px;
-    margin:0 auto 15px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:36px;
-    background:#00e676;
-    color:#07140d;
-    animation:pulse 2s infinite;
+ width:75px;height:75px;margin:0 auto 15px;border-radius:50%;
+ display:flex;align-items:center;justify-content:center;font-size:35px;
+ background:#00e676;color:#06130b
 }
-
-@keyframes pulse{
-    0%,100%{
-        box-shadow:0 0 0 0 rgba(0,230,118,.2);
-    }
-
-    50%{
-        box-shadow:0 0 0 15px rgba(0,230,118,0);
-    }
-}
-
-.login-box h1{
-    text-align:center;
-    margin-bottom:6px;
-}
-
-.subtitle{
-    text-align:center;
-    color:#aaa;
-    margin-bottom:25px;
-}
-
-label{
-    display:block;
-    margin:15px 0 7px;
-    color:#ddd;
-}
-
+.login-box h1{text-align:center}.sub{text-align:center;color:#9ca8b8;margin:7px 0 25px}
+label{display:block;margin:14px 0 7px;color:#d7deea}
 input,select{
-    width:100%;
-    padding:14px;
-    border-radius:10px;
-    border:1px solid #333;
-    background:#181818;
-    color:white;
-    outline:none;
+ width:100%;padding:13px;border-radius:10px;border:1px solid #334155;
+ background:#0d1522;color:#fff;outline:none
 }
-
-input:focus,
-select:focus{
-    border-color:#00e676;
+input:focus,select:focus{border-color:#00e676}
+.login-btn,.green{
+ width:100%;border:0;border-radius:10px;padding:14px;
+ background:#00e676;color:#06130b;font-weight:bold;margin-top:15px
 }
+.remember{display:flex;align-items:center;gap:8px;color:#aaa}
+.remember input{width:auto}
+.forgot{width:100%;background:none;border:0;color:#00e676;padding:14px}
+.msg{text-align:center;min-height:22px;color:#ff5252;margin-top:8px}
 
-.password-wrap{
-    position:relative;
-}
-
-.password-wrap input{
-    padding-right:50px;
-}
-
-.show-pass{
-    position:absolute;
-    right:5px;
-    top:5px;
-    height:42px;
-    width:42px;
-    border:0;
-    border-radius:8px;
-    background:transparent;
-    color:#aaa;
-    cursor:pointer;
-}
-
-.remember{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin:15px 0;
-    color:#bbb;
-}
-
-.remember input{
-    width:auto;
-}
-
-.login-btn{
-    width:100%;
-    padding:15px;
-    border:0;
-    border-radius:11px;
-    background:#00e676;
-    color:#06130b;
-    font-weight:bold;
-    cursor:pointer;
-    margin-top:8px;
-}
-
-.login-btn:active{
-    transform:scale(.98);
-}
-
-.forgot{
-    width:100%;
-    border:0;
-    background:none;
-    color:#00e676;
-    padding:15px;
-    cursor:pointer;
-}
-
-.message{
-    min-height:22px;
-    text-align:center;
-    margin-top:12px;
-    color:#ff5252;
-}
-
-/* ================= APP ================= */
-
-#app{
-    display:none;
-    min-height:100vh;
-    flex-direction:column;
-}
-
+/* APP */
+#app{display:none;min-height:100vh}
 header{
-    padding:18px;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-    animation:headerColor 5s infinite alternate;
+ height:64px;display:flex;align-items:center;justify-content:space-between;
+ padding:0 18px;background:#006b3c;position:sticky;top:0;z-index:20
 }
+.brand{font-size:20px;font-weight:bold}
+.header-user{font-size:12px;color:#d9fff0}
 
-@keyframes headerColor{
-    0%{
-        background:#006b3c;
-    }
-
-    33%{
-        background:#173f75;
-    }
-
-    66%{
-        background:#5b174b;
-    }
-
-    100%{
-        background:#714500;
-    }
+.layout{display:flex;min-height:calc(100vh - 64px)}
+.sidebar{
+ width:235px;background:#101927;border-right:1px solid #263246;
+ padding:15px;flex-shrink:0
 }
-
-.container{
-    flex:1;
-    padding:20px;
+.side-btn{
+ width:100%;text-align:left;padding:13px;margin-bottom:6px;
+ background:transparent;border:0;color:#b9c4d4;border-radius:10px
 }
+.side-btn:hover,.side-btn.active{background:#1d2a3d;color:#00e676}
+.main{flex:1;padding:20px;overflow:auto}
+.page{display:none}.page.active{display:block}
 
-.page{
-    display:none;
+/* DASHBOARD */
+.cards{
+ display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:15px 0
 }
-
-.page.active{
-    display:block;
-}
-
 .card{
-    background:#161616;
-    border:1px solid #292929;
-    border-radius:16px;
-    padding:22px;
-    margin-bottom:18px;
+ background:#111a28;border:1px solid #263246;border-radius:15px;padding:18px;
+ margin-bottom:15px
+}
+.metric{color:#9ba8b8;font-size:13px}.metric strong{
+ display:block;font-size:23px;color:#00e676;margin-top:7px
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+
+/* TABLES */
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th,td{padding:11px;border-bottom:1px solid #263246;text-align:left}
+th{color:#00e676;background:#121c2b}
+.small-btn{
+ padding:7px 10px;border:0;border-radius:7px;background:#263449;color:#fff
+}
+.danger{background:#d32f2f!important}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.toolbar input{max-width:300px}
+.total{font-size:20px;color:#00e676;font-weight:bold}
+
+/* POS */
+.pos-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:15px}
+.product-grid{
+ display:grid;grid-template-columns:repeat(3,1fr);gap:10px
+}
+.product-btn{
+ background:#182335;border:1px solid #2d3d54;color:white;
+ border-radius:12px;padding:15px;text-align:left
+}
+.product-btn:hover{border-color:#00e676}
+.cart-row{
+ display:flex;justify-content:space-between;gap:8px;
+ padding:10px 0;border-bottom:1px solid #29364a
 }
 
-.card h2{
-    margin-bottom:10px;
+/* SETTINGS */
+.theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.theme{
+ height:55px;border:2px solid #555;border-radius:10px
 }
+.theme.blue{background:#173f75}.theme.green{background:#006b3c}
+.theme.maroon{background:#5b174b}.theme.purple{background:#4b2375}
+.theme.gold{background:#714500}.theme.yellow{background:#655500}
+.theme.chocolate{background:#4b2c20}.theme.black{background:#000}
 
-.stats{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:12px;
+/* MOBILE */
+.mobile-nav{
+ display:none;position:fixed;bottom:0;left:0;right:0;
+ background:#101927;border-top:1px solid #29364a;
+ padding:7px;z-index:30
 }
-
-.stat{
-    padding:20px;
-    background:#191919;
-    border-radius:14px;
-    border:1px solid #292929;
+.mobile-nav button{
+ flex:1;background:none;border:0;color:#aaa;padding:8px;font-size:11px
 }
+.mobile-nav button.active{color:#00e676}
 
-.stat strong{
-    display:block;
-    font-size:25px;
-    margin-top:8px;
-    color:#00e676;
+@media(max-width:900px){
+ .sidebar{display:none}
+ .cards{grid-template-columns:repeat(2,1fr)}
+ .pos-grid,.grid2{grid-template-columns:1fr}
+ .mobile-nav{display:flex}
+ .main{padding-bottom:80px}
+ .product-grid{grid-template-columns:repeat(2,1fr)}
 }
-
-.action{
-    width:100%;
-    padding:13px;
-    border:0;
-    border-radius:10px;
-    background:#242424;
-    color:white;
-    margin-top:10px;
-    cursor:pointer;
-}
-
-.action.green{
-    background:#00e676;
-    color:#07140d;
-    font-weight:bold;
-}
-
-.logout{
-    background:#d32f2f;
-}
-
-.nav-tabs{
-    display:flex;
-    justify-content:space-around;
-    background:#151515;
-    border-top:1px solid #303030;
-    padding:10px;
-    position:sticky;
-    bottom:0;
-}
-
-.nav-btn{
-    border:0;
-    background:none;
-    color:#aaa;
-    padding:10px 12px;
-    border-radius:10px;
-    cursor:pointer;
-}
-
-.nav-btn.active{
-    background:#222;
-    color:#00e676;
-}
-
-.user-info{
-    text-align:center;
-    color:#aaa;
-    margin-top:10px;
-    font-size:13px;
-}
-
-@media(max-width:380px){
-
-    .stats{
-        grid-template-columns:1fr;
-    }
-
+@media(max-width:500px){
+ .cards{grid-template-columns:1fr 1fr}
+ .product-grid{grid-template-columns:1fr 1fr}
+ .theme-grid{grid-template-columns:repeat(2,1fr)}
+ header{height:58px}
 }
 </style>
 </head>
 
 <body>
 
-<!-- =====================================================
-     LOGIN SCREEN
-===================================================== -->
-
+<!-- LOGIN -->
 <section id="loginScreen">
+<div class="login-box">
+<div class="logo">⚡</div>
+<h1>Dlimans POS</h1>
+<div class="sub">Supermarket Management System</div>
 
-    <div class="login-box">
+<label>Username</label>
+<input id="username" placeholder="Enter username">
 
-        <div class="logo">
-            ⚡
-        </div>
+<label>Role</label>
+<select id="role">
+<option value="admin">Admin</option>
+<option value="user">User / Cashier</option>
+</select>
 
-        <h1>Dlimans POS</h1>
+<label>Password</label>
+<input id="password" type="password" placeholder="Enter password">
 
-        <div class="subtitle">
-            Supermarket Management System
-        </div>
+<label class="remember">
+<input type="checkbox" id="remember"> Remember Login
+</label>
 
-
-        <!-- USERNAME -->
-
-        <label for="username">
-            Username
-        </label>
-
-        <input
-            id="username"
-            type="text"
-            autocomplete="username"
-            placeholder="Enter username"
-        >
-
-
-        <!-- ROLE -->
-
-        <label for="role">
-            Role
-        </label>
-
-        <select id="role">
-
-            <option value="admin">
-                Admin
-            </option>
-
-            <option value="user">
-                User / Cashier
-            </option>
-
-        </select>
+<button class="login-btn" onclick="login()">LOGIN</button>
+<button class="forgot" onclick="forgotPassword()">Forgot Password?</button>
+<div id="loginMsg" class="msg"></div>
+</div>
+</section>
 
 
-        <!-- PASSWORD -->
+<!-- APP -->
+<section id="app">
 
-        <label for="password">
-            Password
-        </label>
+<header>
+<div class="brand">⚡ Dlimans Supermarket POS</div>
+<div class="header-user" id="headerUser"></div>
+</header>
 
-        <div class="password-wrap">
+<div class="layout">
 
-            <input
-                id="password"
-                type="password"
-                autocomplete="current-password"
-                placeholder="Enter password"
-            >
+<!-- SIDEBAR -->
+<aside class="sidebar">
 
-            <button
-                class="show-pass"
-                type="button"
-                onclick="togglePassword()"
-                id="showPasswordBtn"
-            >
-                👁
-            </button>
+<button class="side-btn active" data-page="dashboard" onclick="go('dashboard')">🏠 Dashboard</button>
+<button class="side-btn" data-page="pos" onclick="go('pos')">🛒 New Sale</button>
+<button class="side-btn" data-page="products" onclick="go('products')">📦 Products</button>
+<button class="side-btn" data-page="sales" onclick="go('sales')">💰 Sales</button>
+<button class="side-btn" data-page="customers" onclick="go('customers')">👥 Customers</button>
+<button class="side-btn" data-page="expenses" onclick="go('expenses')">💸 Expenses</button>
+<button class="side-btn" data-page="reports" onclick="go('reports')">📊 Reports</button>
+<button class="side-btn" data-page="settings" onclick="go('settings')">⚙️ Settings</button>
+<button class="side-btn danger" onclick="logout()">🚪 Logout</button>
 
-        </div>
-
-
-        <!-- REMEMBER LOGIN -->
-
-        <label class="remember">
-
-            <input
-                type="checkbox"
-                id="remember"
-            >
-
-            Remember Login
-
-        </label>
+</aside>
 
 
-        <!-- LOGIN -->
+<main class="main">
 
-        <button
-            class="login-btn"
-            onclick="login()"
-        >
-            LOGIN
-        </button>
+<!-- DASHBOARD -->
+<section id="page-dashboard" class="page active">
 
+<h2>Dashboard</h2>
 
-        <!-- FORGOT PASSWORD -->
+<div class="cards">
 
-        <button
-            class="forgot"
-            onclick="forgotPassword()"
-        >
-            Forgot Password?
-        </button>
+<div class="card">
+<div class="metric">Total Sales</div>
+<strong class="metric-value" id="dashSales">₦0.00</strong>
+</div>
 
+<div class="card">
+<div class="metric">Profit</div>
+<strong class="metric-value" id="dashProfit">₦0.00</strong>
+</div>
 
-        <div
-            id="loginMessage"
-            class="message"
-        ></div>
+<div class="card">
+<div class="metric">Products</div>
+<strong class="metric-value" id="dashProducts">0</strong>
+</div>
 
-    </div>
+<div class="card">
+<div class="metric">Low Stock</div>
+<strong class="metric-value" id="dashLow">0</strong>
+</div>
+
+</div>
+
+<div class="grid2">
+
+<div class="card">
+<h3>📈 Sales Last 7 Days</h3>
+<canvas id="salesChart" height="220"></canvas>
+</div>
+
+<div class="card">
+<h3>⚡ Quick Actions</h3>
+<button class="green" onclick="go('pos')">🛒 Start New Sale</button>
+<button class="side-btn" onclick="go('products')">📦 Manage Products</button>
+<button class="side-btn" onclick="go('sales')">💰 View Sales</button>
+</div>
+
+</div>
 
 </section>
 
 
-<!-- =====================================================
-     MAIN APP
-===================================================== -->
+<!-- POS -->
+<section id="page-pos" class="page">
 
-<section id="app">
+<h2>🛒 New Sale</h2>
 
-<header>
-    ⚡ Dlimans POS
-</header>
+<div class="pos-grid">
 
+<div class="card">
+<div class="toolbar">
+<input id="productSearch" placeholder="Search product..." oninput="renderPOS()">
+</div>
 
-<div class="container">
+<div class="product-grid" id="productGrid"></div>
+</div>
 
+<div class="card">
+<h3>Current Cart</h3>
+<div id="cart"></div>
 
-    <!-- ================= HOME ================= -->
+<div style="margin-top:15px">
+Customer Name
+<input id="saleCustomer" placeholder="Customer name">
+</div>
 
-    <div
-        id="page-Home"
-        class="page active"
-    >
+<div style="margin-top:10px">
+Customer Note
+<input id="saleNote" placeholder="Optional note">
+</div>
 
-        <div class="card">
+<p style="margin-top:15px">
+Total: <span class="total" id="cartTotal">₦0.00</span>
+</p>
 
-            <h2>
-                🏠 Dashboard
-            </h2>
+<button class="green" onclick="completeSale()">COMPLETE SALE</button>
+<button class="side-btn" onclick="clearCart()">Clear Cart</button>
+</div>
 
-            <p>
-                Welcome to Dlimans POS.
-            </p>
+</div>
 
-            <div
-                class="user-info"
-                id="welcomeUser"
-            ></div>
-
-        </div>
-
-
-        <div class="stats">
-
-
-            <div class="stat">
-
-                Total Sales
-
-                <strong>
-                    ₦0.00
-                </strong>
-
-            </div>
+</section>
 
 
-            <div class="stat">
+<!-- PRODUCTS -->
+<section id="page-products" class="page">
 
-                Net Profit
+<h2>📦 Products & Inventory</h2>
 
-                <strong>
-                    ₦0.00
-                </strong>
+<div class="card">
 
-            </div>
+<div class="toolbar">
+<input id="productName" placeholder="Product name">
+<input id="productSKU" placeholder="SKU / Barcode">
+<input id="productCost" type="number" placeholder="Cost price">
+<input id="productPrice" type="number" placeholder="Selling price">
+<input id="productStock" type="number" placeholder="Stock">
+<button class="green" style="max-width:180px" onclick="addProduct()">Add Product</button>
+</div>
 
+</div>
 
-            <div class="stat">
+<div class="card table-wrap">
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>SKU</th>
+<th>Cost</th>
+<th>Price</th>
+<th>Stock</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="productsTable"></tbody>
+</table>
+</div>
 
-                Products
-
-                <strong>
-                    0
-                </strong>
-
-            </div>
-
-
-            <div class="stat">
-
-                Low Stock
-
-                <strong>
-                    0
-                </strong>
-
-            </div>
-
-
-        </div>
-
-    </div>
-
-
-    <!-- ================= PROFILE ================= -->
-
-    <div
-        id="page-Profile"
-        class="page"
-    >
-
-        <div class="card">
-
-            <h2>
-                👤 Profile
-            </h2>
-
-            <p id="profileInfo"></p>
+</section>
 
 
-            <button
-                class="action green"
-                onclick="showPage('Settings')"
-            >
-                Account Settings
-            </button>
+<!-- SALES -->
+<section id="page-sales" class="page">
 
-        </div>
+<h2>💰 Sales History</h2>
 
-    </div>
+<div class="card table-wrap">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Invoice</th>
+<th>Customer</th>
+<th>Total</th>
+<th>Profit</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="salesTable"></tbody>
+</table>
+</div>
 
-
-    <!-- ================= SETTINGS ================= -->
-
-    <div
-        id="page-Settings"
-        class="page"
-    >
-
-        <div class="card">
-
-            <h2>
-                ⚙ Settings
-            </h2>
+</section>
 
 
-            <label>
-                New Admin Password
-            </label>
+<!-- CUSTOMERS -->
+<section id="page-customers" class="page">
 
-            <input
-                type="password"
-                id="newPassword"
-                placeholder="New password"
-            >
+<h2>👥 Customers</h2>
+
+<div class="card">
+
+<div class="toolbar">
+<input id="customerName" placeholder="Customer name">
+<input id="customerPhone" placeholder="Phone">
+<button class="green" style="max-width:180px" onclick="addCustomer()">Add Customer</button>
+</div>
+
+</div>
+
+<div class="card table-wrap">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Phone</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="customersTable"></tbody>
+</table>
+</div>
+
+</section>
 
 
-            <button
-                class="action green"
-                onclick="changeAdminPassword()"
-            >
-                Change Admin Password
-            </button>
+<!-- EXPENSES -->
+<section id="page-expenses" class="page">
+
+<h2>💸 Expenses</h2>
+
+<div class="card">
+<div class="toolbar">
+<input id="expenseName" placeholder="Expense description">
+<input id="expenseAmount" type="number" placeholder="Amount">
+<button class="green" style="max-width:180px" onclick="addExpense()">Add Expense</button>
+</div>
+</div>
+
+<div class="card table-wrap">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Description</th>
+<th>Amount</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="expensesTable"></tbody>
+</table>
+</div>
+
+</section>
 
 
-            <button
-                class="action logout"
-                onclick="logout()"
-            >
-                Logout
-            </button>
+<!-- REPORTS -->
+<section id="page-reports" class="page">
 
-        </div>
+<h2>📊 Reports</h2>
 
-    </div>
+<div class="cards">
 
+<div class="card">
+<div class="metric">Sales</div>
+<strong class="metric-value" id="reportSales">₦0.00</strong>
+</div>
+
+<div class="card">
+<div class="metric">Profit</div>
+<strong class="metric-value" id="reportProfit">₦0.00</strong>
+</div>
+
+<div class="card">
+<div class="metric">Expenses</div>
+<strong class="metric-value" id="reportExpenses">₦0.00</strong>
+</div>
+
+<div class="card">
+<div class="metric">Customers</div>
+<strong class="metric-value" id="reportCustomers">0</strong>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- SETTINGS -->
+<section id="page-settings" class="page">
+
+<h2>⚙️ Settings</h2>
+
+<div class="card">
+
+<h3>🎨 Universal Theme</h3>
+
+<div class="theme-grid" style="margin-top:15px">
+<button class="theme blue" onclick="theme('#173f75')"></button>
+<button class="theme green" onclick="theme('#006b3c')"></button>
+<button class="theme maroon" onclick="theme('#5b174b')"></button>
+<button class="theme purple" onclick="theme('#4b2375')"></button>
+<button class="theme gold" onclick="theme('#714500')"></button>
+<button class="theme yellow" onclick="theme('#655500')"></button>
+<button class="theme chocolate" onclick="theme('#4b2c20')"></button>
+<button class="theme black" onclick="theme('#000000')"></button>
+</div>
 
 </div>
 
 
-<!-- =====================================================
-     BOTTOM NAVIGATION
-===================================================== -->
+<div class="card">
 
-<div class="nav-tabs">
+<h3>🔐 Admin Password</h3>
 
+<input id="newAdminPassword" type="password" placeholder="New password">
 
-    <button
-        class="nav-btn active"
-        id="btn-Home"
-        onclick="showPage('Home')"
-    >
-        🏠 Home
-    </button>
-
-
-    <button
-        class="nav-btn"
-        id="btn-Profile"
-        onclick="showPage('Profile')"
-    >
-        👤 Profile
-    </button>
-
-
-    <button
-        class="nav-btn"
-        id="btn-Settings"
-        onclick="showPage('Settings')"
-    >
-        ⚙ Settings
-    </button>
-
+<button class="green" onclick="changePassword()">
+Change Admin Password
+</button>
 
 </div>
+
+
+<div class="card">
+
+<h3>💾 Backup & Restore</h3>
+
+<button class="green" onclick="backup()">Download Backup</button>
+
+<input type="file" id="restoreFile" accept=".json" onchange="restoreBackup(event)">
+
+</div>
+
+
+<div class="card">
+
+<h3>🚪 Account</h3>
+
+<button class="side-btn danger" onclick="logout()">Logout</button>
+
+</div>
+
+</section>
+
+</main>
+</div>
+
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav">
+<button onclick="go('dashboard')">🏠<br>Home</button>
+<button onclick="go('pos')">🛒<br>Sale</button>
+<button onclick="go('products')">📦<br>Products</button>
+<button onclick="go('sales')">💰<br>Sales</button>
+<button onclick="go('settings')">⚙️<br>Settings</button>
+</nav>
 
 </section>
 
 
 <script>
 
-/* =====================================================
-   DEFAULT ADMIN PASSWORD
-===================================================== */
+/* ==========================
+DATA
+========================== */
 
-const DEFAULT_ADMIN_PASSWORD = "1234";
+let products=JSON.parse(localStorage.getItem("dl_products")||"[]");
+let sales=JSON.parse(localStorage.getItem("dl_sales")||"[]");
+let customers=JSON.parse(localStorage.getItem("dl_customers")||"[]");
+let expenses=JSON.parse(localStorage.getItem("dl_expenses")||"[]");
+
+let cart=[];
+
+const money=n=>"₦"+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2});
 
 
-function getAdminPassword(){
+/* ==========================
+LOGIN
+========================== */
 
-    return localStorage.getItem(
-        "dlimans_admin_password"
-    ) || DEFAULT_ADMIN_PASSWORD;
-
+function adminPassword(){
+return localStorage.getItem("dl_admin_password")||"1234";
 }
-
-
-/* =====================================================
-   LOGIN
-===================================================== */
 
 function login(){
 
-    const username =
-        document
-        .getElementById("username")
-        .value
-        .trim();
+let u=username.value.trim();
+let r=role.value;
+let p=password.value;
 
-    const role =
-        document
-        .getElementById("role")
-        .value;
-
-    const password =
-        document
-        .getElementById("password")
-        .value;
-
-    const message =
-        document
-        .getElementById("loginMessage");
-
-
-    message.style.color =
-        "#ff5252";
-
-
-    if(!username || !password){
-
-        message.innerText =
-            "Please enter username and password.";
-
-        return;
-
-    }
-
-
-    /* ================= ADMIN ================= */
-
-    if(role === "admin"){
-
-        if(
-            username.toLowerCase()
-            !==
-            "admin"
-        ){
-
-            message.innerText =
-                "Invalid Admin username.";
-
-            return;
-
-        }
-
-
-        if(
-            password
-            !==
-            getAdminPassword()
-        ){
-
-            message.innerText =
-                "Incorrect password.";
-
-            return;
-
-        }
-
-    }
-
-
-    /* ================= USER ================= */
-
-    if(role === "user"){
-
-        const savedUser =
-            localStorage.getItem(
-                "dlimans_user_password"
-            );
-
-
-        const userPassword =
-            savedUser || "1234";
-
-
-        if(
-            password
-            !==
-            userPassword
-        ){
-
-            message.innerText =
-                "Incorrect User password.";
-
-            return;
-
-        }
-
-    }
-
-
-    /* ================= LOGIN SUCCESS ================= */
-
-    const session = {
-
-        username:username,
-
-        role:role,
-
-        loggedIn:true
-
-    };
-
-
-    localStorage.setItem(
-        "dlimans_session",
-        JSON.stringify(session)
-    );
-
-
-    if(
-        document
-        .getElementById("remember")
-        .checked
-    ){
-
-        localStorage.setItem(
-            "dlimans_remember",
-            "true"
-        );
-
-    }
-    else{
-
-        localStorage.removeItem(
-            "dlimans_remember"
-        );
-
-    }
-
-
-    message.innerText = "";
-
-    openApp();
-
+if(!u||!p){
+loginMsg.innerText="Enter username and password.";
+return;
 }
 
+if(r==="admin"&&(u.toLowerCase()!=="admin"||p!==adminPassword())){
+loginMsg.innerText="Invalid Admin login.";
+return;
+}
 
-/* =====================================================
-   OPEN APP
-===================================================== */
+if(r==="user"&&p!==(localStorage.getItem("dl_user_password")||"1234")){
+loginMsg.innerText="Invalid User password.";
+return;
+}
+
+let session={username:u,role:r};
+localStorage.setItem("dl_session",JSON.stringify(session));
+
+if(remember.checked)
+localStorage.setItem("dl_remember","true");
+else
+localStorage.removeItem("dl_remember");
+
+openApp();
+}
+
 
 function openApp(){
 
-    document
-    .getElementById("loginScreen")
-    .style
-    .display = "none";
+loginScreen.style.display="none";
+app.style.display="block";
 
+let s=JSON.parse(localStorage.getItem("dl_session")||"{}");
 
-    document
-    .getElementById("app")
-    .style
-    .display = "flex";
+headerUser.innerText=s.username+" • "+s.role;
 
-
-    const session =
-        JSON.parse(
-            localStorage.getItem(
-                "dlimans_session"
-            )
-        );
-
-
-    if(session){
-
-        document
-        .getElementById("welcomeUser")
-        .innerText =
-            "Logged in as: "
-            +
-            session.username
-            +
-            " ("
-            +
-            session.role
-            +
-            ")";
-
-
-        document
-        .getElementById("profileInfo")
-        .innerText =
-            "Username: "
-            +
-            session.username
-            +
-            " | Role: "
-            +
-            session.role;
-
-    }
-
-
-    showPageWithoutHistory(
-        "Home"
-    );
-
+refreshAll();
+go("dashboard",false);
 }
 
-
-/* =====================================================
-   LOGOUT
-===================================================== */
 
 function logout(){
 
-    localStorage.removeItem(
-        "dlimans_session"
-    );
+localStorage.removeItem("dl_session");
 
+app.style.display="none";
+loginScreen.style.display="flex";
 
-    document
-    .getElementById("app")
-    .style
-    .display = "none";
-
-
-    document
-    .getElementById("loginScreen")
-    .style
-    .display = "flex";
-
-
-    document
-    .getElementById("password")
-    .value = "";
-
-
-    history.replaceState(
-        {page:"Login"},
-        "",
-        "#Login"
-    );
-
+password.value="";
 }
 
-
-/* =====================================================
-   SHOW / HIDE PASSWORD
-===================================================== */
-
-function togglePassword(){
-
-    const password =
-        document
-        .getElementById("password");
-
-
-    const button =
-        document
-        .getElementById("showPasswordBtn");
-
-
-    if(
-        password.type
-        ===
-        "password"
-    ){
-
-        password.type =
-            "text";
-
-        button.innerText =
-            "🙈";
-
-    }
-    else{
-
-        password.type =
-            "password";
-
-        button.innerText =
-            "👁";
-
-    }
-
-}
-
-
-/* =====================================================
-   FORGOT PASSWORD
-===================================================== */
 
 function forgotPassword(){
-
-    alert(
-        "Forgot Password\n\n" +
-        "Contact the Admin to reset the password."
-    );
-
+alert("Contact the Admin to reset the password.");
 }
 
 
-/* =====================================================
-   CHANGE ADMIN PASSWORD
-===================================================== */
+/* ==========================
+NAVIGATION
+========================== */
 
-function changeAdminPassword(){
+function go(page,historyAdd=true){
 
-    const session =
-        JSON.parse(
-            localStorage.getItem(
-                "dlimans_session"
-            )
-        );
+document.querySelectorAll(".page")
+.forEach(x=>x.classList.remove("active"));
 
+let target=document.getElementById("page-"+page);
 
-    if(
-        !session
-        ||
-        session.role !== "admin"
-    ){
+if(target)target.classList.add("active");
 
-        alert(
-            "Only Admin can change the password."
-        );
+document.querySelectorAll(".side-btn[data-page]")
+.forEach(x=>x.classList.remove("active"));
 
-        return;
+let active=document.querySelector('.side-btn[data-page="'+page+'"]');
+if(active)active.classList.add("active");
 
-    }
+if(historyAdd){
+history.pushState({page:page},"","#"+page);
+}
 
-
-    const newPassword =
-        document
-        .getElementById("newPassword")
-        .value;
-
-
-    if(
-        newPassword.length < 4
-    ){
-
-        alert(
-            "Password must contain at least 4 characters."
-        );
-
-        return;
-
-    }
-
-
-    localStorage.setItem(
-        "dlimans_admin_password",
-        newPassword
-    );
-
-
-    document
-    .getElementById("newPassword")
-    .value = "";
-
-
-    alert(
-        "Admin password changed successfully."
-    );
-
+refreshAll();
 }
 
 
-/* =====================================================
-   PAGE NAVIGATION
-===================================================== */
+/* BACK BUTTON */
+history.replaceState({page:"dashboard"},"","#dashboard");
 
-function showPage(pageName){
+window.onpopstate=function(e){
 
-    const session =
-        localStorage.getItem(
-            "dlimans_session"
-        );
+if(!localStorage.getItem("dl_session"))return;
 
-
-    if(!session){
-
-        return;
-
-    }
-
-
-    showPageWithoutHistory(
-        pageName
-    );
-
-
-    history.pushState(
-        {page:pageName},
-        "",
-        "#" + pageName
-    );
-
-}
-
-
-/* =====================================================
-   SHOW PAGE WITHOUT ADDING HISTORY
-===================================================== */
-
-function showPageWithoutHistory(pageName){
-
-    document
-    .querySelectorAll(".page")
-    .forEach(
-        page =>
-            page.classList.remove(
-                "active"
-            )
-    );
-
-
-    const page =
-        document.getElementById(
-            "page-" + pageName
-        );
-
-
-    if(page){
-
-        page.classList.add(
-            "active"
-        );
-
-    }
-
-
-    document
-    .querySelectorAll(".nav-btn")
-    .forEach(
-        btn =>
-            btn.classList.remove(
-                "active"
-            )
-    );
-
-
-    const button =
-        document.getElementById(
-            "btn-" + pageName
-        );
-
-
-    if(button){
-
-        button.classList.add(
-            "active"
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   BACK BUTTON
-===================================================== */
-
-history.replaceState(
-    {page:"Home"},
-    "",
-    "#Home"
-);
-
-
-window.onpopstate =
-function(event){
-
-    const session =
-        localStorage.getItem(
-            "dlimans_session"
-        );
-
-
-    if(!session){
-
-        history.pushState(
-            {page:"Login"},
-            "",
-            "#Login"
-        );
-
-        return;
-
-    }
-
-
-    if(
-        event.state
-        &&
-        event.state.page
-        &&
-        event.state.page !== "Login"
-    ){
-
-        showPageWithoutHistory(
-            event.state.page
-        );
-
-    }
-    else{
-
-        showPageWithoutHistory(
-            "Home"
-        );
-
-    }
+if(e.state&&e.state.page)
+go(e.state.page,false);
+else
+go("dashboard",false);
 
 };
 
 
-/* =====================================================
-   AUTO LOGIN
-===================================================== */
+/* ==========================
+PRODUCTS
+========================== */
 
-window.addEventListener(
-    "load",
-    function(){
+function addProduct(){
 
-        const remember =
-            localStorage.getItem(
-                "dlimans_remember"
-            );
+let name=productName.value.trim();
+let sku=productSKU.value.trim();
+let cost=Number(productCost.value);
+let price=Number(productPrice.value);
+let stock=Number(productStock.value);
+
+if(!name||!price){
+alert("Enter product name and selling price.");
+return;
+}
+
+products.push({
+id:Date.now(),
+name,sku,cost,price,stock
+});
+
+save();
+
+productName.value="";
+productSKU.value="";
+productCost.value="";
+productPrice.value="";
+productStock="";
+
+refreshAll();
+}
 
 
-        const session =
-            localStorage.getItem(
-                "dlimans_session"
-            );
+function deleteProduct(id){
+
+if(!confirm("Delete this product?"))return;
+
+products=products.filter(x=>x.id!==id);
+save();
+refreshAll();
+
+}
 
 
-        if(
-            remember === "true"
-            &&
-            session
-        ){
+/* ==========================
+POS
+========================== */
 
-            openApp();
+function renderPOS(){
 
-        }
+let q=(productSearch.value||"").toLowerCase();
 
-    }
+let list=products.filter(p=>
+p.name.toLowerCase().includes(q)||
+(p.sku||"").toLowerCase().includes(q)
 );
 
+productGrid.innerHTML=list.map(p=>`
+<button class="product-btn" onclick="addToCart(${p.id})">
+<strong>${escapeHTML(p.name)}</strong><br>
+${money(p.price)}<br>
+<small>Stock: ${p.stock}</small>
+</button>
+`).join("")||"<p>No products found.</p>";
 
-/* =====================================================
-   ENTER KEY
-===================================================== */
+renderCart();
+}
 
-document
-.getElementById("password")
-.addEventListener(
-    "keydown",
-    function(event){
 
-        if(
-            event.key === "Enter"
-        ){
+function addToCart(id){
 
-            login();
+let p=products.find(x=>x.id===id);
 
-        }
+if(!p||p.stock<=0){
+alert("Product is out of stock.");
+return;
+}
 
-    }
+let item=cart.find(x=>x.id===id);
+
+if(item){
+if(item.qty>=p.stock){
+alert("Not enough stock.");
+return;
+}
+item.qty++;
+}else{
+cart.push({id:p.id,qty:1});
+}
+
+renderCart();
+}
+
+
+function renderCart(){
+
+cart.innerHTML=cart.map(item=>{
+
+let p=products.find(x=>x.id===item.id);
+
+return `
+<div class="cart-row">
+<span>${escapeHTML(p.name)} x ${item.qty}</span>
+<strong>${money(p.price*item.qty)}</strong>
+<button class="small-btn danger" onclick="removeCart(${p.id})">×</button>
+</div>`;
+
+}).join("");
+
+let total=cart.reduce((sum,i)=>{
+let p=products.find(x=>x.id===i.id);
+return sum+p.price*i.qty;
+},0);
+
+cartTotal.innerText=money(total);
+}
+
+
+function removeCart(id){
+cart=cart.filter(x=>x.id!==id);
+renderCart();
+}
+
+
+function clearCart(){
+cart=[];
+renderCart();
+}
+
+
+function completeSale(){
+
+if(!cart.length){
+alert("Cart is empty.");
+return;
+}
+
+let total=0;
+let profit=0;
+
+let items=cart.map(i=>{
+
+let p=products.find(x=>x.id===i.id);
+
+total+=p.price*i.qty;
+profit+=(p.price-p.cost)*i.qty;
+
+p.stock-=i.qty;
+
+return{
+product:p.name,
+qty:i.qty,
+price:p.price,
+cost:p.cost
+};
+
+});
+
+let sale={
+id:Date.now(),
+invoice:"INV-"+Date.now().toString().slice(-6),
+date:new Date().toLocaleString(),
+customer:saleCustomer.value||"Walk-in Customer",
+note:saleNote.value||"",
+items,total,profit
+};
+
+sales.unshift(sale);
+
+saleCustomer.value="";
+saleNote.value="";
+
+cart=[];
+
+save();
+refreshAll();
+
+alert("Sale completed successfully.\n\nInvoice: "+sale.invoice+
+"\nTotal: "+money(total));
+
+go("sales");
+
+}
+
+
+/* ==========================
+SALES
+========================== */
+
+function renderSales(){
+
+salesTable.innerHTML=sales.map(s=>`
+<tr>
+<td>${s.date}</td>
+<td>${s.invoice}</td>
+<td>${escapeHTML(s.customer)}</td>
+<td>${money(s.total)}</td>
+<td>${money(s.profit)}</td>
+<td>
+<button class="small-btn" onclick="viewSale(${s.id})">View</button>
+<button class="small-btn danger" onclick="deleteSale(${s.id})">Delete</button>
+</td>
+</tr>
+`).join("")||"<tr><td colspan='6'>No sales yet.</td></tr>";
+
+}
+
+
+function viewSale(id){
+
+let s=sales.find(x=>x.id===id);
+
+if(!s)return;
+
+alert(
+"Invoice: "+s.invoice+
+"\nCustomer: "+s.customer+
+"\nTotal: "+money(s.total)+
+"\nProfit: "+money(s.profit)
 );
+
+}
+
+
+function deleteSale(id){
+
+if(!confirm("Delete this sale?"))return;
+
+sales=sales.filter(x=>x.id!==id);
+save();
+refreshAll();
+
+}
+
+
+/* ==========================
+CUSTOMERS
+========================== */
+
+function addCustomer(){
+
+let name=customerName.value.trim();
+let phone=customerPhone.value.trim();
+
+if(!name){
+alert("Enter customer name.");
+return;
+}
+
+customers.push({
+id:Date.now(),name,phone
+});
+
+customerName.value="";
+customerPhone.value="";
+
+save();
+refreshAll();
+}
+
+
+function deleteCustomer(id){
+
+customers=customers.filter(x=>x.id!==id);
+save();
+refreshAll();
+
+}
+
+
+function renderCustomers(){
+
+customersTable.innerHTML=customers.map(c=>`
+<tr>
+<td>${escapeHTML(c.name)}</td>
+<td>${escapeHTML(c.phone)}</td>
+<td>
+<button class="small-btn danger" onclick="deleteCustomer(${c.id})">Delete</button>
+</td>
+</tr>
+`).join("")||"<tr><td colspan='3'>No customers yet.</td></tr>";
+
+}
+
+
+/* ==========================
+EXPENSES
+========================== */
+
+function addExpense(){
+
+let name=expenseName.value.trim();
+let amount=Number(expenseAmount.value);
+
+if(!name||!amount){
+alert("Enter expense and amount.");
+return;
+}
+
+expenses.unshift({
+id:Date.now(),
+date:new Date().toLocaleString(),
+name,
+amount
+});
+
+expenseName.value="";
+expenseAmount.value="";
+
+save();
+refreshAll();
+}
+
+
+function deleteExpense(id){
+
+expenses=expenses.filter(x=>x.id!==id);
+save();
+refreshAll();
+
+}
+
+
+function renderExpenses(){
+
+expensesTable.innerHTML=expenses.map(e=>`
+<tr>
+<td>${e.date}</td>
+<td>${escapeHTML(e.name)}</td>
+<td>${money(e.amount)}</td>
+<td>
+<button class="small-btn danger" onclick="deleteExpense(${e.id})">Delete</button>
+</td>
+</tr>
+`).join("")||"<tr><td colspan='4'>No expenses yet.</td></tr>";
+
+}
+
+
+/* ==========================
+DASHBOARD
+========================== */
+
+function refreshDashboard(){
+
+let total=sales.reduce((a,b)=>a+b.total,0);
+let profit=sales.reduce((a,b)=>a+b.profit,0);
+let low=products.filter(p=>p.stock<=5).length;
+
+dashSales.innerText=money(total);
+dashProfit.innerText=money(profit);
+dashProducts.innerText=products.length;
+dashLow.innerText=low;
+
+reportSales.innerText=money(total);
+reportProfit.innerText=money(profit);
+reportExpenses.innerText=
+money(expenses.reduce((a,b)=>a+b.amount,0));
+reportCustomers.innerText=customers.length;
+
+}
+
+
+/* ==========================
+CHART
+========================== */
+
+function drawChart(){
+
+let c=document.getElementById("salesChart");
+if(!c)return;
+
+let ctx=c.getContext("2d");
+
+ctx.clearRect(0,0,c.width,c.height);
+
+let w=c.width;
+let h=c.height;
+
+let values=[];
+
+for(let i=6;i>=0;i--){
+
+let d=new Date();
+d.setDate(d.getDate()-i);
+
+let key=d.toLocaleDateString();
+
+let total=sales
+.filter(s=>new Date(s.date).toLocaleDateString()===key)
+.reduce((a,b)=>a+b.total,0);
+
+values.push(total);
+}
+
+let max=Math.max(...values,1);
+
+ctx.strokeStyle="#00e676";
+ctx.lineWidth=3;
+
+ctx.beginPath();
+
+values.forEach((v,i)=>{
+
+let x=20+i*((w-40)/6);
+let y=h-25-(v/max)*(h-50);
+
+if(i===0)ctx.moveTo(x,y);
+else ctx.lineTo(x,y);
+
+});
+
+ctx.stroke();
+
+ctx.fillStyle="#9ca8b8";
+ctx.font="11px Arial";
+
+values.forEach((v,i)=>{
+
+let x=20+i*((w-40)/6);
+
+ctx.fillText(
+"₦"+Math.round(v),
+x-15,
+h-7
+);
+
+});
+
+}
+
+
+/* ==========================
+SETTINGS
+========================== */
+
+function changePassword(){
+
+let s=JSON.parse(
+localStorage.getItem("dl_session")||"{}"
+);
+
+if(s.role!=="admin"){
+alert("Only Admin can change password.");
+return;
+}
+
+let p=newAdminPassword.value;
+
+if(p.length<4){
+alert("Password must contain at least 4 characters.");
+return;
+}
+
+localStorage.setItem(
+"dl_admin_password",p
+);
+
+newAdminPassword.value="";
+
+alert("Admin password changed successfully.");
+
+}
+
+
+function theme(color){
+
+document.body.style.background=color;
+
+localStorage.setItem(
+"dl_theme",color
+);
+
+}
+
+
+function backup(){
+
+let data={
+products,
+sales,
+customers,
+expenses,
+adminPassword:adminPassword(),
+date:new Date().toISOString()
+};
+
+let blob=new Blob(
+[JSON.stringify(data,null,2)],
+{type:"application/json"}
+);
+
+let a=document.createElement("a");
+
+a.href=URL.createObjectURL(blob);
+a.download="Dlimans_POS_Backup.json";
+a.click();
+
+URL.revokeObjectURL(a.href);
+
+}
+
+
+function restoreBackup(e){
+
+let file=e.target.files[0];
+
+if(!file)return;
+
+let reader=new FileReader();
+
+reader.onload=function(){
+
+try{
+
+let data=JSON.parse(reader.result);
+
+products=data.products||[];
+sales=data.sales||[];
+customers=data.customers||[];
+expenses=data.expenses||[];
+
+if(data.adminPassword)
+localStorage.setItem(
+"dl_admin_password",
+data.adminPassword
+);
+
+save();
+refreshAll();
+
+alert("Backup restored successfully.");
+
+}catch(err){
+
+alert("Invalid backup file.");
+
+}
+
+};
+
+reader.readAsText(file);
+
+}
+
+
+/* ==========================
+SAVE
+========================== */
+
+function save(){
+
+localStorage.setItem(
+"dl_products",
+JSON.stringify(products)
+);
+
+localStorage.setItem(
+"dl_sales",
+JSON.stringify(sales)
+);
+
+localStorage.setItem(
+"dl_customers",
+JSON.stringify(customers)
+);
+
+localStorage.setItem(
+"dl_expenses",
+JSON.stringify(expenses)
+);
+
+}
+
+
+/* ==========================
+REFRESH
+========================== */
+
+function refreshAll(){
+
+renderPOS();
+renderProducts();
+renderSales();
+renderCustomers();
+renderExpenses();
+refreshDashboard();
+drawChart();
+
+}
+
+
+function renderProducts(){
+
+productsTable.innerHTML=products.map(p=>`
+<tr>
+<td>${escapeHTML(p.name)}</td>
+<td>${escapeHTML(p.sku||"")}</td>
+<td>${money(p.cost)}</td>
+<td>${money(p.price)}</td>
+<td>${p.stock}</td>
+<td>
+<button class="small-btn danger" onclick="deleteProduct(${p.id})">Delete</button>
+</td>
+</tr>
+`).join("")||"<tr><td colspan='6'>No products yet.</td></tr>";
+
+}
+
+
+/* ==========================
+SECURITY
+========================== */
+
+function escapeHTML(str){
+
+return String(str||"")
+.replaceAll("&","&amp;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;")
+.replaceAll('"',"&quot;")
+.replaceAll("'","&#039;");
+
+}
+
+
+/* ==========================
+AUTO LOGIN
+========================== */
+
+window.addEventListener("load",()=>{
+
+let themeColor=
+localStorage.getItem("dl_theme");
+
+if(themeColor)
+document.body.style.background=themeColor;
+
+let session=
+localStorage.getItem("dl_session");
+
+let remember=
+localStorage.getItem("dl_remember");
+
+if(session&&remember==="true")
+openApp();
+
+});
+
+
+/* ENTER LOGIN */
+password.addEventListener("keydown",e=>{
+if(e.key==="Enter")login();
+});
 
 </script>
 

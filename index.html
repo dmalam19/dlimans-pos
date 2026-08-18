@@ -7,153 +7,150 @@
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#0b1220;color:#fff;min-height:100vh}
-button,input,select{font:inherit}
+:root{--accent:#00e676;--header:#006b3c;--bg:#08101c;--panel:#111a28;--panel2:#182335;--border:#29364a}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#fff;min-height:100vh}
+button,input,select,textarea{font:inherit}
 button{cursor:pointer}
+input,select,textarea{
+width:100%;padding:12px;border:1px solid #334155;border-radius:9px;
+background:#0b1422;color:#fff;outline:none
+}
+textarea{min-height:75px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .hidden{display:none!important}
 
 /* LOGIN */
 #loginScreen{
- min-height:100vh;display:flex;align-items:center;justify-content:center;
- padding:20px;background:radial-gradient(circle at top,#164b3a,#08101c 65%)
+min-height:100vh;display:flex;align-items:center;justify-content:center;
+padding:20px;background:radial-gradient(circle at top,#164b3a,#08101c 65%)
 }
 .login-box{
- width:100%;max-width:420px;background:#111a28;border:1px solid #29364a;
- border-radius:22px;padding:30px;box-shadow:0 20px 60px #000
+width:100%;max-width:420px;background:#111a28;border:1px solid var(--border);
+border-radius:22px;padding:30px;box-shadow:0 20px 60px #000
 }
 .logo{
- width:75px;height:75px;margin:0 auto 15px;border-radius:50%;
- display:flex;align-items:center;justify-content:center;font-size:35px;
- background:#00e676;color:#06130b
+width:75px;height:75px;margin:0 auto 15px;border-radius:50%;
+display:flex;align-items:center;justify-content:center;font-size:35px;
+background:var(--accent);color:#06130b
 }
-.login-box h1{text-align:center}.sub{text-align:center;color:#9ca8b8;margin:7px 0 25px}
-label{display:block;margin:14px 0 7px;color:#d7deea}
-input,select{
- width:100%;padding:13px;border-radius:10px;border:1px solid #334155;
- background:#0d1522;color:#fff;outline:none
-}
-input:focus,select:focus{border-color:#00e676}
-.login-btn,.green{
- width:100%;border:0;border-radius:10px;padding:14px;
- background:#00e676;color:#06130b;font-weight:bold;margin-top:15px
-}
+.login-box h1{text-align:center}
+.subtitle{text-align:center;color:#9ca8b8;margin:7px 0 25px}
+label{display:block;margin:13px 0 7px;color:#d7deea}
 .remember{display:flex;align-items:center;gap:8px;color:#aaa}
 .remember input{width:auto}
-.forgot{width:100%;background:none;border:0;color:#00e676;padding:14px}
-.msg{text-align:center;min-height:22px;color:#ff5252;margin-top:8px}
+.login-btn,.green{
+width:100%;border:0;border-radius:10px;padding:14px;
+background:var(--accent);color:#06130b;font-weight:bold;margin-top:14px
+}
+.forgot{width:100%;background:none;border:0;color:var(--accent);padding:14px}
+.message{text-align:center;min-height:22px;color:#ff5252;margin-top:8px}
 
 /* APP */
 #app{display:none;min-height:100vh}
 header{
- height:64px;display:flex;align-items:center;justify-content:space-between;
- padding:0 18px;background:#006b3c;position:sticky;top:0;z-index:20
+height:62px;background:var(--header);display:flex;align-items:center;
+justify-content:space-between;padding:0 18px;position:sticky;top:0;z-index:50
 }
 .brand{font-size:20px;font-weight:bold}
-.header-user{font-size:12px;color:#d9fff0}
-
-.layout{display:flex;min-height:calc(100vh - 64px)}
+.header-right{font-size:12px;color:#dcfff0}
+.layout{display:flex;min-height:calc(100vh - 62px)}
 .sidebar{
- width:235px;background:#101927;border-right:1px solid #263246;
- padding:15px;flex-shrink:0
+width:235px;background:#101927;border-right:1px solid var(--border);
+padding:14px;flex-shrink:0
 }
 .side-btn{
- width:100%;text-align:left;padding:13px;margin-bottom:6px;
- background:transparent;border:0;color:#b9c4d4;border-radius:10px
+width:100%;text-align:left;padding:12px;margin-bottom:5px;
+background:transparent;border:0;color:#b9c4d4;border-radius:9px
 }
-.side-btn:hover,.side-btn.active{background:#1d2a3d;color:#00e676}
+.side-btn:hover,.side-btn.active{background:#1d2a3d;color:var(--accent)}
+.danger{background:#d32f2f!important;color:#fff!important}
 .main{flex:1;padding:20px;overflow:auto}
-.page{display:none}.page.active{display:block}
-
-/* DASHBOARD */
-.cards{
- display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:15px 0
-}
+.page{display:none}
+.page.active{display:block}
 .card{
- background:#111a28;border:1px solid #263246;border-radius:15px;padding:18px;
- margin-bottom:15px
+background:var(--panel);border:1px solid var(--border);
+border-radius:15px;padding:18px;margin-bottom:15px
 }
-.metric{color:#9ba8b8;font-size:13px}.metric strong{
- display:block;font-size:23px;color:#00e676;margin-top:7px
-}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:15px 0}
+.metric{color:#9ba8b8;font-size:13px}
+.metric strong{display:block;font-size:23px;color:var(--accent);margin-top:7px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-
-/* TABLES */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar>*{flex:1;min-width:130px}
 .table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:600px}
-th,td{padding:11px;border-bottom:1px solid #263246;text-align:left}
-th{color:#00e676;background:#121c2b}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
+th{color:var(--accent);background:#121c2b}
 .small-btn{
- padding:7px 10px;border:0;border-radius:7px;background:#263449;color:#fff
+padding:7px 10px;border:0;border-radius:7px;background:#263449;color:#fff;margin:2px
 }
-.danger{background:#d32f2f!important}
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
-.toolbar input{max-width:300px}
-.total{font-size:20px;color:#00e676;font-weight:bold}
+.total{font-size:21px;color:var(--accent);font-weight:bold}
 
 /* POS */
 .pos-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:15px}
-.product-grid{
- display:grid;grid-template-columns:repeat(3,1fr);gap:10px
-}
+.product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .product-btn{
- background:#182335;border:1px solid #2d3d54;color:white;
- border-radius:12px;padding:15px;text-align:left
+background:var(--panel2);border:1px solid #2d3d54;color:white;
+border-radius:12px;padding:14px;text-align:left
 }
-.product-btn:hover{border-color:#00e676}
+.product-btn:hover{border-color:var(--accent)}
 .cart-row{
- display:flex;justify-content:space-between;gap:8px;
- padding:10px 0;border-bottom:1px solid #29364a
+display:flex;align-items:center;justify-content:space-between;
+gap:8px;padding:9px 0;border-bottom:1px solid var(--border)
 }
+.qty-controls{display:flex;align-items:center;gap:5px}
 
 /* SETTINGS */
 .theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .theme{
- height:55px;border:2px solid #555;border-radius:10px
+height:55px;border:2px solid #555;border-radius:10px
 }
-.theme.blue{background:#173f75}.theme.green{background:#006b3c}
-.theme.maroon{background:#5b174b}.theme.purple{background:#4b2375}
-.theme.gold{background:#714500}.theme.yellow{background:#655500}
-.theme.chocolate{background:#4b2c20}.theme.black{background:#000}
+.blue{background:#173f75}.greenTheme{background:#006b3c}
+.maroon{background:#5b174b}.purple{background:#4b2375}
+.gold{background:#714500}.yellow{background:#655500}
+.chocolate{background:#4b2c20}.black{background:#000}
 
 /* MOBILE */
 .mobile-nav{
- display:none;position:fixed;bottom:0;left:0;right:0;
- background:#101927;border-top:1px solid #29364a;
- padding:7px;z-index:30
+display:none;position:fixed;bottom:0;left:0;right:0;background:#101927;
+border-top:1px solid var(--border);padding:6px;z-index:100
 }
 .mobile-nav button{
- flex:1;background:none;border:0;color:#aaa;padding:8px;font-size:11px
+flex:1;background:none;border:0;color:#aaa;padding:7px;font-size:11px
 }
-.mobile-nav button.active{color:#00e676}
-
-@media(max-width:900px){
- .sidebar{display:none}
- .cards{grid-template-columns:repeat(2,1fr)}
- .pos-grid,.grid2{grid-template-columns:1fr}
- .mobile-nav{display:flex}
- .main{padding-bottom:80px}
- .product-grid{grid-template-columns:repeat(2,1fr)}
+.mobile-nav button.active{color:var(--accent)}
+@media(max-width:950px){
+.sidebar{display:none}
+.cards{grid-template-columns:repeat(2,1fr)}
+.grid2,.pos-grid{grid-template-columns:1fr}
+.mobile-nav{display:flex}
+.main{padding-bottom:80px}
+.product-grid{grid-template-columns:repeat(2,1fr)}
 }
-@media(max-width:500px){
- .cards{grid-template-columns:1fr 1fr}
- .product-grid{grid-template-columns:1fr 1fr}
- .theme-grid{grid-template-columns:repeat(2,1fr)}
- header{height:58px}
+@media(max-width:520px){
+.cards{grid-template-columns:1fr 1fr}
+.grid3{grid-template-columns:1fr}
+.product-grid{grid-template-columns:1fr 1fr}
+.theme-grid{grid-template-columns:repeat(2,1fr)}
+.brand{font-size:16px}
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- ================= LOGIN ================= -->
+
 <section id="loginScreen">
 <div class="login-box">
+
 <div class="logo">⚡</div>
 <h1>Dlimans POS</h1>
-<div class="sub">Supermarket Management System</div>
+<div class="subtitle">Supermarket Management System</div>
 
 <label>Username</label>
-<input id="username" placeholder="Enter username">
+<input id="username" autocomplete="username" placeholder="Enter username">
 
 <label>Role</label>
 <select id="role">
@@ -162,7 +159,8 @@ th{color:#00e676;background:#121c2b}
 </select>
 
 <label>Password</label>
-<input id="password" type="password" placeholder="Enter password">
+<input id="password" type="password" autocomplete="current-password"
+placeholder="Enter password">
 
 <label class="remember">
 <input type="checkbox" id="remember"> Remember Login
@@ -170,17 +168,20 @@ th{color:#00e676;background:#121c2b}
 
 <button class="login-btn" onclick="login()">LOGIN</button>
 <button class="forgot" onclick="forgotPassword()">Forgot Password?</button>
-<div id="loginMsg" class="msg"></div>
+
+<div id="loginMessage" class="message"></div>
+
 </div>
 </section>
 
 
-<!-- APP -->
+<!-- ================= APP ================= -->
+
 <section id="app">
 
 <header>
 <div class="brand">⚡ Dlimans Supermarket POS</div>
-<div class="header-user" id="headerUser"></div>
+<div class="header-right" id="headerUser"></div>
 </header>
 
 <div class="layout">
@@ -203,31 +204,52 @@ th{color:#00e676;background:#121c2b}
 
 <main class="main">
 
-<!-- DASHBOARD -->
+<!-- ================= DASHBOARD ================= -->
+
 <section id="page-dashboard" class="page active">
 
-<h2>Dashboard</h2>
+<h2>🏠 Dashboard</h2>
 
 <div class="cards">
 
 <div class="card">
 <div class="metric">Total Sales</div>
-<strong class="metric-value" id="dashSales">₦0.00</strong>
+<div class="metric"><strong id="dashSales">₦0.00</strong></div>
 </div>
 
 <div class="card">
-<div class="metric">Profit</div>
-<strong class="metric-value" id="dashProfit">₦0.00</strong>
+<div class="metric">Net Profit</div>
+<div class="metric"><strong id="dashProfit">₦0.00</strong></div>
 </div>
 
 <div class="card">
 <div class="metric">Products</div>
-<strong class="metric-value" id="dashProducts">0</strong>
+<div class="metric"><strong id="dashProducts">0</strong></div>
 </div>
 
 <div class="card">
 <div class="metric">Low Stock</div>
-<strong class="metric-value" id="dashLow">0</strong>
+<div class="metric"><strong id="dashLow">0</strong></div>
+</div>
+
+<div class="card">
+<div class="metric">Invoice Due</div>
+<div class="metric"><strong id="dashDue">₦0.00</strong></div>
+</div>
+
+<div class="card">
+<div class="metric">Expenses</div>
+<div class="metric"><strong id="dashExpenses">₦0.00</strong></div>
+</div>
+
+<div class="card">
+<div class="metric">Customers</div>
+<div class="metric"><strong id="dashCustomers">0</strong></div>
+</div>
+
+<div class="card">
+<div class="metric">Transactions</div>
+<div class="metric"><strong id="dashTransactions">0</strong></div>
 </div>
 
 </div>
@@ -235,23 +257,39 @@ th{color:#00e676;background:#121c2b}
 <div class="grid2">
 
 <div class="card">
-<h3>📈 Sales Last 7 Days</h3>
-<canvas id="salesChart" height="220"></canvas>
+<h3>📈 Sales Last 30 Days</h3>
+<canvas id="salesChart" width="700" height="280" style="width:100%;margin-top:15px"></canvas>
 </div>
 
 <div class="card">
 <h3>⚡ Quick Actions</h3>
-<button class="green" onclick="go('pos')">🛒 Start New Sale</button>
-<button class="side-btn" onclick="go('products')">📦 Manage Products</button>
-<button class="side-btn" onclick="go('sales')">💰 View Sales</button>
+<button class="green" onclick="go('pos')">🛒 New Sale</button>
+<button class="side-btn" onclick="go('products')">📦 Add Product</button>
+<button class="side-btn" onclick="go('sales')">💰 Sales History</button>
+<button class="side-btn" onclick="go('reports')">📊 Reports</button>
 </div>
 
+</div>
+
+<div class="card">
+<h3>🧾 Recent Sales</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Date</th><th>Invoice</th><th>Customer</th><th>Total</th><th>Paid</th><th>Due</th>
+</tr>
+</thead>
+<tbody id="recentSales"></tbody>
+</table>
+</div>
 </div>
 
 </section>
 
 
-<!-- POS -->
+<!-- ================= POS ================= -->
+
 <section id="page-pos" class="page">
 
 <h2>🛒 New Sale</h2>
@@ -259,41 +297,67 @@ th{color:#00e676;background:#121c2b}
 <div class="pos-grid">
 
 <div class="card">
+
 <div class="toolbar">
-<input id="productSearch" placeholder="Search product..." oninput="renderPOS()">
+<input id="productSearch" placeholder="Search product / SKU / barcode"
+oninput="renderPOS()">
 </div>
 
 <div class="product-grid" id="productGrid"></div>
+
 </div>
+
 
 <div class="card">
+
 <h3>Current Cart</h3>
+
 <div id="cart"></div>
 
+<hr style="border-color:#29364a;margin:14px 0">
+
+<label>Customer</label>
+<select id="saleCustomerSelect">
+<option value="">Walk-in Customer</option>
+</select>
+
+<label>Customer Note</label>
+<textarea id="saleNote" placeholder="Customer note"></textarea>
+
+<label>Discount</label>
+<input id="saleDiscount" type="number" value="0" min="0" oninput="renderCart()">
+
+<label>Payment Method</label>
+<select id="paymentMethod">
+<option>Cash</option>
+<option>Card / POS</option>
+<option>Transfer</option>
+<option>Credit / Due</option>
+</select>
+
+<label>Amount Paid</label>
+<input id="amountPaid" type="number" value="0" min="0" oninput="updateTotals()">
+
 <div style="margin-top:15px">
-Customer Name
-<input id="saleCustomer" placeholder="Customer name">
+Subtotal: <strong id="cartSubtotal">₦0.00</strong><br>
+Discount: <strong id="cartDiscount">₦0.00</strong><br>
+Total: <span class="total" id="cartTotal">₦0.00</span><br>
+Paid: <strong id="cartPaid">₦0.00</strong><br>
+Balance/Due: <strong id="cartDue">₦0.00</strong>
 </div>
-
-<div style="margin-top:10px">
-Customer Note
-<input id="saleNote" placeholder="Optional note">
-</div>
-
-<p style="margin-top:15px">
-Total: <span class="total" id="cartTotal">₦0.00</span>
-</p>
 
 <button class="green" onclick="completeSale()">COMPLETE SALE</button>
-<button class="side-btn" onclick="clearCart()">Clear Cart</button>
-</div>
+<button class="side-btn" onclick="clearCart()">🗑️ Clear Entire Sale</button>
+<button class="side-btn" onclick="cancelSale()">✖ Cancel Sale</button>
 
+</div>
 </div>
 
 </section>
 
 
-<!-- PRODUCTS -->
+<!-- ================= PRODUCTS ================= -->
+
 <section id="page-products" class="page">
 
 <h2>📦 Products & Inventory</h2>
@@ -306,7 +370,13 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 <input id="productCost" type="number" placeholder="Cost price">
 <input id="productPrice" type="number" placeholder="Selling price">
 <input id="productStock" type="number" placeholder="Stock">
-<button class="green" style="max-width:180px" onclick="addProduct()">Add Product</button>
+<input id="productLow" type="number" placeholder="Low-stock limit" value="5">
+</div>
+
+<div class="toolbar">
+<input id="productImage" placeholder="Image URL (optional)">
+<button class="green" onclick="addProduct()">➕ Add Product</button>
+<button class="side-btn" onclick="clearProductForm()">Clear Form</button>
 </div>
 
 </div>
@@ -315,6 +385,7 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 <table>
 <thead>
 <tr>
+<th>Image</th>
 <th>Product</th>
 <th>SKU</th>
 <th>Cost</th>
@@ -330,10 +401,17 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 </section>
 
 
-<!-- SALES -->
+<!-- ================= SALES ================= -->
+
 <section id="page-sales" class="page">
 
 <h2>💰 Sales History</h2>
+
+<div class="card">
+<div class="toolbar">
+<input id="salesSearch" placeholder="Search invoice / customer" oninput="renderSales()">
+</div>
+</div>
 
 <div class="card table-wrap">
 <table>
@@ -343,6 +421,8 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 <th>Invoice</th>
 <th>Customer</th>
 <th>Total</th>
+<th>Paid</th>
+<th>Due</th>
 <th>Profit</th>
 <th>Action</th>
 </tr>
@@ -354,19 +434,19 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 </section>
 
 
-<!-- CUSTOMERS -->
+<!-- ================= CUSTOMERS ================= -->
+
 <section id="page-customers" class="page">
 
 <h2>👥 Customers</h2>
 
 <div class="card">
-
 <div class="toolbar">
 <input id="customerName" placeholder="Customer name">
 <input id="customerPhone" placeholder="Phone">
-<button class="green" style="max-width:180px" onclick="addCustomer()">Add Customer</button>
+<input id="customerAddress" placeholder="Address">
+<button class="green" onclick="addCustomer()">➕ Add Customer</button>
 </div>
-
 </div>
 
 <div class="card table-wrap">
@@ -375,6 +455,8 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 <tr>
 <th>Name</th>
 <th>Phone</th>
+<th>Address</th>
+<th>Sales</th>
 <th>Action</th>
 </tr>
 </thead>
@@ -385,7 +467,8 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 </section>
 
 
-<!-- EXPENSES -->
+<!-- ================= EXPENSES ================= -->
+
 <section id="page-expenses" class="page">
 
 <h2>💸 Expenses</h2>
@@ -393,8 +476,9 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 <div class="card">
 <div class="toolbar">
 <input id="expenseName" placeholder="Expense description">
+<input id="expenseCategory" placeholder="Category">
 <input id="expenseAmount" type="number" placeholder="Amount">
-<button class="green" style="max-width:180px" onclick="addExpense()">Add Expense</button>
+<button class="green" onclick="addExpense()">➕ Add Expense</button>
 </div>
 </div>
 
@@ -404,6 +488,7 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 <tr>
 <th>Date</th>
 <th>Description</th>
+<th>Category</th>
 <th>Amount</th>
 <th>Action</th>
 </tr>
@@ -415,7 +500,8 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 </section>
 
 
-<!-- REPORTS -->
+<!-- ================= REPORTS ================= -->
+
 <section id="page-reports" class="page">
 
 <h2>📊 Reports</h2>
@@ -423,31 +509,44 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 <div class="cards">
 
 <div class="card">
-<div class="metric">Sales</div>
-<strong class="metric-value" id="reportSales">₦0.00</strong>
+<div class="metric">Total Sales</div>
+<strong id="reportSales">₦0.00</strong>
 </div>
 
 <div class="card">
 <div class="metric">Profit</div>
-<strong class="metric-value" id="reportProfit">₦0.00</strong>
+<strong id="reportProfit">₦0.00</strong>
 </div>
 
 <div class="card">
 <div class="metric">Expenses</div>
-<strong class="metric-value" id="reportExpenses">₦0.00</strong>
+<strong id="reportExpenses">₦0.00</strong>
 </div>
 
 <div class="card">
-<div class="metric">Customers</div>
-<strong class="metric-value" id="reportCustomers">0</strong>
+<div class="metric">Outstanding Due</div>
+<strong id="reportDue">₦0.00</strong>
 </div>
 
+</div>
+
+<div class="card">
+<h3>📦 Stock Report</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Product</th><th>Stock</th><th>Status</th></tr>
+</thead>
+<tbody id="stockReport"></tbody>
+</table>
+</div>
 </div>
 
 </section>
 
 
-<!-- SETTINGS -->
+<!-- ================= SETTINGS ================= -->
+
 <section id="page-settings" class="page">
 
 <h2>⚙️ Settings</h2>
@@ -457,15 +556,57 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 <h3>🎨 Universal Theme</h3>
 
 <div class="theme-grid" style="margin-top:15px">
-<button class="theme blue" onclick="theme('#173f75')"></button>
-<button class="theme green" onclick="theme('#006b3c')"></button>
-<button class="theme maroon" onclick="theme('#5b174b')"></button>
-<button class="theme purple" onclick="theme('#4b2375')"></button>
-<button class="theme gold" onclick="theme('#714500')"></button>
-<button class="theme yellow" onclick="theme('#655500')"></button>
-<button class="theme chocolate" onclick="theme('#4b2c20')"></button>
-<button class="theme black" onclick="theme('#000000')"></button>
+<button class="theme blue" onclick="setTheme('#173f75')"></button>
+<button class="theme greenTheme" onclick="setTheme('#006b3c')"></button>
+<button class="theme maroon" onclick="setTheme('#5b174b')"></button>
+<button class="theme purple" onclick="setTheme('#4b2375')"></button>
+<button class="theme gold" onclick="setTheme('#714500')"></button>
+<button class="theme yellow" onclick="setTheme('#655500')"></button>
+<button class="theme chocolate" onclick="setTheme('#4b2c20')"></button>
+<button class="theme black" onclick="setTheme('#000000')"></button>
 </div>
+
+</div>
+
+
+<div class="card">
+
+<h3>🏪 Business Information</h3>
+
+<label>Business Name</label>
+<input id="businessName" value="Dlimans Supermarket">
+
+<label>Address</label>
+<input id="businessAddress" placeholder="Business address">
+
+<label>Phone</label>
+<input id="businessPhone" placeholder="Phone number">
+
+<label>Receipt Thank-You Message</label>
+<input id="thankMessage" value="Thank you for shopping with us!">
+
+<button class="green" onclick="saveBusinessSettings()">Save Business Settings</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>🧾 Receipt & Printing</h3>
+
+<label>Receipt Size</label>
+<select id="receiptSize">
+<option>58mm</option>
+<option>80mm</option>
+<option>A4</option>
+</select>
+
+<label>
+<input type="checkbox" id="autoPrint"> Auto Print Receipt
+</label>
+
+<button class="green" onclick="savePrintSettings()">Save Print Settings</button>
+<button class="side-btn" onclick="testPrint()">🖨️ Test Print</button>
 
 </div>
 
@@ -474,11 +615,9 @@ Total: <span class="total" id="cartTotal">₦0.00</span>
 
 <h3>🔐 Admin Password</h3>
 
-<input id="newAdminPassword" type="password" placeholder="New password">
+<input id="newAdminPassword" type="password" placeholder="New Admin password">
 
-<button class="green" onclick="changePassword()">
-Change Admin Password
-</button>
+<button class="green" onclick="changePassword()">Change Admin Password</button>
 
 </div>
 
@@ -487,8 +626,9 @@ Change Admin Password
 
 <h3>💾 Backup & Restore</h3>
 
-<button class="green" onclick="backup()">Download Backup</button>
+<button class="green" onclick="backup()">⬇️ Download Backup</button>
 
+<label>Restore Backup</label>
 <input type="file" id="restoreFile" accept=".json" onchange="restoreBackup(event)">
 
 </div>
@@ -497,7 +637,6 @@ Change Admin Password
 <div class="card">
 
 <h3>🚪 Account</h3>
-
 <button class="side-btn danger" onclick="logout()">Logout</button>
 
 </div>
@@ -510,11 +649,11 @@ Change Admin Password
 
 <!-- MOBILE NAV -->
 <nav class="mobile-nav">
-<button onclick="go('dashboard')">🏠<br>Home</button>
-<button onclick="go('pos')">🛒<br>Sale</button>
-<button onclick="go('products')">📦<br>Products</button>
-<button onclick="go('sales')">💰<br>Sales</button>
-<button onclick="go('settings')">⚙️<br>Settings</button>
+<button data-mobile="dashboard" onclick="go('dashboard')">🏠<br>Home</button>
+<button data-mobile="pos" onclick="go('pos')">🛒<br>Sale</button>
+<button data-mobile="products" onclick="go('products')">📦<br>Products</button>
+<button data-mobile="sales" onclick="go('sales')">💰<br>Sales</button>
+<button data-mobile="settings" onclick="go('settings')">⚙️<br>Settings</button>
 </nav>
 
 </section>
@@ -522,9 +661,9 @@ Change Admin Password
 
 <script>
 
-/* ==========================
-DATA
-========================== */
+/* =========================================================
+   DATABASE
+========================================================= */
 
 let products=JSON.parse(localStorage.getItem("dl_products")||"[]");
 let sales=JSON.parse(localStorage.getItem("dl_sales")||"[]");
@@ -532,62 +671,118 @@ let customers=JSON.parse(localStorage.getItem("dl_customers")||"[]");
 let expenses=JSON.parse(localStorage.getItem("dl_expenses")||"[]");
 
 let cart=[];
+let editingSaleId=null;
 
-const money=n=>"₦"+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2});
+const money=n=>"₦"+Number(n||0).toLocaleString("en-NG",{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+});
 
 
-/* ==========================
-LOGIN
-========================== */
+/* =========================================================
+   DEFAULT SAMPLE PRODUCTS
+========================================================= */
+
+if(!localStorage.getItem("dl_initialized")){
+
+products=[
+{id:1,name:"Rice 50kg",sku:"RICE50",cost:65000,price:72000,stock:10,low:2,image:""},
+{id:2,name:"Cooking Oil",sku:"OIL001",cost:7000,price:8500,stock:20,low:5,image:""},
+{id:3,name:"Milo",sku:"MILO001",cost:3500,price:4200,stock:15,low:5,image:""},
+{id:4,name:"Bottled Water",sku:"WATER001",cost:150,price:250,stock:50,low:10,image:""},
+{id:5,name:"Detergent",sku:"DET001",cost:1800,price:2300,stock:12,low:4,image:""}
+];
+
+localStorage.setItem("dl_products",JSON.stringify(products));
+localStorage.setItem("dl_initialized","true");
+
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
 
 function adminPassword(){
 return localStorage.getItem("dl_admin_password")||"1234";
 }
 
+
 function login(){
 
-let u=username.value.trim();
-let r=role.value;
-let p=password.value;
+let u=document.getElementById("username").value.trim();
+let r=document.getElementById("role").value;
+let p=document.getElementById("password").value;
+let msg=document.getElementById("loginMessage");
+
+msg.style.color="#ff5252";
 
 if(!u||!p){
-loginMsg.innerText="Enter username and password.";
+msg.innerText="Please enter username and password.";
 return;
 }
 
-if(r==="admin"&&(u.toLowerCase()!=="admin"||p!==adminPassword())){
-loginMsg.innerText="Invalid Admin login.";
+if(r==="admin"){
+
+if(u.toLowerCase()!=="admin"){
+msg.innerText="Invalid Admin username.";
 return;
 }
 
-if(r==="user"&&p!==(localStorage.getItem("dl_user_password")||"1234")){
-loginMsg.innerText="Invalid User password.";
+if(p!==adminPassword()){
+msg.innerText="Incorrect Admin password.";
 return;
 }
 
-let session={username:u,role:r};
+}
+
+if(r==="user"){
+
+let userPassword=localStorage.getItem("dl_user_password")||"1234";
+
+if(p!==userPassword){
+msg.innerText="Incorrect User password.";
+return;
+}
+
+}
+
+let session={
+username:u,
+role:r,
+loggedIn:true
+};
+
 localStorage.setItem("dl_session",JSON.stringify(session));
 
-if(remember.checked)
+if(document.getElementById("remember").checked)
 localStorage.setItem("dl_remember","true");
 else
 localStorage.removeItem("dl_remember");
 
+msg.innerText="";
+
 openApp();
+
 }
 
 
 function openApp(){
 
-loginScreen.style.display="none";
-app.style.display="block";
+document.getElementById("loginScreen").style.display="none";
+document.getElementById("app").style.display="block";
 
 let s=JSON.parse(localStorage.getItem("dl_session")||"{}");
 
-headerUser.innerText=s.username+" • "+s.role;
+document.getElementById("headerUser").innerText=
+s.username+" • "+s.role;
 
+loadBusinessSettings();
+loadPrintSettings();
 refreshAll();
+
 go("dashboard",false);
+
 }
 
 
@@ -595,23 +790,31 @@ function logout(){
 
 localStorage.removeItem("dl_session");
 
-app.style.display="none";
-loginScreen.style.display="flex";
+document.getElementById("app").style.display="none";
+document.getElementById("loginScreen").style.display="flex";
 
-password.value="";
+document.getElementById("password").value="";
+
+history.replaceState({page:"login"},"","#login");
+
 }
 
 
 function forgotPassword(){
-alert("Contact the Admin to reset the password.");
+
+alert(
+"Forgot Password\n\n"+
+"Contact the Admin to reset the password."
+);
+
 }
 
 
-/* ==========================
-NAVIGATION
-========================== */
+/* =========================================================
+   NAVIGATION
+========================================================= */
 
-function go(page,historyAdd=true){
+function go(page,addHistory=true){
 
 document.querySelectorAll(".page")
 .forEach(x=>x.classList.remove("active"));
@@ -623,63 +826,127 @@ if(target)target.classList.add("active");
 document.querySelectorAll(".side-btn[data-page]")
 .forEach(x=>x.classList.remove("active"));
 
-let active=document.querySelector('.side-btn[data-page="'+page+'"]');
+let active=document.querySelector(
+'.side-btn[data-page="'+page+'"]'
+);
+
 if(active)active.classList.add("active");
 
-if(historyAdd){
-history.pushState({page:page},"","#"+page);
+document.querySelectorAll(".mobile-nav button")
+.forEach(x=>x.classList.remove("active"));
+
+let mobile=document.querySelector(
+'.mobile-nav button[data-mobile="'+page+'"]'
+);
+
+if(mobile)mobile.classList.add("active");
+
+if(addHistory){
+
+history.pushState(
+{page:page},
+"",
+"#"+page
+);
+
 }
 
 refreshAll();
+
 }
 
 
-/* BACK BUTTON */
-history.replaceState({page:"dashboard"},"","#dashboard");
+/* =========================================================
+   BACK BUTTON
+========================================================= */
 
-window.onpopstate=function(e){
+history.replaceState(
+{page:"dashboard"},
+"",
+"#dashboard"
+);
 
-if(!localStorage.getItem("dl_session"))return;
+window.onpopstate=function(event){
 
-if(e.state&&e.state.page)
-go(e.state.page,false);
-else
+if(!localStorage.getItem("dl_session")){
+
+history.pushState(
+{page:"login"},
+"",
+"#login"
+);
+
+return;
+
+}
+
+if(event.state&&event.state.page&&event.state.page!=="login"){
+
+go(event.state.page,false);
+
+}else{
+
 go("dashboard",false);
+
+}
 
 };
 
 
-/* ==========================
-PRODUCTS
-========================== */
+/* =========================================================
+   PRODUCTS
+========================================================= */
 
 function addProduct(){
 
-let name=productName.value.trim();
-let sku=productSKU.value.trim();
-let cost=Number(productCost.value);
-let price=Number(productPrice.value);
-let stock=Number(productStock.value);
+let name=document.getElementById("productName").value.trim();
+let sku=document.getElementById("productSKU").value.trim();
+let cost=Number(document.getElementById("productCost").value);
+let price=Number(document.getElementById("productPrice").value);
+let stock=Number(document.getElementById("productStock").value);
+let low=Number(document.getElementById("productLow").value)||5;
+let image=document.getElementById("productImage").value.trim();
 
-if(!name||!price){
-alert("Enter product name and selling price.");
+if(!name){
+alert("Enter product name.");
+return;
+}
+
+if(price<=0){
+alert("Enter a valid selling price.");
 return;
 }
 
 products.push({
 id:Date.now(),
-name,sku,cost,price,stock
+name,
+sku,
+cost,
+price,
+stock,
+low,
+image
 });
 
 save();
-
-productName.value="";
-productSKU.value="";
-productCost.value="";
-productPrice.value="";
-productStock="";
-
+clearProductForm();
 refreshAll();
+
+alert("Product added successfully.");
+
+}
+
+
+function clearProductForm(){
+
+document.getElementById("productName").value="";
+document.getElementById("productSKU").value="";
+document.getElementById("productCost").value="";
+document.getElementById("productPrice").value="";
+document.getElementById("productStock").value="";
+document.getElementById("productLow").value="5";
+document.getElementById("productImage").value="";
+
 }
 
 
@@ -687,35 +954,146 @@ function deleteProduct(id){
 
 if(!confirm("Delete this product?"))return;
 
-products=products.filter(x=>x.id!==id);
+products=products.filter(p=>p.id!==id);
+
 save();
 refreshAll();
 
 }
 
 
-/* ==========================
-POS
-========================== */
+function renderProducts(){
+
+let tbody=document.getElementById("productsTable");
+
+tbody.innerHTML=products.map(p=>`
+
+<tr>
+
+<td>
+${p.image?
+`<img src="${escapeHTML(p.image)}"
+style="width:45px;height:45px;object-fit:cover;border-radius:8px">`
+:"📦"}
+</td>
+
+<td>${escapeHTML(p.name)}</td>
+<td>${escapeHTML(p.sku||"")}</td>
+<td>${money(p.cost)}</td>
+<td>${money(p.price)}</td>
+<td>
+<span style="color:${p.stock<=(p.low||5)?"#ff5252":"#00e676"}">
+${p.stock}
+</span>
+</td>
+
+<td>
+
+<button class="small-btn"
+onclick="editProduct(${p.id})">
+Edit
+</button>
+
+<button class="small-btn danger"
+onclick="deleteProduct(${p.id})">
+Delete
+</button>
+
+</td>
+
+</tr>
+
+`).join("")||
+"<tr><td colspan='7'>No products yet.</td></tr>";
+
+}
+
+
+function editProduct(id){
+
+let p=products.find(x=>x.id===id);
+
+if(!p)return;
+
+let name=prompt("Product name:",p.name);
+if(name===null)return;
+
+let price=prompt("Selling price:",p.price);
+if(price===null)return;
+
+let stock=prompt("Stock:",p.stock);
+if(stock===null)return;
+
+p.name=name.trim();
+p.price=Number(price);
+p.stock=Number(stock);
+
+save();
+refreshAll();
+
+}
+
+
+/* =========================================================
+   POS
+========================================================= */
 
 function renderPOS(){
 
-let q=(productSearch.value||"").toLowerCase();
+let q=(document.getElementById("productSearch").value||"")
+.toLowerCase();
 
 let list=products.filter(p=>
 p.name.toLowerCase().includes(q)||
 (p.sku||"").toLowerCase().includes(q)
 );
 
-productGrid.innerHTML=list.map(p=>`
-<button class="product-btn" onclick="addToCart(${p.id})">
-<strong>${escapeHTML(p.name)}</strong><br>
-${money(p.price)}<br>
-<small>Stock: ${p.stock}</small>
-</button>
-`).join("")||"<p>No products found.</p>";
+document.getElementById("productGrid").innerHTML=
 
+list.map(p=>`
+
+<button class="product-btn"
+onclick="addToCart(${p.id})">
+
+${p.image?
+`<img src="${escapeHTML(p.image)}"
+style="width:55px;height:55px;object-fit:cover;border-radius:8px;margin-bottom:7px">`
+:"📦"}
+
+<br>
+<strong>${escapeHTML(p.name)}</strong>
+<br>
+${money(p.price)}
+<br>
+<small>Stock: ${p.stock}</small>
+
+</button>
+
+`).join("")||
+"<p>No products found.</p>";
+
+renderCustomerSelect();
 renderCart();
+
+}
+
+
+function renderCustomerSelect(){
+
+let select=document.getElementById("saleCustomerSelect");
+
+let current=select.value;
+
+select.innerHTML=
+`<option value="">Walk-in Customer</option>`+
+customers.map(c=>
+`<option value="${c.id}">
+${escapeHTML(c.name)}
+</option>`
+).join("");
+
+select.value=current;
+
 }
 
 
@@ -724,83 +1102,237 @@ function addToCart(id){
 let p=products.find(x=>x.id===id);
 
 if(!p||p.stock<=0){
+
 alert("Product is out of stock.");
 return;
+
 }
 
 let item=cart.find(x=>x.id===id);
 
 if(item){
+
 if(item.qty>=p.stock){
+
 alert("Not enough stock.");
 return;
+
 }
+
 item.qty++;
+
 }else{
-cart.push({id:p.id,qty:1});
+
+cart.push({
+id:p.id,
+qty:1
+});
+
 }
 
 renderCart();
+
+}
+
+
+function changeQty(id,amount){
+
+let item=cart.find(x=>x.id===id);
+
+let p=products.find(x=>x.id===id);
+
+if(!item||!p)return;
+
+item.qty+=amount;
+
+if(item.qty<=0){
+
+cart=cart.filter(x=>x.id!==id);
+
+}
+
+if(item&&item.qty>p.stock){
+
+item.qty=p.stock;
+
+}
+
+renderCart();
+
+}
+
+
+function removeCart(id){
+
+cart=cart.filter(x=>x.id!==id);
+
+renderCart();
+
+}
+
+
+function calculateCart(){
+
+let subtotal=cart.reduce((sum,i)=>{
+
+let p=products.find(x=>x.id===i.id);
+
+return sum+(p?p.price*i.qty:0);
+
+},0);
+
+let discount=Number(
+document.getElementById("saleDiscount").value
+)||0;
+
+let total=Math.max(0,subtotal-discount);
+
+let paid=Number(
+document.getElementById("amountPaid").value
+)||0;
+
+let due=Math.max(0,total-paid);
+
+return{
+subtotal,
+discount,
+total,
+paid,
+due
+};
+
 }
 
 
 function renderCart(){
 
-cart.innerHTML=cart.map(item=>{
+let box=document.getElementById("cart");
 
-let p=products.find(x=>x.id===item.id);
+box.innerHTML=cart.map(i=>{
 
-return `
-<div class="cart-row">
-<span>${escapeHTML(p.name)} x ${item.qty}</span>
-<strong>${money(p.price*item.qty)}</strong>
-<button class="small-btn danger" onclick="removeCart(${p.id})">×</button>
-</div>`;
-
-}).join("");
-
-let total=cart.reduce((sum,i)=>{
 let p=products.find(x=>x.id===i.id);
-return sum+p.price*i.qty;
-},0);
 
-cartTotal.innerText=money(total);
+if(!p)return"";
+
+return`
+
+<div class="cart-row">
+
+<div style="flex:1">
+<strong>${escapeHTML(p.name)}</strong><br>
+<small>${money(p.price)} × ${i.qty}</small>
+</div>
+
+<div class="qty-controls">
+
+<button class="small-btn"
+onclick="changeQty(${p.id},-1)">−</button>
+
+<strong>${i.qty}</strong>
+
+<button class="small-btn"
+onclick="changeQty(${p.id},1)">+</button>
+
+<button class="small-btn danger"
+onclick="removeCart(${p.id})">×</button>
+
+</div>
+
+</div>
+
+`;
+
+}).join("")||
+"<p style='color:#999;padding:15px 0'>Cart is empty.</p>";
+
+updateTotals();
+
 }
 
 
-function removeCart(id){
-cart=cart.filter(x=>x.id!==id);
-renderCart();
+function updateTotals(){
+
+let t=calculateCart();
+
+document.getElementById("cartSubtotal").innerText=money(t.subtotal);
+document.getElementById("cartDiscount").innerText=money(t.discount);
+document.getElementById("cartTotal").innerText=money(t.total);
+document.getElementById("cartPaid").innerText=money(t.paid);
+document.getElementById("cartDue").innerText=money(t.due);
+
 }
 
 
 function clearCart(){
+
 cart=[];
+
+document.getElementById("saleNote").value="";
+document.getElementById("saleDiscount").value=0;
+document.getElementById("amountPaid").value=0;
+
 renderCart();
+
+}
+
+
+function cancelSale(){
+
+if(cart.length&&!confirm("Cancel current sale?"))
+return;
+
+clearCart();
+
+alert("Current sale cancelled.");
+
 }
 
 
 function completeSale(){
 
 if(!cart.length){
+
 alert("Cart is empty.");
 return;
+
 }
 
-let total=0;
+let t=calculateCart();
+
+if(t.total<=0){
+
+alert("Sale total must be greater than zero.");
+return;
+
+}
+
+let method=document.getElementById("paymentMethod").value;
+
+if(method!=="Credit / Due"&&t.paid<t.total){
+
+alert("Amount paid is less than total. Use Credit / Due if customer owes.");
+return;
+
+}
+
+let customerId=document.getElementById("saleCustomerSelect").value;
+
+let customer=customers.find(c=>String(c.id)===String(customerId));
+
+let customerName=customer?customer.name:"Walk-in Customer";
+
 let profit=0;
 
 let items=cart.map(i=>{
 
 let p=products.find(x=>x.id===i.id);
 
-total+=p.price*i.qty;
 profit+=(p.price-p.cost)*i.qty;
 
-p.stock-=i.qty;
-
 return{
+productId:p.id,
 product:p.name,
+sku:p.sku,
 qty:i.qty,
 price:p.price,
 cost:p.cost
@@ -808,52 +1340,124 @@ cost:p.cost
 
 });
 
+items.forEach(i=>{
+
+let p=products.find(x=>x.id===i.productId);
+
+if(p)p.stock-=i.qty;
+
+});
+
 let sale={
+
 id:Date.now(),
-invoice:"INV-"+Date.now().toString().slice(-6),
-date:new Date().toLocaleString(),
-customer:saleCustomer.value||"Walk-in Customer",
-note:saleNote.value||"",
-items,total,profit
+
+invoice:"INV-"+Date.now().toString().slice(-7),
+
+date:new Date().toISOString(),
+
+customerId:customerId||"",
+
+customer:customerName,
+
+note:document.getElementById("saleNote").value,
+
+items,
+
+subtotal:t.subtotal,
+
+discount:t.discount,
+
+total:t.total,
+
+paid:t.paid,
+
+due:t.due,
+
+payment:method,
+
+profit
+
 };
 
 sales.unshift(sale);
 
-saleCustomer.value="";
-saleNote.value="";
-
-cart=[];
-
 save();
+
+let shouldPrint=
+localStorage.getItem("dl_auto_print")==="true";
+
+clearCart();
+
 refreshAll();
 
-alert("Sale completed successfully.\n\nInvoice: "+sale.invoice+
-"\nTotal: "+money(total));
+alert(
+"Sale completed successfully!\n\n"+
+"Invoice: "+sale.invoice+
+"\nTotal: "+money(sale.total)+
+"\nPaid: "+money(sale.paid)+
+"\nDue: "+money(sale.due)
+);
 
 go("sales");
+
+if(shouldPrint){
+
+setTimeout(()=>printSale(sale.id),300);
+
+}
 
 }
 
 
-/* ==========================
-SALES
-========================== */
+/* =========================================================
+   SALES
+========================================================= */
 
 function renderSales(){
 
-salesTable.innerHTML=sales.map(s=>`
+let q=(document.getElementById("salesSearch").value||"")
+.toLowerCase();
+
+let list=sales.filter(s=>
+s.invoice.toLowerCase().includes(q)||
+(s.customer||"").toLowerCase().includes(q)
+);
+
+document.getElementById("salesTable").innerHTML=
+
+list.map(s=>`
+
 <tr>
-<td>${s.date}</td>
+
+<td>${formatDate(s.date)}</td>
 <td>${s.invoice}</td>
 <td>${escapeHTML(s.customer)}</td>
 <td>${money(s.total)}</td>
+<td>${money(s.paid)}</td>
+<td>${money(s.due)}</td>
 <td>${money(s.profit)}</td>
+
 <td>
-<button class="small-btn" onclick="viewSale(${s.id})">View</button>
-<button class="small-btn danger" onclick="deleteSale(${s.id})">Delete</button>
+
+<button class="small-btn"
+onclick="viewSale(${s.id})">View</button>
+
+<button class="small-btn"
+onclick="printSale(${s.id})">Print</button>
+
+<button class="small-btn"
+onclick="editSale(${s.id})">Edit</button>
+
+<button class="small-btn danger"
+onclick="cancelSavedSale(${s.id})">Cancel</button>
+
 </td>
+
 </tr>
-`).join("")||"<tr><td colspan='6'>No sales yet.</td></tr>";
+
+`).join("")||
+"<tr><td colspan='8'>No sales found.</td></tr>";
 
 }
 
@@ -864,56 +1468,222 @@ let s=sales.find(x=>x.id===id);
 
 if(!s)return;
 
-alert(
+let text=
 "Invoice: "+s.invoice+
+"\nDate: "+formatDate(s.date)+
 "\nCustomer: "+s.customer+
+"\nPayment: "+s.payment+
 "\nTotal: "+money(s.total)+
-"\nProfit: "+money(s.profit)
-);
+"\nPaid: "+money(s.paid)+
+"\nDue: "+money(s.due)+
+"\nProfit: "+money(s.profit);
+
+alert(text);
 
 }
 
 
-function deleteSale(id){
+function editSale(id){
 
-if(!confirm("Delete this sale?"))return;
+let s=sales.find(x=>x.id===id);
 
-sales=sales.filter(x=>x.id!==id);
+if(!s)return;
+
+let paid=prompt("Amount Paid:",s.paid);
+
+if(paid===null)return;
+
+paid=Number(paid);
+
+if(paid<0||paid>s.total){
+
+alert("Invalid paid amount.");
+
+return;
+
+}
+
+s.paid=paid;
+s.due=Math.max(0,s.total-paid);
+
 save();
 refreshAll();
 
+alert("Sale payment updated successfully.");
+
 }
 
 
-/* ==========================
-CUSTOMERS
-========================== */
+function cancelSavedSale(id){
+
+let s=sales.find(x=>x.id===id);
+
+if(!s)return;
+
+if(!confirm(
+"Cancel this sale?\n\n"+
+"Stock will be returned."
+))return;
+
+s.items.forEach(i=>{
+
+let p=products.find(x=>x.id===i.productId);
+
+if(p)p.stock+=i.qty;
+
+});
+
+sales=sales.filter(x=>x.id!==id);
+
+save();
+refreshAll();
+
+alert("Sale cancelled and stock restored.");
+
+}
+
+
+function printSale(id){
+
+let s=sales.find(x=>x.id===id);
+
+if(!s)return;
+
+let settings=getBusinessSettings();
+
+let rows=s.items.map(i=>`
+
+<tr>
+<td>${escapeHTML(i.product)}</td>
+<td>${i.qty}</td>
+<td>${money(i.price)}</td>
+<td>${money(i.price*i.qty)}</td>
+</tr>
+
+`).join("");
+
+let html=`
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>${s.invoice}</title>
+<style>
+body{
+font-family:Arial,sans-serif;
+padding:15px;
+max-width:${settings.size==="A4"?"800px":"380px"};
+margin:auto;
+color:#000
+}
+h2,h3{text-align:center}
+table{width:100%;border-collapse:collapse}
+th,td{padding:6px;border-bottom:1px solid #ccc;text-align:left}
+.right{text-align:right}
+.center{text-align:center}
+</style>
+</head>
+<body>
+
+<h2>${escapeHTML(settings.name)}</h2>
+
+<p class="center">
+${escapeHTML(settings.address)}<br>
+${escapeHTML(settings.phone)}
+</p>
+
+<hr>
+
+<p>
+Invoice: ${s.invoice}<br>
+Date: ${formatDate(s.date)}<br>
+Customer: ${escapeHTML(s.customer)}
+</p>
+
+<table>
+<thead>
+<tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+</thead>
+<tbody>${rows}</tbody>
+</table>
+
+<p class="right">
+Subtotal: ${money(s.subtotal)}<br>
+Discount: ${money(s.discount)}<br>
+<strong>Total: ${money(s.total)}</strong><br>
+Paid: ${money(s.paid)}<br>
+Due: ${money(s.due)}
+</p>
+
+<hr>
+
+<p class="center">${escapeHTML(settings.thank)}</p>
+
+${s.note?`<p>Note: ${escapeHTML(s.note)}</p>`:""}
+
+</body>
+</html>
+`;
+
+let w=window.open("","_blank");
+
+if(!w){
+
+alert("Please allow pop-ups to print receipt.");
+
+return;
+
+}
+
+w.document.write(html);
+w.document.close();
+w.focus();
+w.print();
+
+}
+
+
+/* =========================================================
+   CUSTOMERS
+========================================================= */
 
 function addCustomer(){
 
-let name=customerName.value.trim();
-let phone=customerPhone.value.trim();
+let name=document.getElementById("customerName").value.trim();
+let phone=document.getElementById("customerPhone").value.trim();
+let address=document.getElementById("customerAddress").value.trim();
 
 if(!name){
+
 alert("Enter customer name.");
+
 return;
+
 }
 
 customers.push({
-id:Date.now(),name,phone
+id:Date.now(),
+name,
+phone,
+address
 });
 
-customerName.value="";
-customerPhone.value="";
+document.getElementById("customerName").value="";
+document.getElementById("customerPhone").value="";
+document.getElementById("customerAddress").value="";
 
 save();
 refreshAll();
+
 }
 
 
 function deleteCustomer(id){
 
-customers=customers.filter(x=>x.id!==id);
+if(!confirm("Delete this customer?"))return;
+
+customers=customers.filter(c=>c.id!==id);
+
 save();
 refreshAll();
 
@@ -922,51 +1692,82 @@ refreshAll();
 
 function renderCustomers(){
 
-customersTable.innerHTML=customers.map(c=>`
+document.getElementById("customersTable").innerHTML=
+
+customers.map(c=>{
+
+let count=sales.filter(
+s=>String(s.customerId)===String(c.id)
+).length;
+
+return`
+
 <tr>
+
 <td>${escapeHTML(c.name)}</td>
 <td>${escapeHTML(c.phone)}</td>
+<td>${escapeHTML(c.address)}</td>
+<td>${count}</td>
+
 <td>
-<button class="small-btn danger" onclick="deleteCustomer(${c.id})">Delete</button>
+<button class="small-btn danger"
+onclick="deleteCustomer(${c.id})">
+Delete
+</button>
 </td>
+
 </tr>
-`).join("")||"<tr><td colspan='3'>No customers yet.</td></tr>";
+
+`;
+
+}).join("")||
+"<tr><td colspan='5'>No customers yet.</td></tr>";
 
 }
 
 
-/* ==========================
-EXPENSES
-========================== */
+/* =========================================================
+   EXPENSES
+========================================================= */
 
 function addExpense(){
 
-let name=expenseName.value.trim();
-let amount=Number(expenseAmount.value);
+let name=document.getElementById("expenseName").value.trim();
+let category=document.getElementById("expenseCategory").value.trim();
+let amount=Number(document.getElementById("expenseAmount").value);
 
-if(!name||!amount){
-alert("Enter expense and amount.");
+if(!name||amount<=0){
+
+alert("Enter expense and valid amount.");
+
 return;
+
 }
 
 expenses.unshift({
 id:Date.now(),
-date:new Date().toLocaleString(),
+date:new Date().toISOString(),
 name,
+category,
 amount
 });
 
-expenseName.value="";
-expenseAmount.value="";
+document.getElementById("expenseName").value="";
+document.getElementById("expenseCategory").value="";
+document.getElementById("expenseAmount").value="";
 
 save();
 refreshAll();
+
 }
 
 
 function deleteExpense(id){
 
-expenses=expenses.filter(x=>x.id!==id);
+if(!confirm("Delete this expense?"))return;
+
+expenses=expenses.filter(e=>e.id!==id);
+
 save();
 refreshAll();
 
@@ -975,87 +1776,163 @@ refreshAll();
 
 function renderExpenses(){
 
-expensesTable.innerHTML=expenses.map(e=>`
+document.getElementById("expensesTable").innerHTML=
+
+expenses.map(e=>`
+
 <tr>
-<td>${e.date}</td>
+<td>${formatDate(e.date)}</td>
 <td>${escapeHTML(e.name)}</td>
+<td>${escapeHTML(e.category)}</td>
 <td>${money(e.amount)}</td>
 <td>
-<button class="small-btn danger" onclick="deleteExpense(${e.id})">Delete</button>
+<button class="small-btn danger"
+onclick="deleteExpense(${e.id})">
+Delete
+</button>
 </td>
 </tr>
-`).join("")||"<tr><td colspan='4'>No expenses yet.</td></tr>";
+
+`).join("")||
+"<tr><td colspan='5'>No expenses yet.</td></tr>";
 
 }
 
 
-/* ==========================
-DASHBOARD
-========================== */
+/* =========================================================
+   DASHBOARD
+========================================================= */
 
 function refreshDashboard(){
 
-let total=sales.reduce((a,b)=>a+b.total,0);
-let profit=sales.reduce((a,b)=>a+b.profit,0);
-let low=products.filter(p=>p.stock<=5).length;
+let total=sales.reduce((a,s)=>a+s.total,0);
+let profit=sales.reduce((a,s)=>a+s.profit,0);
+let due=sales.reduce((a,s)=>a+s.due,0);
+let exp=expenses.reduce((a,e)=>a+e.amount,0);
 
-dashSales.innerText=money(total);
-dashProfit.innerText=money(profit);
-dashProducts.innerText=products.length;
-dashLow.innerText=low;
+let low=products.filter(
+p=>p.stock<=(p.low||5)
+).length;
 
-reportSales.innerText=money(total);
-reportProfit.innerText=money(profit);
-reportExpenses.innerText=
-money(expenses.reduce((a,b)=>a+b.amount,0));
-reportCustomers.innerText=customers.length;
+document.getElementById("dashSales").innerText=money(total);
+document.getElementById("dashProfit").innerText=money(profit-exp);
+document.getElementById("dashProducts").innerText=products.length;
+document.getElementById("dashLow").innerText=low;
+document.getElementById("dashDue").innerText=money(due);
+document.getElementById("dashExpenses").innerText=money(exp);
+document.getElementById("dashCustomers").innerText=customers.length;
+document.getElementById("dashTransactions").innerText=sales.length;
+
+document.getElementById("reportSales").innerText=money(total);
+document.getElementById("reportProfit").innerText=money(profit-exp);
+document.getElementById("reportExpenses").innerText=money(exp);
+document.getElementById("reportDue").innerText=money(due);
+
+document.getElementById("recentSales").innerHTML=
+
+sales.slice(0,8).map(s=>`
+
+<tr>
+<td>${formatDate(s.date)}</td>
+<td>${s.invoice}</td>
+<td>${escapeHTML(s.customer)}</td>
+<td>${money(s.total)}</td>
+<td>${money(s.paid)}</td>
+<td>${money(s.due)}</td>
+</tr>
+
+`).join("")||
+"<tr><td colspan='6'>No sales yet.</td></tr>";
+
+renderStockReport();
+drawChart();
 
 }
 
 
-/* ==========================
-CHART
-========================== */
+function renderStockReport(){
+
+document.getElementById("stockReport").innerHTML=
+
+products.map(p=>{
+
+let low=p.stock<=(p.low||5);
+
+return`
+
+<tr>
+<td>${escapeHTML(p.name)}</td>
+<td>${p.stock}</td>
+<td style="color:${low?"#ff5252":"#00e676"}">
+${low?"LOW STOCK":"OK"}
+</td>
+</tr>
+
+`;
+
+}).join("")||
+"<tr><td colspan='3'>No products.</td></tr>";
+
+}
+
+
+/* =========================================================
+   SALES CHART
+========================================================= */
 
 function drawChart(){
 
-let c=document.getElementById("salesChart");
-if(!c)return;
+let canvas=document.getElementById("salesChart");
 
-let ctx=c.getContext("2d");
+if(!canvas)return;
 
-ctx.clearRect(0,0,c.width,c.height);
+let ctx=canvas.getContext("2d");
 
-let w=c.width;
-let h=c.height;
+let w=canvas.width;
+let h=canvas.height;
+
+ctx.clearRect(0,0,w,h);
 
 let values=[];
 
-for(let i=6;i>=0;i--){
+for(let i=29;i>=0;i--){
 
 let d=new Date();
+
+d.setHours(0,0,0,0);
 d.setDate(d.getDate()-i);
 
-let key=d.toLocaleDateString();
+let next=new Date(d);
+next.setDate(next.getDate()+1);
 
 let total=sales
-.filter(s=>new Date(s.date).toLocaleDateString()===key)
-.reduce((a,b)=>a+b.total,0);
+.filter(s=>{
+
+let date=new Date(s.date);
+
+return date>=d&&date<next;
+
+})
+.reduce((a,s)=>a+s.total,0);
 
 values.push(total);
+
 }
 
 let max=Math.max(...values,1);
 
-ctx.strokeStyle="#00e676";
+ctx.strokeStyle=getComputedStyle(
+document.documentElement
+).getPropertyValue("--accent")||"#00e676";
+
 ctx.lineWidth=3;
 
 ctx.beginPath();
 
 values.forEach((v,i)=>{
 
-let x=20+i*((w-40)/6);
-let y=h-25-(v/max)*(h-50);
+let x=20+i*((w-40)/29);
+let y=h-30-(v/max)*(h-60);
 
 if(i===0)ctx.moveTo(x,y);
 else ctx.lineTo(x,y);
@@ -1065,16 +1942,16 @@ else ctx.lineTo(x,y);
 ctx.stroke();
 
 ctx.fillStyle="#9ca8b8";
-ctx.font="11px Arial";
+ctx.font="10px Arial";
 
-values.forEach((v,i)=>{
+[0,7,14,21,29].forEach(i=>{
 
-let x=20+i*((w-40)/6);
+let x=20+i*((w-40)/29);
 
 ctx.fillText(
-"₦"+Math.round(v),
-x-15,
-h-7
+"Day "+(i+1),
+x-12,
+h-8
 );
 
 });
@@ -1082,59 +1959,201 @@ h-7
 }
 
 
-/* ==========================
-SETTINGS
-========================== */
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+function setTheme(headerColor){
+
+document.documentElement
+.style.setProperty("--header",headerColor);
+
+localStorage.setItem(
+"dl_theme",
+headerColor
+);
+
+}
+
+
+function getBusinessSettings(){
+
+return{
+
+name:localStorage.getItem("dl_business_name")||
+"Dlimans Supermarket",
+
+address:localStorage.getItem("dl_business_address")||
+"",
+
+phone:localStorage.getItem("dl_business_phone")||
+"",
+
+thank:localStorage.getItem("dl_thank")||
+"Thank you for shopping with us!",
+
+size:localStorage.getItem("dl_receipt_size")||
+"58mm"
+
+};
+
+}
+
+
+function loadBusinessSettings(){
+
+let s=getBusinessSettings();
+
+document.getElementById("businessName").value=s.name;
+document.getElementById("businessAddress").value=s.address;
+document.getElementById("businessPhone").value=s.phone;
+document.getElementById("thankMessage").value=s.thank;
+document.getElementById("receiptSize").value=s.size;
+
+}
+
+
+function saveBusinessSettings(){
+
+localStorage.setItem(
+"dl_business_name",
+document.getElementById("businessName").value
+);
+
+localStorage.setItem(
+"dl_business_address",
+document.getElementById("businessAddress").value
+);
+
+localStorage.setItem(
+"dl_business_phone",
+document.getElementById("businessPhone").value
+);
+
+localStorage.setItem(
+"dl_thank",
+document.getElementById("thankMessage").value
+);
+
+alert("Business settings saved.");
+
+}
+
+
+function loadPrintSettings(){
+
+document.getElementById("autoPrint").checked=
+localStorage.getItem("dl_auto_print")==="true";
+
+}
+
+
+function savePrintSettings(){
+
+localStorage.setItem(
+"dl_receipt_size",
+document.getElementById("receiptSize").value
+);
+
+localStorage.setItem(
+"dl_auto_print",
+document.getElementById("autoPrint").checked
+);
+
+alert("Print settings saved.");
+
+}
+
+
+function testPrint(){
+
+let s=getBusinessSettings();
+
+let w=window.open("","_blank");
+
+if(!w){
+
+alert("Please allow pop-ups.");
+
+return;
+
+}
+
+w.document.write(`
+<html>
+<body style="font-family:Arial;text-align:center;padding:20px">
+<h2>${escapeHTML(s.name)}</h2>
+<p>TEST RECEIPT</p>
+<hr>
+<p>Printer test successful.</p>
+<p>${escapeHTML(s.thank)}</p>
+</body>
+</html>
+`);
+
+w.document.close();
+w.print();
+
+}
+
 
 function changePassword(){
 
-let s=JSON.parse(
+let session=JSON.parse(
 localStorage.getItem("dl_session")||"{}"
 );
 
-if(s.role!=="admin"){
+if(session.role!=="admin"){
+
 alert("Only Admin can change password.");
+
 return;
+
 }
 
-let p=newAdminPassword.value;
+let p=document.getElementById("newAdminPassword").value;
 
 if(p.length<4){
+
 alert("Password must contain at least 4 characters.");
+
 return;
+
 }
 
 localStorage.setItem(
-"dl_admin_password",p
+"dl_admin_password",
+p
 );
 
-newAdminPassword.value="";
+document.getElementById("newAdminPassword").value="";
 
 alert("Admin password changed successfully.");
 
 }
 
 
-function theme(color){
-
-document.body.style.background=color;
-
-localStorage.setItem(
-"dl_theme",color
-);
-
-}
-
+/* =========================================================
+   BACKUP
+========================================================= */
 
 function backup(){
 
 let data={
+
+version:"Dlimans POS Complete",
+
+date:new Date().toISOString(),
+
 products,
 sales,
 customers,
 expenses,
+
 adminPassword:adminPassword(),
-date:new Date().toISOString()
+
+settings:getBusinessSettings()
+
 };
 
 let blob=new Blob(
@@ -1142,20 +2161,22 @@ let blob=new Blob(
 {type:"application/json"}
 );
 
+let url=URL.createObjectURL(blob);
+
 let a=document.createElement("a");
 
-a.href=URL.createObjectURL(blob);
+a.href=url;
 a.download="Dlimans_POS_Backup.json";
 a.click();
 
-URL.revokeObjectURL(a.href);
+URL.revokeObjectURL(url);
 
 }
 
 
-function restoreBackup(e){
+function restoreBackup(event){
 
-let file=e.target.files[0];
+let file=event.target.files[0];
 
 if(!file)return;
 
@@ -1167,23 +2188,60 @@ try{
 
 let data=JSON.parse(reader.result);
 
+if(!confirm(
+"This will replace current POS data. Continue?"
+))return;
+
 products=data.products||[];
 sales=data.sales||[];
 customers=data.customers||[];
 expenses=data.expenses||[];
 
-if(data.adminPassword)
+if(data.adminPassword){
+
 localStorage.setItem(
 "dl_admin_password",
 data.adminPassword
 );
 
+}
+
+if(data.settings){
+
+localStorage.setItem(
+"dl_business_name",
+data.settings.name||"Dlimans Supermarket"
+);
+
+localStorage.setItem(
+"dl_business_address",
+data.settings.address||""
+);
+
+localStorage.setItem(
+"dl_business_phone",
+data.settings.phone||""
+);
+
+localStorage.setItem(
+"dl_thank",
+data.settings.thank||"Thank you for shopping with us!"
+);
+
+localStorage.setItem(
+"dl_receipt_size",
+data.settings.size||"58mm"
+);
+
+}
+
 save();
+loadBusinessSettings();
 refreshAll();
 
 alert("Backup restored successfully.");
 
-}catch(err){
+}catch(error){
 
 alert("Invalid backup file.");
 
@@ -1196,9 +2254,9 @@ reader.readAsText(file);
 }
 
 
-/* ==========================
-SAVE
-========================== */
+/* =========================================================
+   STORAGE
+========================================================= */
 
 function save(){
 
@@ -1225,48 +2283,36 @@ JSON.stringify(expenses)
 }
 
 
-/* ==========================
-REFRESH
-========================== */
+/* =========================================================
+   REFRESH ALL
+========================================================= */
 
 function refreshAll(){
 
-renderPOS();
 renderProducts();
+renderPOS();
 renderSales();
 renderCustomers();
 renderExpenses();
 refreshDashboard();
-drawChart();
 
 }
 
 
-function renderProducts(){
+/* =========================================================
+   UTILITIES
+========================================================= */
 
-productsTable.innerHTML=products.map(p=>`
-<tr>
-<td>${escapeHTML(p.name)}</td>
-<td>${escapeHTML(p.sku||"")}</td>
-<td>${money(p.cost)}</td>
-<td>${money(p.price)}</td>
-<td>${p.stock}</td>
-<td>
-<button class="small-btn danger" onclick="deleteProduct(${p.id})">Delete</button>
-</td>
-</tr>
-`).join("")||"<tr><td colspan='6'>No products yet.</td></tr>";
+function formatDate(value){
+
+return new Date(value).toLocaleString("en-NG");
 
 }
 
 
-/* ==========================
-SECURITY
-========================== */
+function escapeHTML(value){
 
-function escapeHTML(str){
-
-return String(str||"")
+return String(value??"")
 .replaceAll("&","&amp;")
 .replaceAll("<","&lt;")
 .replaceAll(">","&gt;")
@@ -1276,34 +2322,42 @@ return String(str||"")
 }
 
 
-/* ==========================
-AUTO LOGIN
-========================== */
+/* =========================================================
+   AUTO LOGIN
+========================================================= */
 
-window.addEventListener("load",()=>{
+window.addEventListener("load",function(){
 
-let themeColor=
-localStorage.getItem("dl_theme");
+let savedTheme=localStorage.getItem("dl_theme");
 
-if(themeColor)
-document.body.style.background=themeColor;
+if(savedTheme){
 
-let session=
-localStorage.getItem("dl_session");
+document.documentElement
+.style.setProperty("--header",savedTheme);
 
-let remember=
-localStorage.getItem("dl_remember");
+}
 
-if(session&&remember==="true")
+let session=localStorage.getItem("dl_session");
+let remember=localStorage.getItem("dl_remember");
+
+if(session&&remember==="true"){
+
 openApp();
 
+}
+
 });
 
 
-/* ENTER LOGIN */
-password.addEventListener("keydown",e=>{
+/* ENTER TO LOGIN */
+
+document.getElementById("password")
+.addEventListener("keydown",function(e){
+
 if(e.key==="Enter")login();
+
 });
+
 
 </script>
 

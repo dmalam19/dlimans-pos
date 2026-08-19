@@ -73,12 +73,6 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
  overflow-y:auto;background:#091523f5;border-right:1px solid var(--border);padding:10px
 }
 .sidebar.open{transform:translateX(0)!important}
-.sidebar.collapsed{width:78px!important;flex-basis:78px!important;padding:8px 6px!important}
-.sidebar.collapsed .side-label,.sidebar.collapsed .side-group{display:none!important}
-.sidebar.collapsed .side-item{justify-content:center!important;padding:11px 8px!important}
-.sidebar.collapsed .side-icon{width:100%;text-align:center}
-@media(max-width:800px){.sidebar.collapsed{width:285px!important;flex-basis:285px!important;padding:12px!important}.sidebar.collapsed .side-label,.sidebar.collapsed .side-group{display:block!important}.sidebar.collapsed .side-item{justify-content:flex-start!important;padding:11px 12px!important}}
-
 
 .sidebar::-webkit-scrollbar{width:6px}.sidebar::-webkit-scrollbar-thumb{background:#ffffff22;border-radius:8px}
 .side-group{font-size:10px;text-transform:uppercase;color:#64748b;margin:12px 8px 5px}
@@ -116,6 +110,40 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.55}}
 .login-blink{animation:loginPulse 2s infinite}
 @keyframes loginPulse{0%,100%{box-shadow:0 20px 60px #000,0 0 0 0 #00e67633}50%{box-shadow:0 20px 60px #000,0 0 0 8px #00e67622}}
+
+/* =========================================================
+   PURCHASE MANAGEMENT
+========================================================= */
+.purchase-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.purchase-tab{border:1px solid var(--border);background:#ffffff06}
+.purchase-tab.active{background:var(--accent);color:#06130b;border-color:var(--accent)}
+.purchase-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.purchase-table-wrap{max-height:560px;overflow:auto;position:relative}
+.purchase-table{min-width:780px}
+.purchase-table td,.purchase-table th{white-space:nowrap}
+.purchase-actions{display:flex;gap:5px;flex-wrap:wrap;min-width:118px}
+.purchase-table th:last-child,
+.purchase-table td:last-child{
+  position:sticky;
+  right:0;
+  z-index:3;
+  background:var(--panel);
+  box-shadow:-8px 0 14px #0005;
+  min-width:125px;
+}
+.purchase-table th:last-child{z-index:4}
+.purchase-actions .danger{display:inline-flex!important}
+.purchase-detail{margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:#ffffff04}
+@media(max-width:800px){
+ .purchase-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .purchase-nav{position:sticky;top:68px;z-index:8;background:var(--panel);padding:8px;border-radius:12px}
+}
+@media(max-width:520px){
+ .purchase-kpis{grid-template-columns:1fr 1fr}
+ .purchase-tab{flex:1;min-width:105px;font-size:12px;padding:9px 7px}
+ .purchase-table{min-width:780px}
+}
+
 @media(max-width:1050px){
  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
  .quick{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -284,44 +312,6 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
  .side-label{display:block!important;font-size:14px!important;font-weight:700!important}
  .side-group{display:block!important}
 }
-
-/* ADDITIVE CUSTOMIZATION PACK — preserves existing POS styles/functionality */
-.blink.blink-pulse{animation:dlPulse 1.2s infinite}.blink.blink-bounce{animation:dlBounce 1s infinite}.blink.blink-spin{animation:dlSpin 1.5s linear infinite}.blink.blink-glow{animation:dlGlow 1.1s ease-in-out infinite}.blink.blink-none{animation:none!important}
-@keyframes dlPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.72}}
-@keyframes dlBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-@keyframes dlSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes dlGlow{0%,100%{filter:drop-shadow(0 0 0 transparent)}50%{filter:drop-shadow(0 0 8px var(--accent))}}
-
-/* SIDEBAR COLOR + LIGHT BLINK — applies to BOTH icons and names */
-.sidebar.sidebar-blinking .side-item .side-icon,
-.sidebar.sidebar-blinking .side-item .side-label{
-  animation:dlSidebarRainbow 1.8s ease-in-out infinite;
-  will-change:color,text-shadow,filter,opacity;
-}
-.sidebar.sidebar-blinking .side-item:nth-of-type(2) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(2) .side-label{animation-delay:-.15s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(3) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(3) .side-label{animation-delay:-.30s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(4) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(4) .side-label{animation-delay:-.45s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(5) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(5) .side-label{animation-delay:-.60s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(6) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(6) .side-label{animation-delay:-.75s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(7) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(7) .side-label{animation-delay:-.90s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(8) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(8) .side-label{animation-delay:-1.05s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(9) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(9) .side-label{animation-delay:-1.20s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(10) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(10) .side-label{animation-delay:-1.35s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(11) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(11) .side-label{animation-delay:-1.50s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(12) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(12) .side-label{animation-delay:-1.65s}
-.sidebar.sidebar-blinking .side-item:nth-of-type(13) .side-icon,.sidebar.sidebar-blinking .side-item:nth-of-type(13) .side-label{animation-delay:-1.80s}
-@keyframes dlSidebarRainbow{
-  0%{color:#00e5ff;text-shadow:0 0 3px #00e5ff,0 0 9px #00e5ff;opacity:1}
-  16%{color:#7c4dff;text-shadow:0 0 3px #7c4dff,0 0 10px #7c4dff;opacity:.92}
-  33%{color:#ff2bd6;text-shadow:0 0 3px #ff2bd6,0 0 10px #ff2bd6;opacity:1}
-  50%{color:#ff1744;text-shadow:0 0 4px #ff1744,0 0 12px #ff1744;opacity:.88}
-  66%{color:#ffea00;text-shadow:0 0 3px #ffea00,0 0 10px #ffea00;opacity:1}
-  83%{color:#00ff88;text-shadow:0 0 3px #00ff88,0 0 11px #00ff88;opacity:.9}
-  100%{color:#00e5ff;text-shadow:0 0 3px #00e5ff,0 0 9px #00e5ff;opacity:1}
-}
-@media(prefers-reduced-motion:reduce){.sidebar.sidebar-blinking .side-item .side-icon,.sidebar.sidebar-blinking .side-item .side-label{animation:none!important}}
-.custom-logo-preview{max-width:110px;max-height:70px;object-fit:contain;border-radius:10px;border:1px solid var(--border);padding:5px;background:#fff}
-.receipt-preview-box{background:#fff;color:#111;border-radius:10px;padding:14px;max-width:360px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -447,11 +437,6 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
               <input id="paidAmount" type="number" min="0" placeholder="Amount paid">
               <select id="dueMode"><option value="auto">Auto Due</option><option value="full">Full Payment</option></select>
             </div>
-            <div class="grid grid2" style="margin-top:8px">
-              <select id="discountType" onchange="renderCart()"><option value="none">No Discount</option><option value="percent">Discount %</option><option value="fixed">Discount Amount</option></select>
-              <input id="discountValue" type="number" min="0" step="0.01" placeholder="Discount" oninput="renderCart()">
-            </div>
-            <div class="small" id="cartSummary" style="margin-top:8px"></div>
             <div class="total-box" id="cartTotal">₦0</div>
             <button class="btn primary" style="width:100%;padding:14px" onclick="confirmSale()">✓ CONFIRM SALE</button>
           </div>
@@ -473,9 +458,53 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
       </section>
 
       <section class="view" id="view-purchases">
-        <div class="section-title"><h2>Purchases</h2><button class="btn primary" onclick="openPurchase()">＋ Add Purchase</button></div>
-        <div class="cards" style="margin-bottom:12px"><div class="card"><div class="small">TOTAL PURCHASE</div><div class="kpi" id="purchaseTotal">₦0</div></div><div class="card"><div class="small">PURCHASE DUE</div><div class="kpi" id="purchaseDue">₦0</div></div></div>
-        <div class="card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Supplier</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th></tr></thead><tbody id="purchaseTable"></tbody></table></div></div>
+        <div class="section-title">
+          <div>
+            <h2>Purchase Management</h2>
+            <div class="small">List Purchase • Add Purchase • Edit Purchase • Delete Purchase • Total Purchase • Purchase Due</div>
+          </div>
+          <button class="btn primary" onclick="openPurchase()">＋ Add Purchase</button>
+        </div>
+
+        <div class="purchase-nav card">
+          <button class="btn purchase-tab active" onclick="purchaseTab('list',this)">📋 List Purchase</button>
+          <button class="btn purchase-tab" onclick="purchaseTab('add',this)">➕ Add Purchase</button>
+          <button class="btn purchase-tab" onclick="purchaseTab('total',this)">💰 Total Purchase</button>
+        </div>
+
+        <div id="purchaseTabList">
+          <div class="cards purchase-kpis" style="margin-bottom:12px">
+            <div class="card dash-kpi"><div class="label">TOTAL PURCHASE</div><div class="kpi" id="purchaseTotal">₦0</div><div class="sub">All purchases</div></div>
+            <div class="card dash-kpi"><div class="label">PURCHASE PAID</div><div class="kpi" id="purchasePaid">₦0</div><div class="sub">Amount paid</div></div>
+            <div class="card dash-kpi"><div class="label">PURCHASE DUE</div><div class="kpi" id="purchaseDue">₦0</div><div class="sub">Supplier balance</div></div>
+            <div class="card dash-kpi"><div class="label">PURCHASE COUNT</div><div class="kpi" id="purchaseCount">0</div><div class="sub">Recorded purchases</div></div>
+          </div>
+
+          <div class="card">
+            <div class="panel-head">
+              <h3>LIST PURCHASE</h3>
+              <button class="btn sm" onclick="openPurchase()">＋ New Purchase</button>
+            </div>
+            <div class="table-wrap purchase-table-wrap">
+              <table class="purchase-table">
+                <thead><tr><th>Date</th><th>Supplier</th><th>Items</th><th>Payment</th><th>Total</th><th>Paid</th><th>Due</th><th>Action</th></tr></thead>
+                <tbody id="purchaseTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="purchaseTabTotal" class="hidden">
+          <div class="cards purchase-kpis">
+            <div class="card"><div class="small">TOTAL PURCHASE</div><div class="kpi" id="purchaseTotalBig">₦0</div></div>
+            <div class="card"><div class="small">TOTAL PAID</div><div class="kpi" id="purchasePaidBig">₦0</div></div>
+            <div class="card"><div class="small">TOTAL DUE</div><div class="kpi" id="purchaseDueBig">₦0</div></div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <h3>Purchase Summary</h3>
+            <div id="purchaseSummaryBox" class="small" style="margin-top:10px">No purchases recorded.</div>
+          </div>
+        </div>
       </section>
 
       <section class="view" id="view-sales">
@@ -486,6 +515,18 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
       <section class="view" id="view-customers">
         <div class="section-title"><h2>Customers</h2><button class="btn primary" onclick="openCustomer()">＋ Add Customer</button></div>
         <div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Due</th><th>Action</th></tr></thead><tbody id="customersTable"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="view-contacts">
+        <div class="section-title"><div><h2>Contacts</h2><div class="small">Business contact and address information</div></div><button class="btn primary" onclick="openContact()">＋ Add Contact</button></div>
+        <div class="card">
+          <div class="grid grid2">
+            <div><label class="small">Business / Contact Name</label><input id="contactBusiness" readonly></div>
+            <div><label class="small">Phone / Contact</label><input id="contactPhone" readonly></div>
+            <div style="grid-column:1/-1"><label class="small">Address</label><textarea id="contactAddress" readonly></textarea></div>
+          </div>
+          <div class="row" style="margin-top:12px"><button class="btn primary" onclick="editBusinessContact()">✏️ Edit Contact & Address</button><button class="btn" onclick="showView('settings')">⚙️ Business Settings</button></div>
+        </div>
       </section>
 
       <section class="view" id="view-expenses">
@@ -534,42 +575,6 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
             </select>
             <label class="remember"><input id="blinkTheme" type="checkbox" onchange="toggleBlink(this.checked)"> Blinking theme/icons</label>
             <button class="btn" onclick="document.body.classList.toggle('blink')">Toggle universal blink</button>
-          </div>
-          <div class="card">
-            <h3>Custom Background & Colours</h3>
-            <div class="grid grid2">
-              <div><label class="small">Background</label><input id="customBg" type="color"></div>
-              <div><label class="small">Panel</label><input id="customPanel" type="color"></div>
-              <div><label class="small">Panel 2</label><input id="customPanel2" type="color"></div>
-              <div><label class="small">Accent</label><input id="customAccent" type="color"></div>
-            </div>
-            <div class="row wrap" style="margin-top:10px"><button class="btn primary" onclick="saveCustomColours()">Save Colours</button><button class="btn" onclick="resetCustomColours()">Use Theme Colours</button></div>
-          </div>
-          <div class="card">
-            <h3>General UI Customization</h3>
-            <div class="grid grid2">
-              <div><label class="small">Font</label><select id="uiFont" onchange="applyUIFont(this.value)"><option value="system">System</option><option value="arial">Arial</option><option value="poppins">Poppins</option><option value="georgia">Georgia</option></select></div>
-              <div><label class="small">Button shape</label><select id="buttonShape" onchange="applyButtonShape(this.value)"><option value="rounded">Rounded</option><option value="square">Square</option></select></div>
-              <div><label class="small">UI scale</label><select id="uiScale" onchange="applyUIScale(this.value)"><option value="normal">Normal</option><option value="compact">Compact</option><option value="large">Large</option></select></div>
-              <div><label class="small">Date format</label><select id="dateFormat" onchange="saveDateFormat(this.value)"><option value="local">Local</option><option value="en-GB">DD/MM/YYYY</option><option value="en-US">MM/DD/YYYY</option></select></div>
-            </div>
-          </div>
-          <div class="card">
-            <h3>Menu / Sidebar / Icon Style</h3>
-            <div class="grid grid2">
-              <div><label class="small">Icon animation</label><select id="iconAnimation" onchange="applyIconAnimation(this.value)"><option value="none">None</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="spin">Spin</option><option value="glow">Glow</option></select></div>
-              <div><label class="small">Sidebar mode</label><select id="sidebarMode" onchange="applySidebarMode(this.value)"><option value="normal">Normal</option><option value="collapsed">Collapsed</option></select></div>
-            </div>
-            <label class="small">Rename menu items (one per line: key=Name)</label><textarea id="menuNamesInput" placeholder="dashboard=Home
-pos=New Sale
-sales=Sales History"></textarea>
-            <button class="btn primary" style="margin-top:10px" onclick="saveMenuNames()">Save Menu Names</button>
-          </div>
-          <div class="card">
-            <h3>Business Logo</h3>
-            <div class="small">Upload a logo used on login and receipts. Existing business details remain unchanged.</div>
-            <div class="row wrap" style="margin-top:10px"><input id="logoUpload" type="file" accept="image/*" onchange="loadLogoFile(event)"><button class="btn danger" onclick="removeLogo()">Remove Logo</button></div>
-            <div id="logoPreviewWrap" style="margin-top:10px"></div>
           </div>
           <div class="card">
             <h3>Voice Control</h3>
@@ -651,17 +656,7 @@ sales=Sales History"></textarea>
             <label class="remember"><input id="invShowDue" type="checkbox"> Show due amount</label>
             <label class="remember"><input id="invShowPaid" type="checkbox"> Show paid amount</label>
             <label class="remember"><input id="invShowLogo" type="checkbox"> Show business logo/initial</label>
-            <label class="remember"><input id="invShowDiscount" type="checkbox" checked> Show discount on receipt</label>
-            <div style="margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:12px">
-              <div style="font-weight:800;margin-bottom:6px">🖼️ Upload Receipt Logo</div>
-              <div class="small">Choose your business logo here. It will be used on the receipt when “Show business logo/initial” is enabled.</div>
-              <div class="row wrap" style="margin-top:10px;align-items:center">
-                <input id="receiptLogoUpload" type="file" accept="image/*" onchange="loadReceiptLogoFile(event)">
-                <button type="button" class="btn danger" onclick="removeLogo()">Remove Logo</button>
-              </div>
-              <div id="receiptLogoPreview" style="margin-top:10px"></div>
-            </div>
-            <div class="row wrap" style="margin-top:10px"><button class="btn primary" onclick="saveInvoiceSettings()">Save Invoice Settings</button><button class="btn" onclick="previewReceiptEditor()">👁 Receipt Preview</button></div>
+            <button class="btn primary" onclick="saveInvoiceSettings()">Save Invoice Settings</button>
           </div>
         </div>
         <div class="card" style="margin-top:14px">
@@ -709,15 +704,15 @@ const defaultState={
  settings:{
   business:'Dlimans Supermarket',phone:'08063756515',address:'Nigeria',currency:'₦',
   thanks:'Thank you for shopping with Dlimans Supermarket!',theme:'darkblue',blink:true,
-  paper:'58mm',autoPrint:false,iconAnimation:'none',sidebarMode:'normal',customColours:null,logoData:'',uiFont:'system',buttonShape:'rounded',uiScale:'normal',dateFormat:'local',
-  invoice:{prefix:'INV-',nextNumber:1,title:'INVOICE',footer:'Thank you for shopping with Dlimans Supermarket!',showCustomerNote:true,showDue:true,showPaid:true,showLogo:false,showDiscount:true}
+  paper:'58mm',autoPrint:false,
+  invoice:{prefix:'INV-',nextNumber:1,title:'INVOICE',footer:'Thank you for shopping with Dlimans Supermarket!',showCustomerNote:true,showDue:true,showPaid:true,showLogo:false}
  },
  users:[
   {id:'u-admin',username:'admin',password:'admin123',role:'Admin',active:true},
   {id:'u-cashier',username:'cashier',password:'1234',role:'Cashier',active:true}
  ],
  permissions:{
-  cashier:{dashboard:true,pos:true,held:true,products:true,inventory:true,sales:true,customers:true,expenses:false,reports:false,purchases:false,accounting:false,printer:true,returns:true,branches:false,settings:false,users:false,control:false}
+  cashier:{dashboard:true,pos:true,held:true,products:true,inventory:true,sales:true,customers:true,contacts:true,expenses:false,reports:false,purchases:false,accounting:false,printer:true,returns:true,branches:false,settings:false,users:false,control:false}
  },
  products:[
   {id:'p1',name:'Rice 50kg',sku:'RICE50',barcode:'100001',cost:65000,price:78000,stock:20,min:3,image:''},
@@ -765,37 +760,6 @@ function load(){
  }catch(e){console.error('Dlimans load error',e);return cloneBase()}
 }
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
-
-/* =========================================================
-   APP SESSION / BROWSER NAVIGATION PROTECTION
-   Keep the logged-in app open across refresh and browser Back.
-   This does not store the password.
-========================================================= */
-const SESSION_KEY='DLIMANS_ACTIVE_SESSION_2026';
-function saveActiveSession(user){
- try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({id:user?.id||'',username:user?.username||''}))}catch(e){console.warn('Session save error',e)}
-}
-function clearActiveSession(){
- try{sessionStorage.removeItem(SESSION_KEY)}catch(e){}
-}
-function getActiveSession(){
- try{return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null')}catch(e){return null}
-}
-function lockAppHistory(){
- try{
-  if(!currentUser)return;
-  const stateObj={dlimansPOS:true,view:document.querySelector('.view.active')?.id||'view-dashboard'};
-  history.pushState(stateObj,'',location.href);
- }catch(e){console.warn('History lock error',e)}
-}
-window.addEventListener('popstate',function(){
- try{
-  if(!currentUser)return;
-  const active=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
-  history.pushState({dlimansPOS:true,view:active},'',location.href);
-  toast('You are still inside Dlimans POS');
- }catch(e){console.warn('Back protection error',e)}
-});
 function toast(msg){
  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
  setTimeout(()=>el.classList.remove('show'),2400)
@@ -818,44 +782,21 @@ function login(){
   }
   if(!found){toast('Invalid username or password');return false}
   currentUser=found;
-  saveActiveSession(found);
   if(document.getElementById('rememberMe')?.checked)localStorage.setItem('DLIMANS_REMEMBER',u);else localStorage.removeItem('DLIMANS_REMEMBER');
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('topRole').textContent=found.role;
   try{buildSidebar()}catch(e){console.error(e)}
   showView('dashboard',true);
-  lockAppHistory();
   return true;
  }catch(e){console.error('Login error',e);toast('Login error — please try again');return false}
 }
-function logout(){
- clearActiveSession();
- currentUser=null;cart=[];
- document.getElementById('app').style.display='none';
- document.getElementById('loginScreen').style.display='flex';
- try{history.replaceState({dlimansLogin:true},'',location.href)}catch(e){}
-}
+function logout(){currentUser=null;cart=[];document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex'}
 (function initLogin(){
  try{
   const remembered=localStorage.getItem('DLIMANS_REMEMBER');if(remembered&&document.getElementById('loginUser'))document.getElementById('loginUser').value=remembered;
   applyTheme(state.settings.theme||'darkblue',false);
   const a=document.getElementById('loginBusiness'),b=document.getElementById('topBusiness');if(a)a.textContent=state.settings.business;if(b)b.textContent=state.settings.business;
-
-  /* Restore the active session after refresh without storing the password. */
-  const active=getActiveSession();
-  if(active?.username){
-   const found=state.users.find(x=>x.username===active.username&&x.active!==false);
-   if(found){
-    currentUser=found;
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.getElementById('topRole').textContent=found.role;
-    try{buildSidebar()}catch(e){console.error(e)}
-    showView('dashboard',true);
-    lockAppHistory();
-   }else clearActiveSession();
-  }
  }catch(e){console.error('Login init error',e)}
 })();
 window.addEventListener('load',()=>{
@@ -875,6 +816,7 @@ const builtInNav=[
  ['returns','🛡️','Sales Check-up','returns'],
  ['purchases','🛍️','Purchases','purchases'],
  ['customers','👥','Customers','customers'],
+ ['contacts','📇','Contacts','contacts'],
  ['expenses','💸','Expenses','expenses'],
  ['reports','📊','Reports','reports'],
  ['accounting','📒','Accounting','accounting'],
@@ -922,13 +864,9 @@ function buildSidebar(){
  side.style.display='block';
  side.style.visibility='visible';
 
- side.classList.toggle('sidebar-blinking',!!state.settings.blink);
  if(state.settings.blink){
   side.querySelectorAll('.side-icon').forEach(x=>x.classList.add('blink'));
- }else{
-  side.querySelectorAll('.side-icon').forEach(x=>x.classList.remove('blink'));
  }
- applyIconAnimation(state.settings.iconAnimation||'pulse',false);
 }
 function showView(name,force=false){
  if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
@@ -969,15 +907,8 @@ function changeQty(id,d){
  if(p&&item.qty>p.stock){item.qty=p.stock;toast('Stock limit reached')}
  renderCart()
 }
-function clearCart(){cart=[];const d=document.getElementById('discountValue');if(d)d.value='';const dt=document.getElementById('discountType');if(dt)dt.value='none';renderCart()}
-function cartSubtotal(){return cart.reduce((s,i)=>s+i.qty*i.price,0)}
-function getDiscount(subtotal){
- const type=document.getElementById('discountType')?.value||'none';
- const raw=Math.max(0,Number(document.getElementById('discountValue')?.value)||0);
- let discount=type==='percent'?subtotal*Math.min(raw,100)/100:type==='fixed'?Math.min(raw,subtotal):0;
- return {type,value:raw,discount:Math.round(discount*100)/100,total:Math.max(0,subtotal-discount)};
-}
-function cartTotal(){return getDiscount(cartSubtotal()).total}
+function clearCart(){cart=[];renderCart()}
+function cartTotal(){return cart.reduce((s,i)=>s+i.qty*i.price,0)}
 function renderCart(){
  document.getElementById('cartList').innerHTML=cart.map(i=>{
   const p=state.products.find(x=>x.id===i.productId);return `<div class="cart-row">
@@ -986,23 +917,20 @@ function renderCart(){
    <button class="btn sm danger" onclick="cart=cart.filter(x=>x.productId!=='${i.productId}');renderCart()">×</button>
   </div>`
  }).join('')||'<div class="muted">Cart is empty</div>';
- const sub=cartSubtotal(),d=getDiscount(sub);
- document.getElementById('cartTotal').textContent=money(d.total);
- const summary=document.getElementById('cartSummary');if(summary)summary.innerHTML=`Subtotal: <b>${money(sub)}</b> • Discount: <b>${money(d.discount)}</b> • Total: <b>${money(d.total)}</b>`;
+ document.getElementById('cartTotal').textContent=money(cartTotal());
 }
 function confirmSale(){
  if(!cart.length){toast('Add a product first');return}
- const calc=getDiscount(cartSubtotal()),total=calc.total,paid=document.getElementById('paidAmount').value===''?total:Number(document.getElementById('paidAmount').value);
+ const total=cartTotal(),paid=document.getElementById('paidAmount').value===''?total:Number(document.getElementById('paidAmount').value);
  if(paid<0||paid>total){toast('Invalid paid amount');return}
  const review=cart.map(i=>{const p=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td>${i.qty}</td><td>${money(i.qty*i.price)}</td></tr>`}).join('');
- const discountLine=calc.discount?`<tr><td colspan="2"><b>Discount</b></td><td><b>-${money(calc.discount)}</b></td></tr>`:'';
- openModal(`<h3>Sales Check-up</h3><p class="small">Review the customer's items before final confirmation. You can still remove an item from the cart.</p><div class="table-wrap"><table><thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${review}${discountLine}</tbody></table></div><div class="small">Subtotal: ${money(calc.subtotal||cartSubtotal())} • Discount: ${money(calc.discount)}</div><div class="total-box">${money(total)}</div><div class="row"><button class="btn primary" onclick="finalizeSale()">✓ Confirm & Sell</button><button class="btn" onclick="closeModal()">Back to Cart</button></div>`);
+ openModal(`<h3>Sales Check-up</h3><p class="small">Review the customer's items before final confirmation. You can still remove an item from the cart.</p><div class="table-wrap"><table><thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${review}</tbody></table></div><div class="total-box">${money(total)}</div><div class="row"><button class="btn primary" onclick="finalizeSale()">✓ Confirm & Sell</button><button class="btn" onclick="closeModal()">Back to Cart</button></div>`);
 }
 function finalizeSale(){
  closeModal();
- const calc=getDiscount(cartSubtotal()),subtotal=cartSubtotal(),total=calc.total,paid=document.getElementById('paidAmount').value===''?total:Number(document.getElementById('paidAmount').value);
+ const total=cartTotal(),paid=document.getElementById('paidAmount').value===''?total:Number(document.getElementById('paidAmount').value);
 
- const sale={id:uid(),invoice:invoiceNumber(),date:today(),customer:document.getElementById('customerName').value.trim()||'Walk-in',note:document.getElementById('customerNote').value.trim(),payment:document.getElementById('paymentMethod').value,items:structuredClone(cart),subtotal,discountType:calc.type,discountValue:calc.value,discount:calc.discount,total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser.username};
+ const sale={id:uid(),invoice:invoiceNumber(),date:today(),customer:document.getElementById('customerName').value.trim()||'Walk-in',note:document.getElementById('customerNote').value.trim(),payment:document.getElementById('paymentMethod').value,items:structuredClone(cart),total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser.username};
  advanceInvoiceNumber();
  state.sales.push(sale);
  sale.items.forEach(i=>{const p=state.products.find(x=>x.id===i.productId);if(p)p.stock-=i.qty});
@@ -1012,13 +940,12 @@ function finalizeSale(){
   c.due=(c.due||0)+sale.due
  }
  save();cart=[];document.getElementById('customerName').value='';document.getElementById('customerNote').value='';document.getElementById('paidAmount').value='';
- document.getElementById('discountValue').value='';document.getElementById('discountType').value='none';
  renderCart();refreshAll();toast('Sale confirmed successfully');
  if(state.settings.autoPrint)receiptPrint(sale);
 }
 function holdSale(){
  if(!cart.length){toast('Cart is empty');return}
- const hc=getDiscount(cartSubtotal());state.held.push({id:uid(),date:today(),customer:document.getElementById('customerName').value||'Walk-in',items:structuredClone(cart),subtotal:cartSubtotal(),discount:hc.discount,discountType:hc.type,discountValue:hc.value,total:hc.total});
+ state.held.push({id:uid(),date:today(),customer:document.getElementById('customerName').value||'Walk-in',items:structuredClone(cart),total:cartTotal()});
  save();clearCart();toast('Sale held');showView('held')
 }
 function openHeld(){
@@ -1151,18 +1078,186 @@ function openCustomer(id=''){const c=state.customers.find(x=>x.id===id)||{name:'
 function saveCustomer(id){const c={id:id||uid(),name:document.getElementById('cName').value.trim(),phone:document.getElementById('cPhone').value.trim(),address:document.getElementById('cAddress').value.trim(),due:Number(document.getElementById('cDue').value)||0};if(!c.name){toast('Name required');return}const i=state.customers.findIndex(x=>x.id===id);if(i>=0)state.customers[i]=c;else state.customers.push(c);save();closeModal();refreshAll()}
 function deleteCustomer(id){if(!adminConfirm('Delete customer?'))return;state.customers=state.customers.filter(x=>x.id!==id);save();refreshAll()}
 
+function renderContacts(){
+ const b=document.getElementById('contactBusiness'),ph=document.getElementById('contactPhone'),ad=document.getElementById('contactAddress');
+ if(b)b.value=state.settings.business||'';
+ if(ph)ph.value=state.settings.phone||'';
+ if(ad)ad.value=state.settings.address||'';
+}
+function openContact(){
+ if(!isAdmin()){toast('Admin only');return}
+ openModal(`<h3>Add / Edit Contact</h3><div class="grid grid2"><div><label class="small">Business / Contact Name</label><input id="ctBusiness" value="${escapeHTML(state.settings.business||'')}"></div><div><label class="small">Phone / Contact</label><input id="ctPhone" value="${escapeHTML(state.settings.phone||'')}"></div><div style="grid-column:1/-1"><label class="small">Address</label><textarea id="ctAddress">${escapeHTML(state.settings.address||'')}</textarea></div></div><div class="row" style="margin-top:12px"><button class="btn primary" onclick="saveContact()">Save Contact</button><button class="btn" onclick="closeModal()">Cancel</button></div>`);
+}
+function editBusinessContact(){openContact()}
+function saveContact(){
+ state.settings.business=document.getElementById('ctBusiness').value.trim()||state.settings.business;
+ state.settings.phone=document.getElementById('ctPhone').value.trim();
+ state.settings.address=document.getElementById('ctAddress').value.trim();
+ save();closeModal();refreshAll();toast('Contact and address saved');
+}
+
 function renderExpenses(){document.getElementById('expenseTable').innerHTML=state.expenses.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${escapeHTML(e.title)}</td><td>${money(e.amount)}</td><td>${escapeHTML(e.note)}</td><td><button class="btn sm danger" onclick="deleteExpense('${e.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No expenses</td></tr>'}
 function openExpense(){openModal(`<h3>Add Expense</h3><input id="eTitle" placeholder="Title"><input id="eAmount" type="number" placeholder="Amount" style="margin-top:8px"><textarea id="eNote" placeholder="Note" style="margin-top:8px"></textarea><div class="row" style="margin-top:12px"><button class="btn primary" onclick="saveExpense()">Save</button><button class="btn" onclick="closeModal()">Cancel</button></div>`)}
 function saveExpense(){const e={id:uid(),date:today(),title:document.getElementById('eTitle').value.trim(),amount:Number(document.getElementById('eAmount').value)||0,note:document.getElementById('eNote').value};if(!e.title||!e.amount){toast('Title and amount required');return}state.expenses.push(e);save();closeModal();refreshAll()}
 function deleteExpense(id){if(!adminConfirm('Delete expense?'))return;state.expenses=state.expenses.filter(x=>x.id!==id);save();refreshAll()}
 
-function renderPurchases(){
- const total=state.purchases.reduce((a,x)=>a+x.total,0),due=state.purchases.reduce((a,x)=>a+x.due,0);
- document.getElementById('purchaseTotal').textContent=money(total);document.getElementById('purchaseDue').textContent=money(due);
- document.getElementById('purchaseTable').innerHTML=state.purchases.slice().reverse().map(p=>`<tr><td>${fmtDate(p.date)}</td><td>${escapeHTML(p.supplier)}</td><td>${p.items}</td><td>${money(p.total)}</td><td>${money(p.paid)}</td><td>${money(p.due)}</td></tr>`).join('')||'<tr><td colspan="6">No purchases</td></tr>'
+function purchaseTab(tab,btn){
+  document.querySelectorAll('.purchase-tab').forEach(x=>x.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const list=document.getElementById('purchaseTabList');
+  const total=document.getElementById('purchaseTabTotal');
+  if(tab==='add'){ openPurchase(); return; }
+  if(list)list.classList.toggle('hidden',tab!=='list');
+  if(total)total.classList.toggle('hidden',tab!=='total');
+  renderPurchases();
 }
-function openPurchase(){openModal(`<h3>Add Purchase</h3><div class="grid grid2"><input id="purSupplier" placeholder="Supplier"><input id="purItems" type="number" placeholder="Number of items"><input id="purTotal" type="number" placeholder="Total"><input id="purPaid" type="number" placeholder="Paid"></div><div class="row" style="margin-top:12px"><button class="btn primary" onclick="savePurchase()">Save</button><button class="btn" onclick="closeModal()">Cancel</button></div>`)}
-function savePurchase(){const total=Number(document.getElementById('purTotal').value)||0,paid=Math.min(total,Number(document.getElementById('purPaid').value)||0);state.purchases.push({id:uid(),date:today(),supplier:document.getElementById('purSupplier').value,items:Number(document.getElementById('purItems').value)||0,total,paid,due:total-paid});save();closeModal();refreshAll()}
+function purchaseDetailsHTML(p){
+  const details=(p.itemsDetail||[]).map(i=>{
+    const prod=state.products.find(x=>x.id===i.productId);
+    return `${escapeHTML(prod?.name||'Unknown')} × ${Number(i.qty)||0} @ ${money(i.cost||0)}`;
+  }).join('<br>')||'No item details';
+  return `<div class="purchase-detail"><b>Items:</b><br>${details}${p.note?`<br><b>Note:</b> ${escapeHTML(p.note)}`:''}</div>`;
+}
+function renderPurchases(){
+ const total=state.purchases.reduce((a,x)=>a+(Number(x.total)||0),0);
+ const paid=state.purchases.reduce((a,x)=>a+(Number(x.paid)||0),0);
+ const due=state.purchases.reduce((a,x)=>a+(Number(x.due)||0),0);
+ const count=state.purchases.length;
+ ['purchaseTotal','purchaseTotalBig'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=money(total)});
+ ['purchasePaid','purchasePaidBig'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=money(paid)});
+ ['purchaseDue','purchaseDueBig'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=money(due)});
+ const ce=document.getElementById('purchaseCount');if(ce)ce.textContent=count;
+
+ const table=document.getElementById('purchaseTable');
+ if(table){
+   table.innerHTML=state.purchases.slice().reverse().map(p=>{
+     const itemCount=p.itemsDetail?.reduce((a,i)=>a+(Number(i.qty)||0),0) ?? (Number(p.items)||0);
+     return `<tr>
+       <td>${fmtDate(p.date)}</td>
+       <td>${escapeHTML(p.supplier||'')}</td>
+       <td>${itemCount}</td>
+       <td>${escapeHTML(p.payment||'Cash')}</td>
+       <td>${money(p.total||0)}</td>
+       <td>${money(p.paid||0)}</td>
+       <td>${money(p.due||0)}</td>
+       <td><div class="purchase-actions">
+         <button class="btn sm" onclick="viewPurchase('${p.id}')">View</button>
+         <button class="btn sm" onclick="editPurchase('${p.id}')">Edit</button>
+         <button class="btn sm danger" onclick="deletePurchase('${p.id}')">🗑 Delete</button>
+       </div></td>
+     </tr>`;
+   }).join('')||'<tr><td colspan="8">No purchases recorded.</td></tr>';
+ }
+ const summary=document.getElementById('purchaseSummaryBox');
+ if(summary){
+   summary.innerHTML=count
+    ? `<b>${count}</b> purchase(s) recorded.<br>Total Purchase: <b>${money(total)}</b><br>Total Paid: <b>${money(paid)}</b><br>Total Due: <b>${money(due)}</b>`
+    : 'No purchases recorded.';
+ }
+}
+function viewPurchase(id){
+ const p=state.purchases.find(x=>x.id===id);if(!p)return;
+ const details=(p.itemsDetail||[]).map(i=>{
+   const prod=state.products.find(x=>x.id===i.productId);
+   return `<tr><td>${escapeHTML(prod?.name||'Unknown')}</td><td>${Number(i.qty)||0}</td><td>${money(i.cost||0)}</td><td>${money((Number(i.qty)||0)*(Number(i.cost)||0))}</td></tr>`;
+ }).join('')||'<tr><td colspan="4">No item details</td></tr>';
+ openModal(`<h3>Purchase Details</h3>
+   <div class="small" style="margin:6px 0 12px">Supplier: <b>${escapeHTML(p.supplier||'')}</b> • ${fmtDate(p.date)}</div>
+   <div class="table-wrap"><table><thead><tr><th>Product</th><th>Qty</th><th>Cost</th><th>Total</th></tr></thead><tbody>${details}</tbody></table></div>
+   <div class="card" style="margin-top:12px"><b>Total:</b> ${money(p.total||0)}<br><b>Paid:</b> ${money(p.paid||0)}<br><b>Due:</b> ${money(p.due||0)}<br><b>Payment:</b> ${escapeHTML(p.payment||'Cash')}</div>
+   ${p.note?`<div class="small" style="margin-top:10px"><b>Note:</b> ${escapeHTML(p.note)}</div>`:''}
+   <div class="row" style="margin-top:12px"><button class="btn" onclick="closeModal()">Close</button><button class="btn primary" onclick="closeModal();editPurchase('${p.id}')">Edit Purchase</button></div>`);
+}
+function editPurchase(id){
+ if(!isAdmin()){toast('Admin only');return}
+ const p=state.purchases.find(x=>x.id===id);if(!p)return;
+ const rows=(p.itemsDetail||[]).map(x=>purchaseRowHTML(x)).join('');
+ openModal(`<h3>Edit Purchase</h3>
+  <div class="grid grid2">
+   <input id="purSupplier" placeholder="Supplier" value="${escapeHTML(p.supplier||'')}">
+   <select id="purPayment"><option ${p.payment==='Cash'?'selected':''}>Cash</option><option ${p.payment==='Card'?'selected':''}>Card</option><option ${p.payment==='POS'?'selected':''}>POS</option><option ${p.payment==='Transfer'?'selected':''}>Transfer</option><option ${p.payment==='Credit'?'selected':''}>Credit</option></select>
+  </div>
+  <div style="margin-top:12px"><div class="row" style="justify-content:space-between"><h4>Purchase Items</h4><button class="btn sm" type="button" onclick="document.getElementById('purchaseItemsBox').insertAdjacentHTML('beforeend',purchaseRowHTML());updatePurchaseTotal()">＋ Add Item</button></div>
+   <div id="purchaseItemsBox">${rows||purchaseRowHTML()}</div>
+  </div>
+  <div class="grid grid2" style="margin-top:12px"><input id="purTotal" type="number" readonly><input id="purPaid" type="number" min="0" value="${Number(p.paid)||0}" placeholder="Paid" oninput="updatePurchaseTotal()"></div>
+  <div id="purSummary" class="small" style="margin-top:6px"></div>
+  <textarea id="purNote" placeholder="Purchase note" style="margin-top:10px">${escapeHTML(p.note||'')}</textarea>
+  <div class="row" style="margin-top:12px"><button class="btn primary" onclick="saveEditedPurchase('${p.id}')">Save Changes</button><button class="btn" onclick="closeModal()">Cancel</button></div>`);
+ updatePurchaseTotal();
+}
+function saveEditedPurchase(id){
+ if(!isAdmin()){toast('Admin only');return}
+ const old=state.purchases.find(x=>x.id===id);if(!old)return;
+ const supplier=(document.getElementById('purSupplier')?.value||'').trim();
+ const payment=document.getElementById('purPayment')?.value||'Cash';
+ const rows=[...document.querySelectorAll('.purchase-item')];
+ const itemsDetail=rows.map(r=>({productId:r.querySelector('.purProduct')?.value||'',qty:Number(r.querySelector('.purQty')?.value)||0,cost:Number(r.querySelector('.purCost')?.value)||0})).filter(x=>x.productId&&x.qty>0);
+ const total=itemsDetail.reduce((a,x)=>a+x.qty*x.cost,0);
+ const paid=Math.min(total,Math.max(0,Number(document.getElementById('purPaid')?.value)||0));
+ if(!supplier){toast('Supplier required');return}
+ if(!itemsDetail.length||total<=0){toast('Add at least one purchase item with cost price');return}
+ /* Reverse old stock impact, then apply the edited purchase. */
+ (old.itemsDetail||[]).forEach(i=>{const prod=state.products.find(x=>x.id===i.productId);if(prod)prod.stock=Math.max(0,(Number(prod.stock)||0)-Number(i.qty||0))});
+ itemsDetail.forEach(i=>{const prod=state.products.find(x=>x.id===i.productId);if(prod)prod.stock=(Number(prod.stock)||0)+i.qty});
+ old.supplier=supplier;old.payment=payment;old.items=itemsDetail.reduce((a,x)=>a+x.qty,0);old.itemsDetail=itemsDetail;old.total=total;old.paid=paid;old.due=total-paid;old.note=document.getElementById('purNote')?.value||'';
+ save();closeModal();refreshAll();toast('Purchase updated and stock adjusted');
+}
+function purchaseRowHTML(item={}){
+ const opts=state.products.map(p=>`<option value="${p.id}" ${item.productId===p.id?'selected':''}>${escapeHTML(p.name)} • ${escapeHTML(p.sku||'')}</option>`).join('');
+ return `<div class="purchase-item row" style="margin-top:8px;align-items:end;flex-wrap:wrap">
+   <div style="flex:2;min-width:180px"><label class="small">Product</label><select class="purProduct" onchange="updatePurchaseTotal()">${opts}</select></div>
+   <div style="flex:1;min-width:80px"><label class="small">Qty</label><input class="purQty" type="number" min="1" step="1" value="${item.qty||1}" oninput="updatePurchaseTotal()"></div>
+   <div style="flex:1.2;min-width:110px"><label class="small">Cost Price</label><input class="purCost" type="number" min="0" step="0.01" value="${item.cost||0}" oninput="updatePurchaseTotal()"></div>
+   <button class="btn sm danger" type="button" onclick="this.closest('.purchase-item').remove();updatePurchaseTotal()">×</button>
+ </div>`
+}
+function updatePurchaseTotal(){
+ let total=0;
+ document.querySelectorAll('.purchase-item').forEach(r=>{total+=(Number(r.querySelector('.purQty')?.value)||0)*(Number(r.querySelector('.purCost')?.value)||0)});
+ const el=document.getElementById('purTotal');if(el)el.value=total.toFixed(2);
+ const paid=Math.max(0,Number(document.getElementById('purPaid')?.value)||0);
+ const due=Math.max(0,total-Math.min(total,paid));
+ const sum=document.getElementById('purSummary');if(sum)sum.textContent=`Total: ${money(total)} • Due: ${money(due)}`;
+}
+function openPurchase(){
+ if(!isAdmin()){toast('Admin only');return}
+ const first=state.products[0]||{id:'',cost:0};
+ openModal(`<h3>Add Purchase</h3>
+ <div class="grid grid2">
+   <input id="purSupplier" placeholder="Supplier">
+   <select id="purPayment"><option>Cash</option><option>Card</option><option>POS</option><option>Transfer</option><option>Credit</option></select>
+ </div>
+ <div style="margin-top:12px"><div class="row" style="justify-content:space-between"><h4>Purchase Items</h4><button class="btn sm" type="button" onclick="document.getElementById('purchaseItemsBox').insertAdjacentHTML('beforeend',purchaseRowHTML());updatePurchaseTotal()">＋ Add Item</button></div>
+   <div id="purchaseItemsBox">${purchaseRowHTML({productId:first.id,qty:1,cost:first.cost||0})}</div>
+ </div>
+ <div class="grid grid2" style="margin-top:12px"><input id="purTotal" type="number" readonly placeholder="Total"><input id="purPaid" type="number" min="0" placeholder="Paid" oninput="updatePurchaseTotal()"></div>
+ <div id="purSummary" class="small" style="margin-top:6px">Total: ${money(0)} • Due: ${money(0)}</div>
+ <textarea id="purNote" placeholder="Purchase note" style="margin-top:10px"></textarea>
+ <div class="row" style="margin-top:12px"><button class="btn primary" onclick="savePurchase()">Save Purchase</button><button class="btn" onclick="closeModal()">Cancel</button></div>`);
+ updatePurchaseTotal();
+}
+function savePurchase(){
+ if(!isAdmin()){toast('Admin only');return}
+ const supplier=(document.getElementById('purSupplier')?.value||'').trim();
+ const payment=document.getElementById('purPayment')?.value||'Cash';
+ const rows=[...document.querySelectorAll('.purchase-item')];
+ const itemsDetail=rows.map(r=>({productId:r.querySelector('.purProduct')?.value||'',qty:Number(r.querySelector('.purQty')?.value)||0,cost:Number(r.querySelector('.purCost')?.value)||0})).filter(x=>x.productId&&x.qty>0);
+ const total=itemsDetail.reduce((a,x)=>a+x.qty*x.cost,0);
+ const paid=Math.min(total,Math.max(0,Number(document.getElementById('purPaid')?.value)||0));
+ if(!supplier){toast('Supplier required');return}
+ if(!itemsDetail.length||total<=0){toast('Add at least one purchase item with cost price');return}
+ const purchase={id:uid(),date:today(),supplier,payment,items:itemsDetail.reduce((a,x)=>a+x.qty,0),itemsDetail,total,paid,due:total-paid,note:document.getElementById('purNote')?.value||''};
+ itemsDetail.forEach(i=>{const p=state.products.find(x=>x.id===i.productId);if(p)p.stock=(Number(p.stock)||0)+i.qty});
+ state.purchases.push(purchase);save();closeModal();refreshAll();toast('Purchase saved and stock updated');
+}
+function deletePurchase(id){
+ if(!isAdmin()){toast('Admin only');return}
+ const p=state.purchases.find(x=>x.id===id);if(!p)return;
+ if(!confirm('Delete this purchase? Stock will be reduced by the purchased quantities.'))return;
+ (p.itemsDetail||[]).forEach(i=>{const prod=state.products.find(x=>x.id===i.productId);if(prod)prod.stock=Math.max(0,(Number(prod.stock)||0)-Number(i.qty||0))});
+ state.purchases=state.purchases.filter(x=>x.id!==id);save();refreshAll();toast('Purchase deleted and stock adjusted');
+}
 
 function renderUsers(){
  document.getElementById('usersTable').innerHTML=state.users.map(u=>`<tr><td>${escapeHTML(u.username)}</td><td><span class="badge">${u.role}</span></td><td>••••••</td><td>${u.active?'<span class="badge green">Active</span>':'<span class="badge red">Disabled</span>'}</td><td><button class="btn sm" onclick="openUser('${u.id}')">Edit</button> <button class="btn sm danger" onclick="deleteUser('${u.id}')">Delete</button></td></tr>`).join('')
@@ -1207,20 +1302,19 @@ function saveInvoiceSettings(){
  inv.showDue=document.getElementById('invShowDue').checked;
  inv.showPaid=document.getElementById('invShowPaid').checked;
  inv.showLogo=document.getElementById('invShowLogo').checked;
- inv.showDiscount=document.getElementById('invShowDiscount').checked;
  save();renderInvoiceList();toast('Invoice settings saved');
 }
 function renderInvoiceList(){
  const box=document.getElementById('invoiceTable');if(!box)return;
  const arr=state.sales.slice().reverse();
- box.innerHTML=arr.map(s=>`<tr><td>${escapeHTML(s.invoice)}</td><td>${fmtDate(s.date)}</td><td>${escapeHTML(s.customer)}</td><td>${money(s.total)}</td><td>${money(s.paid)}</td><td>${money(s.due)}</td><td><button class="btn sm" onclick="receiptPrint(state.sales.find(x=>x.id==='${s.id}'))">Print/PDF</button> <button class="btn sm" onclick="shareSale('${s.id}','whatsapp')">WhatsApp</button> <button class="btn sm" onclick="shareSale('${s.id}','email')">Email</button></td></tr>`).join('')||'<tr><td colspan="7">No invoices yet</td></tr>';
+ box.innerHTML=arr.map(s=>`<tr><td>${escapeHTML(s.invoice)}</td><td>${fmtDate(s.date)}</td><td>${escapeHTML(s.customer)}</td><td>${money(s.total)}</td><td>${money(s.paid)}</td><td>${money(s.due)}</td><td><button class="btn sm" onclick="receiptPrint(state.sales.find(x=>x.id==='${s.id}'))">Print</button></td></tr>`).join('')||'<tr><td colspan="7">No invoices yet</td></tr>';
 }
 function findInvoice(){
  const q=(document.getElementById('invoiceSearch').value||'').trim().toLowerCase();
  const box=document.getElementById('invoiceResult');
  const sale=state.sales.find(x=>String(x.invoice).toLowerCase()===q);
  if(!sale){box.innerHTML='<div class="badge red">Invoice not found</div>';return}
- box.innerHTML=`<div class="card" style="margin-top:8px"><b>${escapeHTML(sale.invoice)}</b><div class="small">${fmtDate(sale.date)} • ${escapeHTML(sale.customer)}</div><div style="margin-top:8px"><b>Total: ${money(sale.total)}</b> • Paid: ${money(sale.paid)} • Due: ${money(sale.due)}</div><div class="row wrap" style="margin-top:10px"><button class="btn primary" onclick="receiptPrint(state.sales.find(x=>x.id==='${sale.id}'))">🖨 Print / PDF</button><button class="btn" onclick="shareSale('${sale.id}','whatsapp')">WhatsApp</button><button class="btn" onclick="shareSale('${sale.id}','email')">Email</button><button class="btn" onclick="shareSale('${sale.id}','share')">Share</button></div></div>`;
+ box.innerHTML=`<div class="card" style="margin-top:8px"><b>${escapeHTML(sale.invoice)}</b><div class="small">${fmtDate(sale.date)} • ${escapeHTML(sale.customer)}</div><div style="margin-top:8px"><b>Total: ${money(sale.total)}</b> • Paid: ${money(sale.paid)} • Due: ${money(sale.due)}</div><button class="btn primary" style="margin-top:10px" onclick="receiptPrint(state.sales.find(x=>x.id==='${sale.id}'))">🖨 Print / Preview Invoice</button></div>`;
 }
 function invoicePreviewLatest(){
  const sale=state.sales[state.sales.length-1];
@@ -1243,87 +1337,16 @@ const themes={
 function applyTheme(name,saveIt=true){
  const t=themes[name]||themes.darkblue;document.documentElement.style.setProperty('--bg',t[0]);document.documentElement.style.setProperty('--panel',t[1]);document.documentElement.style.setProperty('--panel2',t[2]);document.documentElement.style.setProperty('--accent',t[3]);document.documentElement.style.setProperty('--accent2',t[3]);
  if(saveIt){state.settings.theme=name;save()}
- if(state.settings.customColours)applyCustomColours(false)
 }
-function toggleBlink(on){state.settings.blink=!!on;save();document.querySelector('.login-box')?.classList.toggle('login-blink',!!on);const side=document.querySelector('.sidebar');side?.classList.toggle('sidebar-blinking',!!on);document.querySelectorAll('.side-icon').forEach(x=>x.classList.toggle('blink',!!on));if(side)applyIconAnimation(state.settings.iconAnimation||'pulse',false);}
-function applyUIFont(font,saveIt=true){
- const map={system:'system-ui,Arial,sans-serif',arial:'Arial,sans-serif',poppins:'Poppins,Arial,sans-serif',georgia:'Georgia,serif'};font=map[font]?font:'system';document.body.style.fontFamily=map[font];if(saveIt){state.settings.uiFont=Object.keys(map).find(k=>map[k]===font)||'system';save()}
-}
-function applyButtonShape(shape,saveIt=true){shape=shape==='square'?'square':'rounded';document.documentElement.style.setProperty('--radius',shape==='square'?'2px':'12px');document.querySelectorAll('.btn,.product-tile,.card,input,select,textarea').forEach(x=>x.style.borderRadius=shape==='square'?'2px':'12px');if(saveIt){state.settings.buttonShape=shape;save()}}
-function applyUIScale(scale,saveIt=true){scale=['compact','large'].includes(scale)?scale:'normal';document.documentElement.style.setProperty('font-size',scale==='compact'?'14px':scale==='large'?'17px':'16px');if(saveIt){state.settings.uiScale=scale;save()}}
-function saveDateFormat(fmt){state.settings.dateFormat=fmt||'local';save();refreshAll();toast('Date format saved')}
-function shareSale(id,method){
- const s=state.sales.find(x=>x.id===id);if(!s)return;
- const text=`${state.settings.business}\nInvoice: ${s.invoice}\nCustomer: ${s.customer}\nTotal: ${money(s.total)}\nPaid: ${money(s.paid)}\nDue: ${money(s.due)}`;
- if(method==='whatsapp'){window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');return}
- if(method==='email'){location.href='mailto:?subject='+encodeURIComponent('Receipt '+s.invoice)+'&body='+encodeURIComponent(text);return}
- if(navigator.share){navigator.share({title:'Receipt '+s.invoice,text}).catch(()=>{})}else navigator.clipboard?.writeText(text).then(()=>toast('Receipt details copied'));
-}
-
-function applyIconAnimation(mode,saveIt=true){
- const allowed=['none','pulse','bounce','spin','glow'];mode=allowed.includes(mode)?mode:'none';
- document.querySelectorAll('.side-icon').forEach(x=>{allowed.forEach(m=>x.classList.remove('blink-'+m));x.classList.add('blink-'+mode);});
- if(saveIt){state.settings.iconAnimation=mode;save()}
-}
-function applySidebarMode(mode,saveIt=true){
- mode=mode==='collapsed'?'collapsed':'normal';const side=document.querySelector('.sidebar');if(side&&window.innerWidth>800)side.classList.toggle('collapsed',mode==='collapsed');
- if(saveIt){state.settings.sidebarMode=mode;save()}
-}
-function saveCustomColours(){
- if(!isAdmin()){toast('Admin only');return}
- const ids=['customBg','customPanel','customPanel2','customAccent'],vals=ids.map(id=>document.getElementById(id)?.value||'');
- if(vals.some(v=>!v)){toast('Choose all colours');return}
- state.settings.customColours={bg:vals[0],panel:vals[1],panel2:vals[2],accent:vals[3]};
- applyTheme(state.settings.theme,false);applyCustomColours(false);save();toast('Custom colours saved');
-}
-function applyCustomColours(saveIt=false){
- const c=state.settings.customColours;if(!c)return;
- document.documentElement.style.setProperty('--bg',c.bg);document.documentElement.style.setProperty('--panel',c.panel);document.documentElement.style.setProperty('--panel2',c.panel2);document.documentElement.style.setProperty('--accent',c.accent);document.documentElement.style.setProperty('--accent2',c.accent);
- if(saveIt)save();
-}
-function resetCustomColours(){state.settings.customColours=null;applyTheme(state.settings.theme,false);save();loadControl();toast('Theme colours restored')}
-function saveMenuNames(){
- if(!isAdmin()){toast('Admin only');return}
- const raw=document.getElementById('menuNamesInput').value||'',out={};raw.split(/\n/).forEach(line=>{const i=line.indexOf('=');if(i>0){const k=line.slice(0,i).trim(),v=line.slice(i+1).trim();if(k&&v)out[k]=v}});
- state.settings.menuNames=out;save();buildSidebar();toast('Menu names saved');
-}
-function loadLogoFile(e){
- if(!isAdmin()){toast('Admin only');return}
- const f=e.target.files?.[0];if(!f)return;
- if(!f.type.startsWith('image/')){toast('Please choose an image');return}
- if(f.size>5*1024*1024){toast('Logo is too large. Choose an image under 5MB');return}
- const r=new FileReader();r.onload=()=>{
-   const img=new Image();img.onload=()=>{
-     const max=900,scale=Math.min(1,max/Math.max(img.width,img.height));
-     const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));
-     c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-     state.settings.logoData=c.toDataURL('image/jpeg',.86);save();renderLogoPreview();renderReceiptLogoPreview();updateLoginLogo();toast('Logo saved');
-   };img.onerror=()=>toast('Could not read logo');img.src=String(r.result||'');
- };r.readAsDataURL(f);
-}
-function loadReceiptLogoFile(e){
- loadLogoFile(e);
-}
-function renderReceiptLogoPreview(){
- const box=document.getElementById('receiptLogoPreview');
- if(!box)return;
- box.innerHTML=state.settings.logoData?`<img class="custom-logo-preview" src="${state.settings.logoData}"><div class="small">This logo will appear on printed receipts when enabled.</div>`:'<div class="small">No logo uploaded yet.</div>';
-}
-function removeLogo(){if(!isAdmin()){toast('Admin only');return}state.settings.logoData='';save();renderLogoPreview();renderReceiptLogoPreview();updateLoginLogo();toast('Logo removed')}
-function updateLoginLogo(){const e=document.getElementById('loginLogo');if(!e)return;if(state.settings.logoData)e.innerHTML=`<img src="${state.settings.logoData}" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">`;else e.textContent=(state.settings.business||'D').trim().charAt(0).toUpperCase()}
-function renderLogoPreview(){const box=document.getElementById('logoPreviewWrap');if(!box)return;box.innerHTML=state.settings.logoData?`<img class="custom-logo-preview" src="${state.settings.logoData}"><div class="small">Logo ready for receipt/login.</div>`:'<div class="small">No uploaded logo. Business initial will be used.</div>';const rs=document.getElementById('receiptLogoStatus');if(rs)rs.textContent=state.settings.logoData?'Uploaded logo':'Business initial'}
-
+function toggleBlink(on){state.settings.blink=on;save();document.querySelector('.login-box')?.classList.toggle('login-blink',on);document.querySelectorAll('.side-icon').forEach(x=>x.classList.toggle('blink',on));}
 function loadControl(){
  const set=(id,val)=>{const e=document.getElementById(id);if(e)e.value=val};
  const check=(id,val)=>{const e=document.getElementById(id);if(e)e.checked=!!val};
- set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);set('iconAnimation',state.settings.iconAnimation||'none');set('sidebarMode',state.settings.sidebarMode||'normal');set('uiFont',state.settings.uiFont||'system');set('buttonShape',state.settings.buttonShape||'rounded');set('uiScale',state.settings.uiScale||'normal');set('dateFormat',state.settings.dateFormat||'local');
- const cc=state.settings.customColours||{};set('customBg',cc.bg||themes[state.settings.theme]?.[0]||'#07111f');set('customPanel',cc.panel||themes[state.settings.theme]?.[1]||'#0e1a2b');set('customPanel2',cc.panel2||themes[state.settings.theme]?.[2]||'#142238');set('customAccent',cc.accent||themes[state.settings.theme]?.[3]||'#00e676');
- const mn=state.settings.menuNames||{};const mi=document.getElementById('menuNamesInput');if(mi)mi.value=Object.entries(mn).map(([k,v])=>`${k}=${v}`).join('\n');
+ set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);
  const inv=state.settings.invoice||defaultState.settings.invoice;
  set('invPrefix',inv.prefix);set('invNext',inv.nextNumber);set('invTitle',inv.title);set('invFooter',inv.footer);
- check('invShowNote',inv.showCustomerNote);check('invShowDue',inv.showDue);check('invShowPaid',inv.showPaid);check('invShowLogo',inv.showLogo);check('invShowDiscount',inv.showDiscount!==false);
+ check('invShowNote',inv.showCustomerNote);check('invShowDue',inv.showDue);check('invShowPaid',inv.showPaid);check('invShowLogo',inv.showLogo);
  set('paperSize',state.settings.paper);check('autoPrint',state.settings.autoPrint);t('paperSize',state.settings.paper);check('blinkTheme',state.settings.blink);check('autoPrint',state.settings.autoPrint);
- renderReceiptLogoPreview();
 }
 function renderDashboard(){
  const sales=state.sales.reduce((a,s)=>a+s.total,0),cost=state.sales.reduce((a,s)=>a+s.items.reduce((q,i)=>{const p=state.products.find(x=>x.id===i.productId);return q+i.qty*(p?.cost||0)},0),0),exp=state.expenses.reduce((a,e)=>a+e.amount,0),purchases=state.purchases.reduce((a,p)=>a+p.total,0),due=state.sales.reduce((a,s)=>a+s.due,0);
@@ -1369,7 +1392,7 @@ function refreshReports(){
  document.getElementById('accRevenue').textContent=money(sales);document.getElementById('accExpenses').textContent=money(exp);document.getElementById('accProfit').textContent=money(profit)
 }
 
-function fmtDate(d){const f=state?.settings?.dateFormat||'local';if(f==='en-GB')return new Date(d).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'});if(f==='en-US')return new Date(d).toLocaleString('en-US',{dateStyle:'short',timeStyle:'short'});return new Date(d).toLocaleString('en-NG',{dateStyle:'short',timeStyle:'short'})}
+function fmtDate(d){return new Date(d).toLocaleString('en-NG',{dateStyle:'short',timeStyle:'short'})}
 function openModal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modal').classList.add('show')}
 function closeModal(){document.getElementById('modal').classList.remove('show')}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()})
@@ -1377,45 +1400,34 @@ document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='
 function printSale(id){
  const s=state.sales.find(x=>x.id===id);if(!s)return;receiptPrint(s)
 }
-function previewReceiptEditor(){
- const inv=state.settings.invoice||defaultState.settings.invoice;
- const sample=state.sales[state.sales.length-1]||{invoice:'PREVIEW-0001',date:today(),customer:'Walk-in',payment:'Cash',items:state.products[0]?[{productId:state.products[0].id,qty:1,price:state.products[0].price}]:[],subtotal:state.products[0]?.price||0,discount:0,total:state.products[0]?.price||0,paid:state.products[0]?.price||0,due:0,note:''};
- const items=sample.items.map(i=>{const pr=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(pr?.name||'Item')}</td><td>${i.qty}</td><td style="text-align:right">${money(i.qty*i.price)}</td></tr>`}).join('')||'<tr><td>Sample Item</td><td>1</td><td style="text-align:right">'+money(0)+'</td></tr>';
- const logo=inv.showLogo?(state.settings.logoData?`<img src="${state.settings.logoData}" style="display:block;max-width:90px;max-height:70px;margin:0 auto 8px;object-fit:contain">`:`<div class="logo" style="margin:0 auto 8px">${escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`):'';
- const disc=Number(sample.discount||0);
- const html=`<div class="receipt-preview-box" style="margin:auto;max-width:390px"><div style="text-align:center">${logo}<h3 style="margin:4px 0">${escapeHTML(inv.title||'INVOICE')}</h3><b>${escapeHTML(state.settings.business)}</b><br>${escapeHTML(state.settings.address||'')}<br>${escapeHTML(state.settings.phone||'')}</div><hr><div>Invoice: <b>${escapeHTML(sample.invoice)}</b><br>${fmtDate(sample.date)}<br>Customer: ${escapeHTML(sample.customer)}</div><hr><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Item</th><th>Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${items}</tbody></table>${inv.showDiscount&&disc?`<div style="text-align:right;margin-top:8px">Subtotal: ${money(sample.subtotal??sample.total)}<br>Discount: -${money(disc)}</div>`:''}<div style="text-align:right;font-size:18px;font-weight:800;margin-top:8px">Total: ${money(sample.total)}</div>${inv.showPaid?`<div style="text-align:right">Paid: ${money(sample.paid)}</div>`:''}${inv.showDue?`<div style="text-align:right">Due: ${money(sample.due)}</div>`:''}${inv.showCustomerNote&&sample.note?`<p><b>Note:</b> ${escapeHTML(sample.note)}</p>`:''}<hr><div style="text-align:center;font-weight:800">${escapeHTML(inv.footer||state.settings.thanks||'Thank you')}</div></div>`;
- openModal(`<h3>Receipt Preview</h3><div style="margin-top:10px">${html}</div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" onclick="closeModal()">Close</button></div>`);
-}
-
 function receiptPrint(s){
  if(!s){toast('Invoice not found');return}
  const inv=state.settings.invoice||defaultState.settings.invoice;
  const win=window.open('','_blank','width=520,height=760');
  if(!win){toast('Allow popups to print invoice');return}
  const items=s.items.map(i=>{const p=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td class="qty">${i.qty}</td><td class="right">${money(i.qty*i.price)}</td></tr>`}).join('');
- const logo=inv.showLogo?(state.settings.logoData?`<img class="receipt-logo" src="${state.settings.logoData}">`:`<div class="logo">${escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`):'';
+ const logo=inv.showLogo?`<div class="logo">${escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`:'';
  const note=inv.showCustomerNote&&s.note?`<p><b>Note:</b> ${escapeHTML(s.note)}</p>`:'';
  const paid=inv.showPaid?`<br>Paid: ${money(s.paid)}`:'';
  const due=inv.showDue?`<br>Due: ${money(s.due)}`:'';
- const subtotal=s.subtotal??s.total; const disc=Number(s.discount||0); const discountLine=inv.showDiscount&&disc?`<div style="text-align:right">Subtotal: ${money(subtotal)}<br>Discount: -${money(disc)}</div>`:'';
  const paper=state.settings.paper==='A4'?'90%':'300px';
  win.document.write(`<html><head><title>${escapeHTML(s.invoice)}</title><style>
  body{font-family:Arial,sans-serif;width:${paper};margin:20px auto;font-size:12px;color:#111}
  h2{text-align:center;margin:4px 0}.logo{width:48px;height:48px;border-radius:12px;background:#111;color:#fff;display:grid;place-items:center;margin:0 auto 6px;font-size:24px;font-weight:bold}
  .center{text-align:center}.line{border-top:1px dashed #777;margin:10px 0}
  table{width:100%;border-collapse:collapse}th,td{padding:5px 2px;border-bottom:1px dashed #ccc;text-align:left}.qty{text-align:center;width:45px}.right{text-align:right}
- .receipt-logo{display:block;max-width:90px;max-height:70px;object-fit:contain;margin:0 auto 6px}.total{font-size:16px;font-weight:bold;text-align:right;margin-top:8px}.thanks{text-align:center;margin-top:16px;font-weight:bold}
+ .total{font-size:16px;font-weight:bold;text-align:right;margin-top:8px}.thanks{text-align:center;margin-top:16px;font-weight:bold}
  @media print{body{margin:0 auto}}
  </style></head><body>${logo}<h2>${escapeHTML(inv.title||'INVOICE')}</h2>
  <div class="center"><b>${escapeHTML(state.settings.business)}</b><br>${escapeHTML(state.settings.address)}<br>${escapeHTML(state.settings.phone)}</div>
  <div class="line"></div><div>Invoice: <b>${escapeHTML(s.invoice)}</b><br>${fmtDate(s.date)}<br>Customer: ${escapeHTML(s.customer)}<br>Payment: ${escapeHTML(s.payment||'')}</div>
  <div class="line"></div><table><thead><tr><th>Item</th><th class="qty">Qty</th><th class="right">Amount</th></tr></thead><tbody>${items}</tbody></table>
- ${discountLine}<div class="total">Total: ${money(s.total)}</div><div style="text-align:right">${paid}${due}</div>${note}
+ <div class="total">Total: ${money(s.total)}</div><div style="text-align:right">${paid}${due}</div>${note}
  <div class="line"></div><div class="thanks">${escapeHTML(inv.footer||state.settings.thanks)}</div>
  <script>window.onload=()=>window.print()<\/script></body></html>`);
  win.document.close()
 }
-function testPrint(){const t=state.products[0]?.price||0;receiptPrint({invoice:'TEST-0001',date:today(),customer:'Test Customer',items:[{productId:state.products[0]?.id,qty:1,price:t}],subtotal:t,discount:0,total:t,paid:t,due:0})}
+function testPrint(){receiptPrint({invoice:'TEST-0001',date:today(),customer:'Test Customer',items:[{productId:state.products[0]?.id,qty:1,price:state.products[0]?.price||0}],total:state.products[0]?.price||0,paid:state.products[0]?.price||0,due:0})}
 async function connectBluetooth(){
  if(!navigator.bluetooth){toast('Bluetooth Web API is not supported in this browser');return}
  try{const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true});toast('Bluetooth selected: '+(device.name||'Printer'))}catch(e){toast('Bluetooth selection cancelled')}
@@ -1433,15 +1445,67 @@ async function scanBarcode(){
 }
 
 function startVoice(){
- if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){toast('Voice recognition is not supported in this browser');return}
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(voiceRec){try{voiceRec.stop()}catch(e){}}
- voiceRec=new SR();voiceRec.lang='en-US';voiceRec.continuous=false;voiceRec.interimResults=false;
- const btn=document.getElementById('voiceBtn'),status=document.getElementById('voiceStatus');btn.classList.add('voice-listening');if(status)status.textContent='Listening...';
- voiceRec.onresult=e=>{const text=e.results[0][0].transcript.toLowerCase();if(status)status.textContent='Heard: '+text;handleVoice(text)};
- voiceRec.onerror=e=>{if(status)status.textContent='Voice error: '+e.error};
- voiceRec.onend=()=>btn.classList.remove('voice-listening');
- voiceRec.start()
+ const btn=document.getElementById('voiceBtn');
+ const status=document.getElementById('voiceStatus');
+
+ if(!SR){
+   if(status)status.textContent='Voice recognition is not supported by this browser. Open the app in Chrome.';
+   toast('Voice is not supported here. Open Dlimans in Chrome.');
+   return;
+ }
+
+ if(voiceRec){
+   try{voiceRec.abort()}catch(e){}
+   voiceRec=null;
+ }
+
+ try{
+   voiceRec=new SR();
+   voiceRec.lang='en-US';
+   voiceRec.continuous=false;
+   voiceRec.interimResults=false;
+   voiceRec.maxAlternatives=1;
+
+   if(btn)btn.classList.add('voice-listening');
+   if(status)status.textContent='🎙 Listening... Speak now';
+
+   voiceRec.onstart=()=>{
+     if(btn)btn.classList.add('voice-listening');
+     if(status)status.textContent='🎙 Listening... Speak now';
+   };
+
+   voiceRec.onresult=(e)=>{
+     const text=(e.results && e.results[0] && e.results[0][0])
+       ? e.results[0][0].transcript.trim().toLowerCase() : '';
+     if(status)status.textContent=text ? 'Heard: '+text : 'No words heard';
+     if(text)handleVoice(text);
+   };
+
+   voiceRec.onerror=(e)=>{
+     const msg={
+       'not-allowed':'Microphone permission was denied. Allow microphone permission for Chrome.',
+       'audio-capture':'No microphone was found.',
+       'network':'Voice service/network error.',
+       'no-speech':'No speech detected. Tap Voice and speak again.',
+       'aborted':'Voice stopped.'
+     }[e.error] || ('Voice error: '+e.error);
+     if(status)status.textContent='⚠ '+msg;
+     if(e.error!=='aborted')toast(msg);
+   };
+
+   voiceRec.onend=()=>{
+     if(btn)btn.classList.remove('voice-listening');
+     voiceRec=null;
+   };
+
+   voiceRec.start();
+ }catch(err){
+   if(btn)btn.classList.remove('voice-listening');
+   voiceRec=null;
+   if(status)status.textContent='⚠ Could not start microphone. Allow microphone permission and try again.';
+   toast('Could not start Voice. Allow microphone permission and try again.');
+ }
 }
 function handleVoice(t){
  const commands=[
@@ -1476,20 +1540,16 @@ function factoryReset(){
 function loadSettings(){
  document.getElementById('topBusiness').textContent=state.settings.business;
  document.getElementById('loginBusiness').textContent=state.settings.business;
- updateLoginLogo();
+ document.getElementById('loginLogo').textContent=(state.settings.business||'D').trim().charAt(0).toUpperCase();
  applyTheme(state.settings.theme,false);
- applyCustomColours(false);
  toggleBlink(!!state.settings.blink);
- applyIconAnimation(state.settings.iconAnimation||'none',false);
- applySidebarMode(state.settings.sidebarMode||'normal',false);
- applyUIFont(state.settings.uiFont||'system',false);applyButtonShape(state.settings.buttonShape||'rounded',false);applyUIScale(state.settings.uiScale||'normal',false);
  loadControl()
  const dd=document.getElementById('dashDate');if(dd)dd.textContent=new Date().toLocaleString();
 }
 function safeRun(fn){try{fn()}catch(e){console.error('Dlimans render error:',e)}}
 function safeRefresh(){
  safeRun(()=>buildSidebar());safeRun(()=>loadSettings());
- [renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,renderCustomers,renderExpenses,renderPurchases,renderUsers,renderPermissions,renderCustomIcons,renderDashboard,refreshReports,renderInvoiceList]
+ [renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,renderCustomers,renderContacts,renderExpenses,renderPurchases,renderUsers,renderPermissions,renderCustomIcons,renderDashboard,refreshReports,renderInvoiceList]
   .forEach(fn=>safeRun(fn));
 }
 function refreshAll(){safeRefresh()}

@@ -2,4771 +2,1942 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Dlimans Supermarket POS</title>
 
 <style>
-/* =========================================================
-   DLIMANS POS — UNIVERSAL DESIGN
-   Android + PC + Offline
-========================================================= */
-
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0
-}
-
+*{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --accent:#00e676;
-  --accent2:#00bfa5;
-  --bg:#070b14;
-  --panel:#101827;
-  --panel2:#151f31;
-  --header:#0b1020;
-  --border:#263247;
-  --text:#f5f7fb;
-  --muted:#94a3b8;
-  --danger:#ef4444;
-  --warning:#f59e0b;
-  --success:#22c55e;
-  --shadow:0 18px 55px #0007;
+ --bg:#07111f;--panel:#101b2d;--panel2:#152238;--header:#0b1628;
+ --border:#26364d;--text:#f5f7fb;--muted:#9aa9bd;
+ --accent:#00e676;--accent2:#00bfa5;--danger:#ef4444;
+ --warning:#f59e0b;--success:#22c55e;--shadow:0 15px 45px #0008
 }
-
-html,body{
-  margin:0;
-  min-height:100%;
-  font-family:Arial, sans-serif;
-  background:var(--bg);
-  color:var(--text)
-}
-
+html,body{min-height:100%;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
 body{
-  background:
-  radial-gradient(
-    circle at 15% 0%,
-    #163a31 0,
-    #070b14 38%
-  ),
-  var(--bg)
+ background:
+ radial-gradient(circle at 10% 0%,#123b32 0,transparent 35%),
+ linear-gradient(135deg,var(--bg),#08101d)
 }
-
-button,
-input,
-select,
-textarea{
-  font:inherit
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+input,select,textarea{
+ width:100%;padding:11px 12px;border-radius:9px;
+ border:1px solid var(--border);background:#0a1424;color:var(--text);outline:0
 }
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:80px;resize:vertical}
+.hidden{display:none!important}
+button:disabled{opacity:.5;cursor:not-allowed}
 
-button{
-  cursor:pointer
+.btn{
+ border:0;border-radius:9px;padding:10px 14px;font-weight:700;
+ background:var(--accent);color:#04120a
 }
-
-input,
-select,
-textarea{
-  width:100%;
-  padding:12px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#0b1220;
-  color:var(--text);
-  outline:none
-}
-
-input:focus,
-select:focus,
-textarea:focus{
-  border-color:var(--accent)
-}
-
-textarea{
-  min-height:80px;
-  resize:vertical
-}
-
-.hidden{
-  display:none!important
-}
-
-/* =========================================================
-   LOGIN
-========================================================= */
+.btn.secondary{background:#24344b;color:#fff}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.warning{background:var(--warning);color:#111}
+.btn.success{background:var(--success);color:#031108}
+.btn.small{padding:7px 10px;font-size:12px}
+.btn.full{width:100%}
 
 #loginScreen{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px
+ min-height:100vh;display:flex;align-items:center;justify-content:center;
+ padding:20px
 }
-
 .login-box{
-  width:100%;
-  max-width:430px;
-  padding:30px;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:25px;
-  box-shadow:var(--shadow)
+ width:100%;max-width:430px;background:var(--panel);
+ border:1px solid var(--border);border-radius:22px;padding:30px;
+ box-shadow:var(--shadow)
 }
-
 .logo{
-  width:78px;
-  height:78px;
-  margin:auto auto 15px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:50%;
-  background:var(--accent);
-  color:#06130b;
-  font-size:36px;
-  font-weight:bold
+ width:78px;height:78px;border-radius:50%;background:var(--accent);
+ color:#06130b;margin:0 auto 15px;display:flex;
+ align-items:center;justify-content:center;font-size:30px;font-weight:900
+}
+.login-box h1{text-align:center;font-size:25px}
+.subtitle{text-align:center;color:var(--muted);margin:7px 0 25px}
+.login-box label{display:block;margin:13px 0 6px;font-weight:700}
+.remember{display:flex;gap:8px;align-items:center;margin:12px 0;color:var(--muted)}
+.remember input{width:auto}
+
+#app{min-height:100vh}
+.topbar{
+ height:62px;background:var(--header);border-bottom:1px solid var(--border);
+ display:flex;align-items:center;padding:0 14px;gap:10px;
+ position:sticky;top:0;z-index:50
+}
+.topbar .brand{font-weight:900;font-size:18px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.menuBtn{display:none}
+.userBadge{
+ background:#17263c;padding:8px 10px;border-radius:8px;font-size:12px
 }
 
-.login-box h1{
-  text-align:center
-}
-
-.subtitle{
-  text-align:center;
-  color:var(--muted);
-  margin:8px 0 25px
-}
-
-label{
-  display:block;
-  margin:12px 0 7px;
-  color:#d7deea
-}
-
-.login-btn,
-.primary{
-  width:100%;
-  padding:14px;
-  border:0;
-  border-radius:11px;
-  background:var(--accent);
-  color:#06130b;
-  font-weight:bold
-}
-
-.login-btn{
-  margin-top:16px
-}
-
-.forgot{
-  width:100%;
-  padding:13px;
-  background:none;
-  border:0;
-  color:var(--accent)
-}
-
-.message{
-  min-height:22px;
-  text-align:center;
-  margin-top:8px;
-  color:#ff5252
-}
-
-/* =========================================================
-   APP HEADER
-========================================================= */
-
-#app{
-  display:none;
-  min-height:100vh
-}
-
-header{
-  height:64px;
-  background:var(--header);
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:0 18px;
-  position:sticky;
-  top:0;
-  z-index:100
-}
-
-.menu-toggle{
-  width:42px;
-  height:42px;
-  border:0;
-  border-radius:11px;
-  background:var(--panel2);
-  color:white;
-  font-size:20px
-}
-
-.brand{
-  font-size:20px;
-  font-weight:bold
-}
-
-.header-right{
-  margin-left:auto;
-  color:var(--muted);
-  font-size:13px
-}
-
-/* =========================================================
-   LAYOUT
-========================================================= */
-
-.layout{
-  display:flex;
-  min-height:calc(100vh - 64px)
-}
-
+.layout{display:flex;min-height:calc(100vh - 62px)}
 .sidebar{
-  width:245px;
-  flex-shrink:0;
-  padding:14px;
-  background:#0d1523;
-  border-right:1px solid var(--border);
-  overflow-y:auto
+ width:245px;flex-shrink:0;background:#0b1525;border-right:1px solid var(--border);
+ padding:12px;overflow-y:auto;position:sticky;top:62px;height:calc(100vh - 62px)
 }
-
-.side-title{
-  color:var(--muted);
-  font-size:11px;
-  text-transform:uppercase;
-  padding:12px 10px 6px
+.nav-title{
+ font-size:11px;color:var(--muted);text-transform:uppercase;
+ margin:12px 8px 6px
 }
-
-.side-btn{
-  width:100%;
-  text-align:left;
-  padding:12px;
-  margin-bottom:4px;
-  background:transparent;
-  color:#b9c4d4;
-  border:0;
-  border-radius:10px
+.nav{
+ width:100%;border:0;background:transparent;color:#dce5f1;
+ padding:12px 13px;border-radius:9px;text-align:left;
+ display:flex;align-items:center;gap:12px;margin-bottom:4px
 }
-
-.side-btn:hover,
-.side-btn.active{
-  background:#1d2a3d;
-  color:var(--accent)
+.nav:hover,.nav.active{background:var(--accent);color:#06130b;font-weight:800}
+.nav span:first-child{width:22px;text-align:center}
+.main{flex:1;min-width:0;padding:18px;overflow-x:hidden}
+.page{display:none}
+.page.active{display:block}
+.page-title{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:10px;margin-bottom:18px
 }
-
-.side-btn.danger{
-  background:#8f1d1d;
-  color:white
-}
-
-.main{
-  flex:1;
-  min-width:0;
-  padding:22px;
-  overflow:auto
-}
-
-.page{
-  display:none
-}
-
-.page.active{
-  display:block
-}
-
-/* =========================================================
-   HOME / GEMINI STYLE
-========================================================= */
-
-.hero{
-  padding:28px;
-  border:1px solid var(--border);
-  border-radius:24px;
-  background:
-    radial-gradient(
-      circle at 90% 10%,
-      #006b3c55,
-      transparent 45%
-    ),
-    var(--panel);
-  margin-bottom:18px
-}
-
-.hero h1{
-  font-size:32px;
-  margin-bottom:8px
-}
-
-.hero p{
-  color:var(--muted)
-}
-
-.quick-grid{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(150px,1fr));
-  gap:12px;
-  margin-top:20px
-}
-
-.quick{
-  min-height:110px;
-  padding:18px;
-  border:1px solid var(--border);
-  border-radius:17px;
-  background:var(--panel2);
-  color:white;
-  text-align:left;
-  transition:.2s
-}
-
-.quick:hover{
-  transform:translateY(-2px);
-  border-color:var(--accent)
-}
-
-.quick .icon{
-  font-size:27px;
-  margin-bottom:10px
-}
-
-.quick small{
-  display:block;
-  color:var(--muted);
-  margin-top:5px
-}
-
-/* =========================================================
-   CARDS
-========================================================= */
+.page-title h2{font-size:23px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
 
 .cards{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(180px,1fr));
-  gap:12px;
-  margin:15px 0
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px
 }
-
 .card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:17px;
-  padding:18px;
-  margin-bottom:15px
+ background:var(--panel);border:1px solid var(--border);
+ border-radius:14px;padding:17px;box-shadow:0 8px 25px #0003
 }
+.card .label{font-size:12px;color:var(--muted);margin-bottom:8px}
+.card .value{font-size:23px;font-weight:900}
+.card .sub{font-size:11px;color:var(--muted);margin-top:5px}
 
-.metric{
-  color:var(--muted);
-  font-size:13px
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.panel{
+ background:var(--panel);border:1px solid var(--border);
+ border-radius:14px;padding:16px
 }
-
-.metric strong{
-  display:block;
-  color:var(--accent);
-  font-size:23px;
-  margin-top:7px
+.panel h3{margin-bottom:13px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+th{color:var(--muted);font-size:11px;text-transform:uppercase}
+.badge{
+ display:inline-block;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:700
 }
+.badge.green{background:#16452b;color:#65f19b}
+.badge.red{background:#4b1b1b;color:#ff8585}
+.badge.yellow{background:#493b17;color:#ffd46a}
 
-.grid2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:15px
+.form-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px
 }
+.form-group label{display:block;margin-bottom:6px;color:#dbe5f2;font-size:13px;font-weight:700}
+.fullcol{grid-column:1/-1}
 
-.grid3{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px
-}
-
-.toolbar{
-  display:flex;
-  flex-wrap:wrap;
-  gap:9px;
-  margin-bottom:14px
-}
-
-.toolbar>*{
-  flex:1;
-  min-width:130px
-}
-
-/* =========================================================
-   TABLES
-========================================================= */
-
-.table-wrap{
-  overflow:auto
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:700px
-}
-
-th,
-td{
-  padding:11px;
-  border-bottom:1px solid var(--border);
-  text-align:left
-}
-
-th{
-  color:var(--accent);
-  background:#121c2b
-}
-
-.small-btn{
-  padding:7px 10px;
-  border:0;
-  border-radius:8px;
-  background:#263449;
-  color:white;
-  margin:2px
-}
-
-.small-btn:hover{
-  background:#34445d
-}
-
-.danger{
-  background:var(--danger)!important;
-  color:white!important
-}
-
-.warning{
-  background:var(--warning)!important;
-  color:#111!important
-}
-
-.total{
-  color:var(--accent);
-  font-size:22px;
-  font-weight:bold
-}
-
-/* =========================================================
-   POS
-========================================================= */
-
-.pos-grid{
-  display:grid;
-  grid-template-columns:1.4fr .8fr;
-  gap:15px
-}
-
+.pos-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:15px}
 .product-grid{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(150px,1fr));
-  gap:10px
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+ max-height:580px;overflow:auto
 }
-
-.product-btn{
-  padding:14px;
-  text-align:left;
-  background:var(--panel2);
-  border:1px solid var(--border);
-  color:white;
-  border-radius:13px
+.product-card{
+ background:var(--panel2);border:1px solid var(--border);
+ border-radius:12px;padding:10px;cursor:pointer
 }
-
-.product-btn:hover{
-  border-color:var(--accent)
+.product-card:hover{border-color:var(--accent)}
+.product-img{
+ width:100%;height:100px;border-radius:8px;object-fit:cover;
+ background:#0a1424;display:block;margin-bottom:8px
 }
+.product-img.placeholder{display:flex;align-items:center;justify-content:center;font-size:30px}
+.product-card .name{font-weight:800;font-size:13px}
+.product-card .price{color:var(--accent);font-weight:900;margin-top:4px}
+.product-card .stock{font-size:11px;color:var(--muted);margin-top:3px}
 
 .cart-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:10px 0;
-  border-bottom:1px solid var(--border)
+ display:grid;grid-template-columns:1fr 65px 80px 30px;
+ gap:5px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)
+}
+.cart-row input{padding:6px}
+.cart-total{
+ display:flex;justify-content:space-between;font-weight:900;font-size:18px;
+ margin-top:15px;padding-top:13px;border-top:1px solid var(--border)
+}
+.empty{text-align:center;color:var(--muted);padding:30px}
+
+.chart{
+ width:100%;height:240px;background:#0a1424;border:1px solid var(--border);
+ border-radius:10px;padding:10px
+}
+canvas{width:100%;height:100%}
+
+.searchbar{margin-bottom:12px}
+.statline{display:flex;justify-content:space-between;margin:7px 0;color:var(--muted)}
+.statline strong{color:var(--text)}
+
+.modal{
+ position:fixed;inset:0;background:#0009;display:flex;align-items:center;
+ justify-content:center;padding:15px;z-index:100
+}
+.modal-box{
+ width:100%;max-width:650px;max-height:90vh;overflow:auto;
+ background:var(--panel);border:1px solid var(--border);
+ border-radius:16px;padding:20px
+}
+.modal-head{
+ display:flex;align-items:center;justify-content:space-between;margin-bottom:15px
+}
+.close{border:0;background:#26344a;color:#fff;border-radius:8px;padding:8px 11px}
+
+.toast{
+ position:fixed;right:18px;bottom:18px;background:#152238;
+ border:1px solid var(--border);padding:13px 16px;border-radius:10px;
+ box-shadow:var(--shadow);z-index:200;max-width:350px
 }
 
-.qty-controls{
-  display:flex;
-  align-items:center;
-  gap:5px
+.receipt{
+ background:#fff;color:#111;padding:15px;width:100%;max-width:420px;margin:auto;
+ font-family:Arial,sans-serif
+}
+.receipt h2{text-align:center}
+.receipt .center{text-align:center}
+.receipt table{min-width:0;color:#111}
+.receipt th,.receipt td{border-bottom:1px dashed #aaa;color:#111}
+.receipt hr{border:0;border-top:1px dashed #777;margin:10px 0}
+
+.theme-preview{
+ height:50px;border-radius:10px;border:1px solid var(--border);cursor:pointer;
+ display:flex;align-items:center;justify-content:center;font-weight:800
 }
 
-/* =========================================================
-   THEMES
-========================================================= */
-
-.theme-grid{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(100px,1fr));
-  gap:10px
+@media(max-width:1000px){
+ .cards{grid-template-columns:repeat(2,1fr)}
+ .pos-grid,.grid2{grid-template-columns:1fr}
+ .product-grid{grid-template-columns:repeat(3,1fr)}
 }
-
-.theme{
-  height:60px;
-  border:2px solid #555;
-  border-radius:12px
+@media(max-width:700px){
+ .topbar{height:58px}
+ .menuBtn{display:block}
+ .sidebar{
+   position:fixed;left:-270px;top:58px;height:calc(100vh - 58px);
+   z-index:90;transition:.2s;box-shadow:10px 0 30px #0008
+ }
+ .sidebar.open{left:0}
+ .main{padding:12px}
+ .cards{grid-template-columns:repeat(2,1fr)}
+ .grid3{grid-template-columns:1fr}
+ .form-grid{grid-template-columns:1fr}
+ .product-grid{grid-template-columns:repeat(2,1fr)}
+ .page-title h2{font-size:19px}
+ .userBadge{display:none}
 }
-
-.theme-blue{background:#173f75}
-.theme-green{background:#006b3c}
-.theme-maroon{background:#5b174b}
-.theme-purple{background:#4b2375}
-.theme-gold{background:#714500}
-.theme-yellow{background:#655500}
-.theme-chocolate{background:#4b2c20}
-.theme-black{background:#000}
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-.mobile-nav{
-  display:none
-}
-
-@media(max-width:950px){
-
-  .sidebar{
-    position:fixed;
-    left:-270px;
-    top:64px;
-    bottom:0;
-    z-index:90;
-    transition:.25s
-  }
-
-  .sidebar.open{
-    left:0
-  }
-
-  .grid2,
-  .pos-grid{
-    grid-template-columns:1fr
-  }
-
-  .main{
-    padding:15px;
-    padding-bottom:85px
-  }
-
-  .mobile-nav{
-    display:flex;
-    position:fixed;
-    left:0;
-    right:0;
-    bottom:0;
-    z-index:100;
-    background:#101927;
-    border-top:1px solid var(--border);
-    padding:6px
-  }
-
-  .mobile-nav button{
-    flex:1;
-    background:none;
-    border:0;
-    color:#aaa;
-    padding:7px 2px;
-    font-size:11px
-  }
-
-  .mobile-nav button.active{
-    color:var(--accent)
-  }
-}
-
-@media(max-width:520px){
-
-  .hero h1{
-    font-size:25px
-  }
-
-  .brand{
-    font-size:16px
-  }
-
-  .header-right{
-    display:none
-  }
-
-  .cards{
-    grid-template-columns:1fr 1fr
-  }
-
-  .grid3{
-    grid-template-columns:1fr
-  }
-}
-
-/* =========================================================
-   BLINKING THEME
-========================================================= */
-
-@keyframes dlBlink{
-  0%,100%{
-    box-shadow:0 0 0 rgba(0,230,118,0)
-  }
-  50%{
-    box-shadow:0 0 25px rgba(0,230,118,.45)
-  }
-}
-
-.blinking{
-  animation:dlBlink 1.5s infinite
+@media(max-width:420px){
+ .cards{grid-template-columns:1fr 1fr;gap:8px}
+ .card{padding:12px}
+ .card .value{font-size:18px}
+ .product-grid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 
 <body>
 
-<!-- =======================================================
- LOGIN
-======================================================= -->
-
+<!-- LOGIN -->
 <section id="loginScreen">
+ <div class="login-box">
+   <div class="logo">D</div>
+   <h1>Dlimans Supermarket</h1>
+   <div class="subtitle">Offline Point of Sale System</div>
 
-<div class="login-box">
+   <label>Username</label>
+   <input id="loginUser" autocomplete="username" placeholder="Enter username">
 
-<div class="logo">⚡</div>
+   <label>Password</label>
+   <input id="loginPass" type="password" autocomplete="current-password" placeholder="Enter password">
 
-<h1>Dlimans Supermarket</h1>
+   <label class="remember">
+     <input type="checkbox" id="rememberLogin">
+     Remember login
+   </label>
 
-<div class="subtitle">
-Complete Offline POS & Management System
-</div>
-
-<label>Username</label>
-<input id="username"
-       autocomplete="username"
-       placeholder="Username">
-
-<label>Role</label>
-<select id="role">
-<option value="admin">Admin</option>
-<option value="cashier">Cashier</option>
-</select>
-
-<label>Password</label>
-<input id="password"
-       type="password"
-       autocomplete="current-password"
-       placeholder="Password">
-
-<label style="display:flex;gap:8px;align-items:center">
-<input type="checkbox"
-       id="remember"
-       style="width:auto">
-Remember Login
-</label>
-
-<button class="login-btn"
-        onclick="login()">
-LOGIN
-</button>
-
-<button class="forgot"
-        onclick="resetPassword()">
-Forgot / Reset Password
-</button>
-
-<div id="loginMessage"
-     class="message"></div>
-
-</div>
+   <button class="btn full" onclick="login()">Login</button>
+   <p id="loginError" style="color:#ff7777;text-align:center;margin-top:12px"></p>
+ </div>
 </section>
 
-
-<!-- =======================================================
- APP
-======================================================= -->
-
-<section id="app">
-
-<header>
-
-<button class="menu-toggle"
-        onclick="toggleSidebar()">
-☰
-</button>
-
-<div class="brand">
-⚡ Dlimans Supermarket
-</div>
-
-<div class="header-right"
-     id="headerUser">
-</div>
-
-</header>
-
-
-<div class="layout">
-
-
-<!-- =====================================================
- SIDEBAR
-===================================================== -->
-
-<aside class="sidebar"
-       id="sidebar">
-
-<div class="side-title">Main</div>
-
-<button class="side-btn active"
-        data-page="dashboard"
-        onclick="go('dashboard')">
-🏠 Dashboard
-</button>
-
-<button class="side-btn"
-        data-page="pos"
-        onclick="go('pos')">
-🛒 POS / New Sale
-</button>
-
-<button class="side-btn"
-        data-page="products"
-        onclick="go('products')">
-📦 Products
-</button>
-
-<button class="side-btn"
-        data-page="inventory"
-        onclick="go('inventory')">
-📦 Inventory
-</button>
-
-<button class="side-btn"
-        data-page="sales"
-        onclick="go('sales')">
-💰 Sales
-</button>
-
-<div class="side-title">Management</div>
-
-<button class="side-btn"
-        data-page="purchases"
-        onclick="go('purchases')">
-🧾 Purchase
-</button>
-
-<button class="side-btn"
-        data-page="customers"
-        onclick="go('customers')">
-👥 Customers
-</button>
-
-<button class="side-btn"
-        data-page="contacts"
-        onclick="go('contacts')">
-☎️ Contacts
-</button>
-
-<button class="side-btn"
-        data-page="expenses"
-        onclick="go('expenses')">
-💸 Expenses
-</button>
-
-<button class="side-btn"
-        data-page="adjustment"
-        onclick="go('adjustment')">
-🔄 Stock Adjustment
-</button>
-
-<div class="side-title">Finance</div>
-
-<button class="side-btn"
-        data-page="reports"
-        onclick="go('reports')">
-📊 Reports
-</button>
-
-<button class="side-btn"
-        data-page="profit"
-        onclick="go('profit')">
-📈 Profit & Loss
-</button>
-
-<button class="side-btn"
-        data-page="accounting"
-        onclick="go('accounting')">
-📚 Accounting / Ledger
-</button>
-
-<div class="side-title">System</div>
-
-<button class="side-btn"
-        data-page="users"
-        onclick="go('users')">
-🧑‍💼 User Management
-</button>
-
-<button class="side-btn"
-        data-page="settings"
-        onclick="go('settings')">
-⚙️ Settings
-</button>
-
-<button class="side-btn"
-        data-page="voice"
-        onclick="go('voice')">
-🎙️ Voice Control
-</button>
-
-<button class="side-btn danger"
-        onclick="logout()">
-🚪 Logout
-</button>
-
-</aside>
-
-
-<!-- =====================================================
- MAIN
-===================================================== -->
-
-<main class="main">
-
-
-<!-- =====================================================
- DASHBOARD
-===================================================== -->
-
-<section id="page-dashboard"
-         class="page active">
-
-<div class="hero">
-
-<h1 id="welcomeText">
-Good day 👋
-</h1>
-
-<p>
-Manage your supermarket quickly from one place.
-</p>
-
-
-<div class="quick-grid">
-
-<button class="quick"
-        onclick="go('pos')">
-
-<div class="icon">🛒</div>
-
-<strong>New Sale</strong>
-
-<small>
-Start a customer transaction
-</small>
-
-</button>
-
-
-<button class="quick"
-        onclick="go('products')">
-
-<div class="icon">📦</div>
-
-<strong>Products</strong>
-
-<small>
-Manage products and prices
-</small>
-
-</button>
-
-
-<button class="quick"
-        onclick="go('purchases')">
-
-<div class="icon">🧾</div>
-
-<strong>Purchase</strong>
-
-<small>
-Record stock purchases
-</small>
-
-</button>
-
-
-<button class="quick"
-        onclick="go('reports')">
-
-<div class="icon">📊</div>
-
-<strong>Reports</strong>
-
-<small>
-View business performance
-</small>
-
-</button>
-
-
-<button class="quick"
-        onclick="go('customers')">
-
-<div class="icon">👥</div>
-
-<strong>Customers</strong>
-
-<small>
-Customer history and notes
-</small>
-
-</button>
-
-
-<button class="quick"
-        onclick="go('settings')">
-
-<div class="icon">⚙️</div>
-
-<strong>Customize</strong>
-
-<small>
-Themes and business settings
-</small>
-
-</button>
-
-</div>
-</div>
-
-
-<div class="cards">
-
-<div class="card">
-<div class="metric">Total Sales</div>
-<strong id="dashSales"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Net Profit</div>
-<strong id="dashProfit"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Products</div>
-<strong id="dashProducts"
-        class="total">0</strong>
-</div>
-
-<div class="card">
-<div class="metric">Low Stock</div>
-<strong id="dashLow"
-        class="total">0</strong>
-</div>
-
-<div class="card">
-<div class="metric">Purchase Due</div>
-<strong id="dashPurchaseDue"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Customer Due</div>
-<strong id="dashDue"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Expenses</div>
-<strong id="dashExpenses"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Customers</div>
-<strong id="dashCustomers"
-        class="total">0</strong>
-</div>
-
-</div>
-
-
-<div class="grid2">
-
-<div class="card">
-
-<h3>📈 Sales — Last 30 Days</h3>
-
-<canvas id="salesChart"
-        width="700"
-        height="280"
-        style="width:100%;margin-top:15px">
-</canvas>
-
-</div>
-
-
-<div class="card">
-
-<h3>⚠️ Stock Alerts</h3>
-
-<div id="dashboardStockAlerts">
-No low-stock products.
-</div>
-
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h3>🧾 Recent Sales</h3>
-
-<div class="table-wrap">
-
-<table>
-
-<thead>
-<tr>
-<th>Date</th>
-<th>Invoice</th>
-<th>Customer</th>
-<th>Total</th>
-<th>Paid</th>
-<th>Due</th>
-</tr>
-</thead>
-
-<tbody id="recentSales"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
+<!-- APP -->
+<section id="app" class="hidden">
+
+ <header class="topbar">
+   <button class="btn secondary menuBtn" onclick="toggleSidebar()">☰</button>
+   <div class="brand">Dlimans Supermarket</div>
+   <div class="right">
+     <span class="userBadge" id="userBadge"></span>
+     <button class="btn secondary small" onclick="goBack()">← Back</button>
+   </div>
+ </header>
+
+ <div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+
+   <div class="nav-title">Main</div>
+   <button class="nav active" data-page="dashboard" onclick="showPage('dashboard')">
+    <span>🏠</span> Dashboard
+   </button>
+   <button class="nav" data-page="pos" onclick="showPage('pos')">
+    <span>🛒</span> New Sale
+   </button>
+
+   <div class="nav-title">Inventory</div>
+   <button class="nav" data-page="products" onclick="showPage('products')">
+    <span>📦</span> Products
+   </button>
+   <button class="nav" data-page="inventory" onclick="showPage('inventory')">
+    <span>📋</span> Inventory
+   </button>
+   <button class="nav" data-page="purchases" onclick="showPage('purchases')">
+    <span>🚚</span> Purchases
+   </button>
+
+   <div class="nav-title">Sales</div>
+   <button class="nav" data-page="sales" onclick="showPage('sales')">
+    <span>💰</span> Sales
+   </button>
+   <button class="nav" data-page="customers" onclick="showPage('customers')">
+    <span>👥</span> Customers
+   </button>
+   <button class="nav" data-page="expenses" onclick="showPage('expenses')">
+    <span>💸</span> Expenses
+   </button>
+
+   <div class="nav-title">Reports</div>
+   <button class="nav" data-page="reports" onclick="showPage('reports')">
+    <span>📊</span> Reports
+   </button>
+   <button class="nav" data-page="calculator" onclick="showPage('calculator')">
+    <span>🧮</span> Calculator
+   </button>
+
+   <div class="nav-title">Administration</div>
+   <button class="nav" data-page="users" onclick="showPage('users')">
+    <span>👤</span> Users
+   </button>
+   <button class="nav" data-page="settings" onclick="showPage('settings')">
+    <span>⚙️</span> Settings
+   </button>
+   <button class="nav" data-page="backup" onclick="showPage('backup')">
+    <span>💾</span> Backup / Restore
+   </button>
+   <button class="nav" onclick="logout()">
+    <span>🚪</span> Logout
+   </button>
+  </aside>
+
+  <main class="main">
+
+   <!-- DASHBOARD -->
+   <section class="page active" id="page-dashboard">
+    <div class="page-title">
+      <h2>Dashboard</h2>
+      <div class="actions">
+       <button class="btn small" onclick="refreshAll()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card"><div class="label">TOTAL SALES</div><div class="value" id="dashSales">₦0</div><div class="sub">Completed sales</div></div>
+      <div class="card"><div class="label">NET PROFIT</div><div class="value" id="dashProfit">₦0</div><div class="sub">Estimated profit</div></div>
+      <div class="card"><div class="label">PRODUCTS</div><div class="value" id="dashProducts">0</div><div class="sub">Products in system</div></div>
+      <div class="card"><div class="label">LOW STOCK</div><div class="value" id="dashLow">0</div><div class="sub">Need attention</div></div>
+      <div class="card"><div class="label">PURCHASE</div><div class="value" id="dashPurchase">₦0</div></div>
+      <div class="card"><div class="label">EXPENSES</div><div class="value" id="dashExpense">₦0</div></div>
+      <div class="card"><div class="label">CUSTOMERS</div><div class="value" id="dashCustomers">0</div></div>
+      <div class="card"><div class="label">TODAY SALES</div><div class="value" id="dashToday">₦0</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+       <h3>Sales — Last 30 Days</h3>
+       <div class="chart"><canvas id="salesChart"></canvas></div>
+      </div>
+      <div class="panel">
+       <h3>Recent Sales</h3>
+       <div id="recentSales"></div>
+      </div>
+    </div>
+   </section>
+
+   <!-- POS -->
+   <section class="page" id="page-pos">
+    <div class="page-title">
+      <h2>New Sale / POS</h2>
+      <div class="actions">
+       <button class="btn secondary small" onclick="clearCart()">Clear Cart</button>
+      </div>
+    </div>
+
+    <div class="pos-grid">
+     <div class="panel">
+      <input class="searchbar" id="posSearch" placeholder="🔎 Search product / SKU / barcode..." oninput="renderPOSProducts()">
+      <div class="product-grid" id="posProducts"></div>
+     </div>
+
+     <div class="panel">
+      <h3>Current Cart</h3>
+      <div id="cart"></div>
+
+      <div class="form-grid" style="margin-top:14px">
+       <div class="form-group">
+        <label>Customer</label>
+        <input id="saleCustomer" placeholder="Customer name">
+       </div>
+       <div class="form-group">
+        <label>Payment</label>
+        <select id="salePayment">
+         <option>Cash</option>
+         <option>Card</option>
+         <option>POS</option>
+         <option>Transfer</option>
+        </select>
+       </div>
+       <div class="form-group fullcol">
+        <label>Paid Amount</label>
+        <input id="salePaid" type="number" min="0" step="0.01" oninput="updateCart()">
+       </div>
+       <div class="form-group fullcol">
+        <label>Customer Note</label>
+        <textarea id="saleNote" placeholder="Optional customer note"></textarea>
+       </div>
+      </div>
+
+      <div class="cart-total"><span>Total</span><span id="cartTotal">₦0</span></div>
+      <div class="statline"><span>Paid</span><strong id="cartPaid">₦0</strong></div>
+      <div class="statline"><span>Due</span><strong id="cartDue">₦0</strong></div>
+
+      <button class="btn success full" style="margin-top:12px" onclick="completeSale()">Complete Sale</button>
+     </div>
+    </div>
+   </section>
+
+   <!-- PRODUCTS -->
+   <section class="page" id="page-products">
+    <div class="page-title">
+     <h2>Products</h2>
+     <button class="btn" onclick="openProductModal()">＋ Add Product</button>
+    </div>
+    <div class="panel">
+     <input class="searchbar" id="productSearch" placeholder="Search products..." oninput="renderProducts()">
+     <div class="table-wrap">
+      <table>
+       <thead><tr><th>Image</th><th>Name</th><th>SKU</th><th>Cost</th><th>Selling</th><th>Stock</th><th>Actions</th></tr></thead>
+       <tbody id="productsTable"></tbody>
+      </table>
+     </div>
+    </div>
+   </section>
+
+   <!-- INVENTORY -->
+   <section class="page" id="page-inventory">
+    <div class="page-title">
+     <h2>Inventory</h2>
+     <button class="btn" onclick="stockAdjustment()">＋ Stock Adjustment</button>
+    </div>
+    <div class="panel">
+     <div class="table-wrap">
+      <table>
+       <thead><tr><th>Product</th><th>SKU</th><th>Current Stock</th><th>Cost Value</th><th>Sale Value</th><th>Status</th></tr></thead>
+       <tbody id="inventoryTable"></tbody>
+      </table>
+     </div>
+    </div>
+   </section>
+
+   <!-- PURCHASES -->
+   <section class="page" id="page-purchases">
+    <div class="page-title">
+     <h2>Purchases</h2>
+     <button class="btn" onclick="openPurchaseModal()">＋ Add Purchase</button>
+    </div>
+    <div class="cards">
+     <div class="card"><div class="label">TOTAL PURCHASE</div><div class="value" id="purchaseTotal">₦0</div></div>
+     <div class="card"><div class="label">PURCHASE COUNT</div><div class="value" id="purchaseCount">0</div></div>
+    </div>
+    <div class="panel" style="margin-top:15px">
+     <div class="table-wrap">
+      <table>
+       <thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Cost</th><th>Total</th><th>Supplier</th><th>Action</th></tr></thead>
+       <tbody id="purchasesTable"></tbody>
+      </table>
+     </div>
+    </div>
+   </section>
+
+   <!-- SALES -->
+   <section class="page" id="page-sales">
+    <div class="page-title">
+     <h2>Sales History</h2>
+     <button class="btn secondary" onclick="exportSalesCSV()">Export CSV</button>
+    </div>
+    <div class="panel">
+     <input class="searchbar" id="salesSearch" placeholder="Search invoice/customer/payment..." oninput="renderSales()">
+     <div class="table-wrap">
+      <table>
+       <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Total</th><th>Paid</th><th>Due</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead>
+       <tbody id="salesTable"></tbody>
+      </table>
+     </div>
+    </div>
+   </section>
+
+   <!-- CUSTOMERS -->
+   <section class="page" id="page-customers">
+    <div class="page-title">
+     <h2>Customers</h2>
+     <button class="btn" onclick="openCustomerModal()">＋ Add Customer</button>
+    </div>
+    <div class="panel">
+     <div class="table-wrap">
+      <table>
+       <thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Note</th><th>Actions</th></tr></thead>
+       <tbody id="customersTable"></tbody>
+      </table>
+     </div>
+    </div>
+   </section>
+
+   <!-- EXPENSES -->
+   <section class="page" id="page-expenses">
+    <div class="page-title">
+     <h2>Expenses</h2>
+     <button class="btn" onclick="openExpenseModal()">＋ Add Expense</button>
+    </div>
+    <div class="cards">
+     <div class="card"><div class="label">TOTAL EXPENSE</div><div class="value" id="expenseTotal">₦0</div></div>
+    </div>
+    <div class="panel" style="margin-top:15px">
+     <div class="table-wrap">
+      <table>
+       <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead>
+       <tbody id="expensesTable"></tbody>
+      </table>
+     </div>
+    </div>
+   </section>
+
+   <!-- REPORTS -->
+   <section class="page" id="page-reports">
+    <div class="page-title"><h2>Reports</h2></div>
+    <div class="cards">
+     <div class="card"><div class="label">SALES</div><div class="value" id="reportSales">₦0</div></div>
+     <div class="card"><div class="label">COST OF GOODS</div><div class="value" id="reportCost">₦0</div></div>
+     <div class="card"><div class="label">GROSS PROFIT</div><div class="value" id="reportProfit">₦0</div></div>
+     <div class="card"><div class="label">EXPENSE</div><div class="value" id="reportExpense">₦0</div></div>
+    </div>
+    <div class="grid2">
+     <div class="panel">
+      <h3>Business Summary</h3>
+      <div class="statline"><span>Sales</span><strong id="r1">₦0</strong></div>
+      <div class="statline"><span>Purchases</span><strong id="r2">₦0</strong></div>
+      <div class="statline"><span>Expenses</span><strong id="r3">₦0</strong></div>
+      <div class="statline"><span>Profit</span><strong id="r4">₦0</strong></div>
+      <div class="statline"><span>Outstanding Due</span><strong id="r5">₦0</strong></div>
+     </div>
+     <div class="panel">
+      <h3>Stock Summary</h3>
+      <div class="statline"><span>Total Products</span><strong id="r6">0</strong></div>
+      <div class="statline"><span>Total Units</span><strong id="r7">0</strong></div>
+      <div class="statline"><span>Low Stock</span><strong id="r8">0</strong></div>
+      <div class="statline"><span>Stock Cost Value</span><strong id="r9">₦0</strong></div>
+     </div>
+    </div>
+   </section>
+
+   <!-- CALCULATOR -->
+   <section class="page" id="page-calculator">
+    <div class="page-title"><h2>Calculator</h2></div>
+    <div class="panel" style="max-width:400px">
+     <input id="calcDisplay" style="font-size:24px;text-align:right;margin-bottom:10px" readonly>
+     <div class="grid3">
+      <button class="btn secondary" onclick="calcClear()">C</button>
+      <button class="btn secondary" onclick="calcAdd('(')">(</button>
+      <button class="btn secondary" onclick="calcAdd(')')">)</button>
+      <button class="btn secondary" onclick="calcAdd('/')">÷</button>
+      <button class="btn secondary" onclick="calcAdd('7')">7</button>
+      <button class="btn secondary" onclick="calcAdd('8')">8</button>
+      <button class="btn secondary" onclick="calcAdd('9')">9</button>
+      <button class="btn secondary" onclick="calcAdd('*')">×</button>
+      <button class="btn secondary" onclick="calcAdd('4')">4</button>
+      <button class="btn secondary" onclick="calcAdd('5')">5</button>
+      <button class="btn secondary" onclick="calcAdd('6')">6</button>
+      <button class="btn secondary" onclick="calcAdd('-')">−</button>
+      <button class="btn secondary" onclick="calcAdd('1')">1</button>
+      <button class="btn secondary" onclick="calcAdd('2')">2</button>
+      <button class="btn secondary" onclick="calcAdd('3')">3</button>
+      <button class="btn secondary" onclick="calcAdd('+')">+</button>
+      <button class="btn secondary" onclick="calcAdd('0')">0</button>
+      <button class="btn secondary" onclick="calcAdd('.')">.</button>
+      <button class="btn success" style="grid-column:span 2" onclick="calcResult()">=</button>
+     </div>
+    </div>
+   </section>
+
+   <!-- USERS -->
+   <section class="page" id="page-users">
+    <div class="page-title">
+     <h2>User Management</h2>
+     <button class="btn" onclick="openUserModal()">＋ Add User</button>
+    </div>
+    <div class="panel">
+     <div class="table-wrap">
+      <table>
+       <thead><tr><th>Username</th><th>Role</th><th>Actions</th></tr></thead>
+       <tbody id="usersTable"></tbody>
+      </table>
+     </div>
+    </div>
+   </section>
+
+   <!-- SETTINGS -->
+   <section class="page" id="page-settings">
+    <div class="page-title"><h2>Settings / Customize</h2></div>
+
+    <div class="grid2">
+     <div class="panel">
+      <h3>Business Settings</h3>
+      <div class="form-grid">
+       <div class="form-group fullcol"><label>Business Name</label><input id="setBusiness"></div>
+       <div class="form-group"><label>Phone</label><input id="setPhone"></div>
+       <div class="form-group"><label>Address / Location</label><input id="setAddress"></div>
+       <div class="form-group"><label>Currency</label><input id="setCurrency"></div>
+       <div class="form-group"><label>Receipt Thank You</label><input id="setThanks"></div>
+       <div class="form-group fullcol"><label>Receipt Logo</label><input type="file" id="setLogoFile" accept="image/*" onchange="loadLogo(event)"></div>
+      </div>
+      <button class="btn" style="margin-top:12px" onclick="saveSettings()">Save Settings</button>
+     </div>
+
+     <div class="panel">
+      <h3>Theme</h3>
+      <div class="grid3">
+       <div class="theme-preview" onclick="setTheme('blue')" style="background:#07111f">Dark Blue</div>
+       <div class="theme-preview" onclick="setTheme('green')" style="background:#071b13">Dark Green</div>
+       <div class="theme-preview" onclick="setTheme('maroon')" style="background:#210b12">Maroon</div>
+       <div class="theme-preview" onclick="setTheme('purple')" style="background:#150d25">Purple</div>
+       <div class="theme-preview" onclick="setTheme('gold')" style="background:#201707">Gold</div>
+       <div class="theme-preview" onclick="setTheme('yellow')" style="background:#201d08">Yellow</div>
+       <div class="theme-preview" onclick="setTheme('chocolate')" style="background:#1d1109">Chocolate</div>
+       <div class="theme-preview" onclick="setTheme('black')" style="background:#050505">Black</div>
+       <div class="theme-preview" onclick="setTheme('light')" style="background:#edf1f5;color:#111">Light</div>
+      </div>
+     </div>
+    </div>
+
+    <div class="panel" style="margin-top:15px">
+     <h3>Security</h3>
+     <button class="btn warning" onclick="changePassword()">Change My Password</button>
+    </div>
+   </section>
+
+   <!-- BACKUP -->
+   <section class="page" id="page-backup">
+    <div class="page-title"><h2>Backup / Restore</h2></div>
+    <div class="grid2">
+     <div class="panel">
+      <h3>Backup</h3>
+      <p style="color:var(--muted);margin-bottom:12px">
+       Export all products, sales, purchases, customers, expenses and settings.
+      </p>
+      <button class="btn full" onclick="backupData()">⬇ Download Backup</button>
+     </div>
+     <div class="panel">
+      <h3>Restore</h3>
+      <input type="file" id="restoreFile" accept=".json">
+      <button class="btn warning full" style="margin-top:10px" onclick="restoreData()">Restore Backup</button>
+     </div>
+    </div>
+   </section>
+
+  </main>
+ </div>
 </section>
 
-
-<!-- =====================================================
- POS
-===================================================== -->
-
-<section id="page-pos"
-         class="page">
-
-<h2>🛒 New Sale</h2>
-
-<div class="pos-grid">
-
-
-<div class="card">
-
-<div class="toolbar">
-
-<input id="productSearch"
-       placeholder="🔎 Search name / SKU / barcode"
-       oninput="renderPOS()">
-
-<button class="small-btn"
-        onclick="startBarcodeScan()">
-🔎 Barcode
-</button>
-
-</div>
-
-<div id="productGrid"
-     class="product-grid">
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h3>🛒 Current Cart</h3>
-
-<div id="cart"></div>
-
-<hr style="border-color:var(--border);margin:15px 0">
-
-<label>Customer</label>
-
-<select id="saleCustomerSelect">
-<option value="">
-Walk-in Customer
-</option>
-</select>
-
-
-<label>Customer Note</label>
-
-<textarea id="saleNote"
-          placeholder="Customer note"></textarea>
-
-
-<label>Discount</label>
-
-<input id="saleDiscount"
-       type="number"
-       min="0"
-       value="0"
-       oninput="renderCart()">
-
-
-<label>Payment Method</label>
-
-<select id="paymentMethod">
-
-<option>Cash</option>
-<option>Card</option>
-<option>POS</option>
-<option>Transfer</option>
-<option>Credit / Due</option>
-
-</select>
-
-
-<label>Amount Paid</label>
-
-<input id="amountPaid"
-       type="number"
-       min="0"
-       value="0"
-       oninput="updateTotals()">
-
-
-<div style="margin-top:15px">
-
-Subtotal:
-<strong id="cartSubtotal">
-₦0.00
-</strong>
-
-<br>
-
-Discount:
-<strong id="cartDiscount">
-₦0.00
-</strong>
-
-<br>
-
-Total:
-<strong id="cartTotal"
-        class="total">
-₦0.00
-</strong>
-
-<br>
-
-Paid:
-<strong id="cartPaid">
-₦0.00
-</strong>
-
-<br>
-
-Due:
-<strong id="cartDue">
-₦0.00
-</strong>
-
-</div>
-
-
-<button class="primary"
-        onclick="checkSaleBeforeComplete()">
-🔍 CHECK SALE
-</button>
-
-
-<button class="primary"
-        onclick="completeSale()">
-✅ COMPLETE SALE
-</button>
-
-
-<button class="side-btn"
-        onclick="clearCart()">
-🗑️ Clear Cart
-</button>
-
-</div>
-</div>
-
-</section>
-
-
-<!-- =====================================================
- PRODUCTS
-===================================================== -->
-
-<section id="page-products"
-         class="page">
-
-<h2>📦 Products</h2>
-
-<div class="card">
-
-<div class="toolbar">
-
-<input id="productName"
-       placeholder="Product name">
-
-<input id="productSKU"
-       placeholder="SKU / Barcode">
-
-<input id="productCost"
-       type="number"
-       placeholder="Cost price">
-
-<input id="productPrice"
-       type="number"
-       placeholder="Selling price">
-
-<input id="productStock"
-       type="number"
-       placeholder="Stock">
-
-<input id="productLow"
-       type="number"
-       value="5"
-       placeholder="Low stock">
-
-</div>
-
-
-<div class="toolbar">
-
-<input id="productImage"
-       placeholder="Product image URL">
-
-<button class="primary"
-        onclick="addProduct()">
-➕ Add Product
-</button>
-
-</div>
-
-</div>
-
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>Image</th>
-<th>Product</th>
-<th>SKU</th>
-<th>Cost</th>
-<th>Price</th>
-<th>Stock</th>
-<th>Action</th>
-</tr>
-
-</thead>
-
-<tbody id="productsTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- INVENTORY
-===================================================== -->
-
-<section id="page-inventory"
-         class="page">
-
-<h2>📦 Inventory</h2>
-
-<div class="cards">
-
-<div class="card">
-<div class="metric">Total Products</div>
-<strong id="inventoryProducts"
-        class="total">0</strong>
-</div>
-
-<div class="card">
-<div class="metric">Total Stock Units</div>
-<strong id="inventoryUnits"
-        class="total">0</strong>
-</div>
-
-<div class="card">
-<div class="metric">Stock Value</div>
-<strong id="inventoryValue"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Low Stock</div>
-<strong id="inventoryLow"
-        class="total">0</strong>
-</div>
-
-</div>
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-<tr>
-<th>Product</th>
-<th>SKU</th>
-<th>Stock</th>
-<th>Cost</th>
-<th>Value</th>
-<th>Status</th>
-</tr>
-</thead>
-
-<tbody id="inventoryTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- PURCHASE
-===================================================== -->
-
-<section id="page-purchases"
-         class="page">
-
-<h2>🧾 Purchase</h2>
-
-<div class="cards">
-
-<div class="card">
-<div class="metric">Total Purchase</div>
-<strong id="purchaseTotal"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Purchase Due</div>
-<strong id="purchaseDue"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Purchase Return</div>
-<strong id="purchaseReturn"
-        class="total">₦0.00</strong>
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h3>➕ Add Purchase</h3>
-
-<div class="toolbar">
-
-<select id="purchaseProduct">
-</select>
-
-<input id="purchaseQty"
-       type="number"
-       min="1"
-       placeholder="Quantity">
-
-<input id="purchaseCost"
-       type="number"
-       min="0"
-       placeholder="Cost">
-
-<input id="purchasePaid"
-       type="number"
-       min="0"
-       placeholder="Paid">
-
-</div>
-
-<button class="primary"
-        onclick="addPurchase()">
-➕ Add Purchase
-</button>
-
-</div>
-
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>Date</th>
-<th>Product</th>
-<th>Qty</th>
-<th>Total</th>
-<th>Paid</th>
-<th>Due</th>
-<th>Action</th>
-</tr>
-
-</thead>
-
-<tbody id="purchaseTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- STOCK ADJUSTMENT
-===================================================== -->
-
-<section id="page-adjustment"
-         class="page">
-
-<h2>🔄 Stock Adjustment</h2>
-
-<div class="card">
-
-<div class="toolbar">
-
-<select id="adjustProduct"></select>
-
-<select id="adjustType">
-
-<option value="add">
-➕ Add Stock
-</option>
-
-<option value="reduce">
-➖ Reduce Stock
-</option>
-
-</select>
-
-<input id="adjustQty"
-       type="number"
-       min="1"
-       placeholder="Quantity">
-
-<input id="adjustReason"
-       placeholder="Reason">
-
-<button class="primary"
-        onclick="adjustStock()">
-Save Adjustment
-</button>
-
-</div>
-
-</div>
-
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>Date</th>
-<th>Product</th>
-<th>Type</th>
-<th>Quantity</th>
-<th>Reason</th>
-</tr>
-
-</thead>
-
-<tbody id="adjustmentTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- SALES
-===================================================== -->
-
-<section id="page-sales"
-         class="page">
-
-<h2>💰 Sales</h2>
-
-<div class="card">
-
-<input id="salesSearch"
-       placeholder="🔎 Search invoice/customer"
-       oninput="renderSales()">
-
-</div>
-
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>Date</th>
-<th>Invoice</th>
-<th>Customer</th>
-<th>Total</th>
-<th>Paid</th>
-<th>Due</th>
-<th>Profit</th>
-<th>Action</th>
-</tr>
-
-</thead>
-
-<tbody id="salesTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- CUSTOMERS
-===================================================== -->
-
-<section id="page-customers"
-         class="page">
-
-<h2>👥 Customers</h2>
-
-<div class="card">
-
-<div class="toolbar">
-
-<input id="customerName"
-       placeholder="Name">
-
-<input id="customerPhone"
-       placeholder="Phone">
-
-<input id="customerAddress"
-       placeholder="Address">
-
-<button class="primary"
-        onclick="addCustomer()">
-➕ Add Customer
-</button>
-
-</div>
-
-</div>
-
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>Name</th>
-<th>Phone</th>
-<th>Address</th>
-<th>Purchases</th>
-<th>Action</th>
-</tr>
-
-</thead>
-
-<tbody id="customersTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- CONTACTS
-===================================================== -->
-
-<section id="page-contacts"
-         class="page">
-
-<h2>☎️ Contacts</h2>
-
-<div class="card">
-
-<div class="toolbar">
-
-<input id="contactName"
-       placeholder="Contact name">
-
-<input id="contactPhone"
-       placeholder="Phone">
-
-<input id="contactType"
-       placeholder="Type / Supplier / Customer">
-
-<button class="primary"
-        onclick="addContact()">
-➕ Add Contact
-</button>
-
-</div>
-
-</div>
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-<tr>
-<th>Name</th>
-<th>Phone</th>
-<th>Type</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="contactsTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- EXPENSES
-===================================================== -->
-
-<section id="page-expenses"
-         class="page">
-
-<h2>💸 Expenses</h2>
-
-<div class="card">
-
-<div class="toolbar">
-
-<input id="expenseName"
-       placeholder="Description">
-
-<input id="expenseCategory"
-       placeholder="Category">
-
-<input id="expenseAmount"
-       type="number"
-       placeholder="Amount">
-
-<button class="primary"
-        onclick="addExpense()">
-➕ Add Expense
-</button>
-
-</div>
-
-</div>
-
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>Date</th>
-<th>Description</th>
-<th>Category</th>
-<th>Amount</th>
-<th>Action</th>
-</tr>
-
-</thead>
-
-<tbody id="expensesTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- PROFIT & LOSS
-===================================================== -->
-
-<section id="page-profit"
-         class="page">
-
-<h2>📈 Profit & Loss</h2>
-
-<div class="cards">
-
-<div class="card">
-<div class="metric">Sales Revenue</div>
-<strong id="plSales"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Cost of Goods</div>
-<strong id="plCost"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Gross Profit</div>
-<strong id="plGross"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Expenses</div>
-<strong id="plExpense"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Net Profit</div>
-<strong id="plNet"
-        class="total">₦0.00</strong>
-</div>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- ACCOUNTING
-===================================================== -->
-
-<section id="page-accounting"
-         class="page">
-
-<h2>📚 Accounting / Ledger</h2>
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>Date</th>
-<th>Type</th>
-<th>Description</th>
-<th>Debit</th>
-<th>Credit</th>
-<th>Balance</th>
-</tr>
-
-</thead>
-
-<tbody id="ledgerTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- REPORTS
-===================================================== -->
-
-<section id="page-reports"
-         class="page">
-
-<h2>📊 Reports</h2>
-
-<div class="cards">
-
-<div class="card">
-<div class="metric">Sales</div>
-<strong id="reportSales"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Profit</div>
-<strong id="reportProfit"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Expenses</div>
-<strong id="reportExpenses"
-        class="total">₦0.00</strong>
-</div>
-
-<div class="card">
-<div class="metric">Due</div>
-<strong id="reportDue"
-        class="total">₦0.00</strong>
-</div>
-
-</div>
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-<tr>
-<th>Product</th>
-<th>Stock</th>
-<th>Status</th>
-</tr>
-</thead>
-
-<tbody id="stockReport"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- USER MANAGEMENT
-===================================================== -->
-
-<section id="page-users"
-         class="page">
-
-<h2>🧑‍💼 User Management</h2>
-
-<div class="card">
-
-<div class="toolbar">
-
-<input id="newUserName"
-       placeholder="Username">
-
-<input id="newUserPassword"
-       type="password"
-       placeholder="Password">
-
-<select id="newUserRole">
-
-<option value="cashier">
-Cashier
-</option>
-
-<option value="admin">
-Admin
-</option>
-
-</select>
-
-<button class="primary"
-        onclick="addUser()">
-➕ Add User
-</button>
-
-</div>
-
-</div>
-
-
-<div class="card table-wrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>User</th>
-<th>Role</th>
-<th>Permissions</th>
-<th>Action</th>
-</tr>
-
-</thead>
-
-<tbody id="usersTable"></tbody>
-
-</table>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- SETTINGS
-===================================================== -->
-
-<section id="page-settings"
-         class="page">
-
-<h2>⚙️ Settings</h2>
-
-
-<div class="card">
-
-<h3>🎨 Themes</h3>
-
-<div class="theme-grid">
-
-<button class="theme theme-blue"
-        onclick="setTheme('#173f75')">
-</button>
-
-<button class="theme theme-green"
-        onclick="setTheme('#006b3c')">
-</button>
-
-<button class="theme theme-maroon"
-        onclick="setTheme('#5b174b')">
-</button>
-
-<button class="theme theme-purple"
-        onclick="setTheme('#4b2375')">
-</button>
-
-<button class="theme theme-gold"
-        onclick="setTheme('#714500')">
-</button>
-
-<button class="theme theme-yellow"
-        onclick="setTheme('#655500')">
-</button>
-
-<button class="theme theme-chocolate"
-        onclick="setTheme('#4b2c20')">
-</button>
-
-<button class="theme theme-black"
-        onclick="setTheme('#000')">
-</button>
-
-</div>
-
-<br>
-
-<button class="primary"
-        onclick="toggleBlinking()">
-✨ Blinking Theme
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h3>🏪 Business Settings</h3>
-
-<label>Business Name</label>
-<input id="businessName">
-
-<label>Address</label>
-<input id="businessAddress">
-
-<label>Phone</label>
-<input id="businessPhone">
-
-<label>Logo URL</label>
-<input id="businessLogo">
-
-<label>Wallpaper URL</label>
-<input id="wallpaper">
-
-<label>Thank-you message</label>
-<input id="thankMessage">
-
-<button class="primary"
-        onclick="saveBusinessSettings()">
-Save Business Settings
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h3>🧾 Invoice Settings</h3>
-
-<label>Receipt Size</label>
-
-<select id="receiptSize">
-<option>58mm</option>
-<option>80mm</option>
-<option>A4</option>
-</select>
-
-<label>Invoice Prefix</label>
-<input id="invoicePrefix"
-       value="INV">
-
-<label>
-<input type="checkbox"
-       id="autoPrint"
-       style="width:auto">
-Auto Print
-</label>
-
-<button class="primary"
-        onclick="savePrintSettings()">
-Save Invoice Settings
-</button>
-
-<button class="small-btn"
-        onclick="testPrint()">
-🖨️ Test Print
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h3>🔎 Barcode Settings</h3>
-
-<label>Barcode Prefix</label>
-<input id="barcodePrefix"
-       value="DL">
-
-<button class="primary"
-        onclick="saveBarcodeSettings()">
-Save Barcode Settings
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h3>🖨️ Printer</h3>
-
-<button class="primary"
-        onclick="connectBluetoothPrinter()">
-📱 Connect Bluetooth Printer
-</button>
-
-<button class="small-btn"
-        onclick="testPrint()">
-Test Printer
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h3>💾 Backup / Restore</h3>
-
-<button class="primary"
-        onclick="backup()">
-⬇️ Backup
-</button>
-
-<br><br>
-
-<input type="file"
-       id="restoreFile"
-       accept=".json"
-       onchange="restoreBackup(event)">
-
-</div>
-
-
-<div class="card">
-
-<h3>🔐 Change Password</h3>
-
-<input id="changePasswordInput"
-       type="password"
-       placeholder="New password">
-
-<button class="primary"
-        onclick="changePassword()">
-Change Password
-</button>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
- VOICE
-===================================================== -->
-
-<section id="page-voice"
-         class="page">
-
-<h2>🎙️ Voice Control</h2>
-
-<div class="card">
-
-<p style="color:var(--muted)">
-Say commands such as:
-</p>
-
-<br>
-
-<ul style="line-height:2">
-
-<li>“Dashboard”</li>
-<li>“POS”</li>
-<li>“Products”</li>
-<li>“Inventory”</li>
-<li>“Sales”</li>
-<li>“Customers”</li>
-<li>“Purchase”</li>
-<li>“Reports”</li>
-<li>“Settings”</li>
-<li>“Back”</li>
-<li>“Clear Cart”</li>
-
-</ul>
-
-<br>
-
-<button class="primary"
-        onclick="startVoice()">
-🎙️ Start Voice Control
-</button>
-
-<div id="voiceResult"
-     style="margin-top:15px;color:var(--accent)">
-Voice ready.
-</div>
-
-</div>
-
-</section>
-
-</main>
-</div>
-
-
-<!-- =====================================================
- MOBILE NAV
-===================================================== -->
-
-<nav class="mobile-nav">
-
-<button data-mobile="dashboard"
-        onclick="go('dashboard')">
-🏠<br>Home
-</button>
-
-<button data-mobile="pos"
-        onclick="go('pos')">
-🛒<br>Sale
-</button>
-
-<button data-mobile="products"
-        onclick="go('products')">
-📦<br>Products
-</button>
-
-<button data-mobile="sales"
-        onclick="go('sales')">
-💰<br>Sales
-</button>
-
-<button data-mobile="settings"
-        onclick="go('settings')">
-⚙️<br>Settings
-</button>
-
-</nav>
-
-</section>
-
+<!-- MODAL -->
+<div class="modal hidden" id="modal">
+ <div class="modal-box">
+  <div class="modal-head">
+   <h3 id="modalTitle">Form</h3>
+   <button class="close" onclick="closeModal()">✕</button>
+  </div>
+  <div id="modalBody"></div>
+ </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
 
 <script>
-
 /* =========================================================
-   DATABASE
+   DLIMANS SUPERMARKET POS
+   SINGLE FILE / GITHUB PAGES / OFFLINE
 ========================================================= */
 
-let products =
-JSON.parse(
-localStorage.getItem("dl_products") || "[]"
-);
-
-let sales =
-JSON.parse(
-localStorage.getItem("dl_sales") || "[]"
-);
-
-let customers =
-JSON.parse(
-localStorage.getItem("dl_customers") || "[]"
-);
-
-let expenses =
-JSON.parse(
-localStorage.getItem("dl_expenses") || "[]"
-);
-
-let purchases =
-JSON.parse(
-localStorage.getItem("dl_purchases") || "[]"
-);
-
-let adjustments =
-JSON.parse(
-localStorage.getItem("dl_adjustments") || "[]"
-);
-
-let contacts =
-JSON.parse(
-localStorage.getItem("dl_contacts") || "[]"
-);
-
-let users =
-JSON.parse(
-localStorage.getItem("dl_users") || "[]"
-);
-
+const DB_KEY="DLIMANS_POS_DATABASE_V3";
+const LOGIN_KEY="DLIMANS_LOGIN";
+let db;
+let currentUser=null;
+let currentPage="dashboard";
+let historyPages=[];
 let cart=[];
+let editingProductId=null;
 
+const defaultDB={
+ users:[
+  {id:"u1",username:"admin",password:"admin123",role:"Admin"},
+  {id:"u2",username:"cashier",password:"1234",role:"Cashier"}
+ ],
+ products:[
+  {id:"p1",name:"Rice 50kg",sku:"RICE50",cost:65000,price:72000,stock:20,min:3,image:""},
+  {id:"p2",name:"Cooking Oil",sku:"OIL001",cost:12000,price:14500,stock:30,min:5,image:""},
+  {id:"p3",name:"Milo",sku:"MILO001",cost:5000,price:6500,stock:25,min:5,image:""},
+  {id:"p4",name:"Bottled Water",sku:"WATER001",cost:250,price:400,stock:100,min:15,image:""},
+  {id:"p5",name:"Detergent",sku:"DET001",cost:3000,price:4200,stock:18,min:4,image:""}
+ ],
+ sales:[],
+ purchases:[],
+ customers:[],
+ expenses:[],
+ settings:{
+  business:"Dlimans Supermarket",
+  phone:"08063756515",
+  address:"",
+  currency:"₦",
+  thanks:"Thank you for shopping with Dlimans Supermarket!",
+  logo:"",
+  theme:"blue"
+ }
+};
 
-/* =========================================================
- MONEY
-========================================================= */
-
-const money = n =>
-"₦" +
-Number(n || 0).toLocaleString(
-"en-NG",
-{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-}
-);
-
-
-/* =========================================================
- STORAGE
-========================================================= */
-
-function save(){
-
-localStorage.setItem(
-"dl_products",
-JSON.stringify(products)
-);
-
-localStorage.setItem(
-"dl_sales",
-JSON.stringify(sales)
-);
-
-localStorage.setItem(
-"dl_customers",
-JSON.stringify(customers)
-);
-
-localStorage.setItem(
-"dl_expenses",
-JSON.stringify(expenses)
-);
-
-localStorage.setItem(
-"dl_purchases",
-JSON.stringify(purchases)
-);
-
-localStorage.setItem(
-"dl_adjustments",
-JSON.stringify(adjustments)
-);
-
-localStorage.setItem(
-"dl_contacts",
-JSON.stringify(contacts)
-);
-
-localStorage.setItem(
-"dl_users",
-JSON.stringify(users)
-);
-
+function loadDB(){
+ try{
+  const raw=localStorage.getItem(DB_KEY);
+  db=raw?JSON.parse(raw):structuredClone(defaultDB);
+ }catch(e){
+  db=structuredClone(defaultDB);
+ }
+ if(!db.users)db.users=defaultDB.users;
+ if(!db.products)db.products=[];
+ if(!db.sales)db.sales=[];
+ if(!db.purchases)db.purchases=[];
+ if(!db.customers)db.customers=[];
+ if(!db.expenses)db.expenses=[];
+ if(!db.settings)db.settings=structuredClone(defaultDB.settings);
+ saveDB();
 }
 
+function saveDB(){
+ localStorage.setItem(DB_KEY,JSON.stringify(db));
+}
 
-/* =========================================================
- LOGIN
-========================================================= */
+function money(n){
+ return (db.settings.currency||"₦")+" "+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
 
+function id(prefix){
+ return prefix+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
+}
+
+function today(){
+ return new Date().toISOString().slice(0,10);
+}
+
+function dateTime(){
+ return new Date().toLocaleString();
+}
+
+function toast(msg){
+ const el=document.getElementById("toast");
+ el.textContent=msg;
+ el.classList.remove("hidden");
+ clearTimeout(window.toastTimer);
+ window.toastTimer=setTimeout(()=>el.classList.add("hidden"),2500);
+}
+
+function isAdmin(){
+ return currentUser && currentUser.role==="Admin";
+}
+
+/* LOGIN */
 function login(){
+ const u=document.getElementById("loginUser").value.trim();
+ const p=document.getElementById("loginPass").value;
+ const found=db.users.find(x=>x.username===u&&x.password===p);
 
-const u=
-document.getElementById("username")
-.value.trim();
+ if(!found){
+  document.getElementById("loginError").textContent="Invalid username or password";
+  return;
+ }
 
-const p=
-document.getElementById("password")
-.value;
+ currentUser={id:found.id,username:found.username,role:found.role};
 
-const r=
-document.getElementById("role")
-.value;
+ if(document.getElementById("rememberLogin").checked){
+  localStorage.setItem(LOGIN_KEY,JSON.stringify({username:u,password:p}));
+ }else{
+  localStorage.removeItem(LOGIN_KEY);
+ }
 
-const msg=
-document.getElementById("loginMessage");
-
-
-if(!u || !p){
-
-msg.innerText=
-"Enter username and password.";
-
-return;
-
+ openApp();
 }
-
-
-if(r==="admin"){
-
-if(u!=="admin"){
-
-msg.innerText=
-"Invalid Admin username.";
-
-return;
-
-}
-
-if(
-p !==
-(
-localStorage.getItem(
-"dl_admin_password"
-) || "1234"
-)
-){
-
-msg.innerText=
-"Incorrect Admin password.";
-
-return;
-
-}
-
-}
-
-
-if(r==="cashier"){
-
-let cashier=
-users.find(
-x =>
-x.username===u &&
-x.role==="cashier"
-);
-
-if(!cashier){
-
-if(
-u!=="cashier" ||
-p!=="1234"
-){
-
-msg.innerText=
-"Invalid cashier login.";
-
-return;
-
-}
-
-}
-
-else if(cashier.password!==p){
-
-msg.innerText=
-"Incorrect password.";
-
-return;
-
-}
-
-}
-
-
-localStorage.setItem(
-"dl_session",
-JSON.stringify({
-username:u,
-role:r,
-loggedIn:true
-})
-);
-
-
-if(
-document.getElementById("remember").checked
-){
-
-localStorage.setItem(
-"dl_remember",
-"true"
-);
-
-}
-
-
-openApp();
-
-}
-
 
 function openApp(){
+ document.getElementById("loginScreen").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+ document.getElementById("userBadge").textContent=currentUser.username+" • "+currentUser.role;
 
-document.getElementById(
-"loginScreen"
-).style.display="none";
-
-document.getElementById(
-"app"
-).style.display="block";
-
-
-let session=
-JSON.parse(
-localStorage.getItem(
-"dl_session"
-) || "{}"
-);
-
-
-document.getElementById(
-"headerUser"
-).innerText=
-session.username+
-" • "+
-session.role;
-
-
-document.getElementById(
-"welcomeText"
-).innerText=
-"Good day, "+
-session.username+" 👋";
-
-
-refreshAll();
-
-go("dashboard",false);
-
+ if(!isAdmin()){
+  document.querySelectorAll('[data-page="users"]').forEach(x=>x.style.display="none");
+ }
+ showPage("dashboard",false);
+ refreshAll();
 }
 
-
-/* =========================================================
- NAVIGATION
-========================================================= */
-
-let pageHistory=[];
-
-function go(page,add=true){
-
-const target=
-document.getElementById(
-"page-"+page
-);
-
-if(!target)return;
-
-
-document.querySelectorAll(
-".page"
-).forEach(
-x=>x.classList.remove("active")
-);
-
-target.classList.add("active");
-
-
-document.querySelectorAll(
-".side-btn[data-page]"
-).forEach(
-x=>x.classList.remove("active")
-);
-
-
-let active=
-document.querySelector(
-'.side-btn[data-page="'+
-page+'"]'
-);
-
-if(active)
-active.classList.add("active");
-
-
-document.querySelectorAll(
-".mobile-nav button"
-).forEach(
-x=>x.classList.remove("active")
-);
-
-
-let mobile=
-document.querySelector(
-'.mobile-nav button[data-mobile="'+
-page+'"]'
-);
-
-if(mobile)
-mobile.classList.add("active");
-
-
-if(
-pageHistory[
-pageHistory.length-1
-]!==page
-){
-
-pageHistory.push(page);
-
+function logout(){
+ if(!confirm("Logout from Dlimans POS?"))return;
+ currentUser=null;
+ document.getElementById("app").classList.add("hidden");
+ document.getElementById("loginScreen").classList.remove("hidden");
 }
 
-
-if(
-window.innerWidth<=950
-){
-
-document.getElementById(
-"sidebar"
-).classList.remove("open");
-
+function autoLogin(){
+ const saved=localStorage.getItem(LOGIN_KEY);
+ if(!saved)return;
+ try{
+  const x=JSON.parse(saved);
+  document.getElementById("loginUser").value=x.username||"";
+  document.getElementById("loginPass").value=x.password||"";
+  document.getElementById("rememberLogin").checked=true;
+ }catch(e){}
 }
 
-
-refreshAll();
-
-}
-
-
-function appBack(){
-
-if(pageHistory.length>1){
-
-pageHistory.pop();
-
-let previous=
-pageHistory[
-pageHistory.length-1
-];
-
-go(previous,false);
-
-}else{
-
-go("dashboard",false);
-
-}
-
-}
-
-
+/* NAVIGATION */
 function toggleSidebar(){
-
-document.getElementById(
-"sidebar"
-).classList.toggle("open");
-
+ document.getElementById("sidebar").classList.toggle("open");
 }
 
+function showPage(page,push=true){
+ if(push && currentPage!==page)historyPages.push(currentPage);
+ currentPage=page;
 
-/* =========================================================
- PRODUCT
-========================================================= */
+ document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+ const target=document.getElementById("page-"+page);
+ if(target)target.classList.add("active");
 
-function addProduct(){
+ document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));
+ const nav=document.querySelector('.nav[data-page="'+page+'"]');
+ if(nav)nav.classList.add("active");
 
-let name=
-document.getElementById(
-"productName"
-).value.trim();
+ document.getElementById("sidebar").classList.remove("open");
 
-let sku=
-document.getElementById(
-"productSKU"
-).value.trim();
-
-let cost=
-Number(
-document.getElementById(
-"productCost"
-).value
-);
-
-let price=
-Number(
-document.getElementById(
-"productPrice"
-).value
-);
-
-let stock=
-Number(
-document.getElementById(
-"productStock"
-).value
-);
-
-let low=
-Number(
-document.getElementById(
-"productLow"
-).value
-)||5;
-
-let image=
-document.getElementById(
-"productImage"
-).value.trim();
-
-
-if(!name || price<=0){
-
-alert(
-"Enter product name and valid price."
-);
-
-return;
-
+ refreshPage(page);
 }
 
-
-if(
-products.some(
-p =>
-p.sku &&
-sku &&
-p.sku.toLowerCase()===sku.toLowerCase()
-)
-){
-
-alert("SKU already exists.");
-
-return;
-
+function goBack(){
+ if(historyPages.length){
+  const p=historyPages.pop();
+  showPage(p,false);
+ }else{
+  showPage("dashboard",false);
+ }
 }
 
-
-products.push({
-
-id:Date.now(),
-
-name,
-sku,
-cost,
-price,
-stock,
-low,
-image
-
-});
-
-
-save();
-
-clearProductForm();
-
-refreshAll();
-
-alert(
-"Product added successfully."
-);
-
+function refreshPage(page){
+ if(page==="dashboard")renderDashboard();
+ if(page==="pos"){renderPOSProducts();updateCart()}
+ if(page==="products")renderProducts();
+ if(page==="inventory")renderInventory();
+ if(page==="purchases")renderPurchases();
+ if(page==="sales")renderSales();
+ if(page==="customers")renderCustomers();
+ if(page==="expenses")renderExpenses();
+ if(page==="reports")renderReports();
+ if(page==="users")renderUsers();
+ if(page==="settings")loadSettings();
 }
 
+/* DASHBOARD */
+function renderDashboard(){
+ const sales=db.sales.filter(s=>s.status!=="Deleted");
+ const total=sales.reduce((a,s)=>a+s.total,0);
+ const profit=sales.reduce((a,s)=>a+(s.profit||0),0);
+ const purchases=db.purchases.reduce((a,p)=>a+p.total,0);
+ const expenses=db.expenses.reduce((a,e)=>a+e.amount,0);
+ const low=db.products.filter(p=>p.stock<=p.min).length;
+ const todaySales=sales.filter(s=>s.date.slice(0,10)===today()).reduce((a,s)=>a+s.total,0);
 
-function clearProductForm(){
+ document.getElementById("dashSales").textContent=money(total);
+ document.getElementById("dashProfit").textContent=money(profit-expenses);
+ document.getElementById("dashProducts").textContent=db.products.length;
+ document.getElementById("dashLow").textContent=low;
+ document.getElementById("dashPurchase").textContent=money(purchases);
+ document.getElementById("dashExpense").textContent=money(expenses);
+ document.getElementById("dashCustomers").textContent=db.customers.length;
+ document.getElementById("dashToday").textContent=money(todaySales);
 
-[
-"productName",
-"productSKU",
-"productCost",
-"productPrice",
-"productStock",
-"productImage"
-].forEach(
-id =>
-document.getElementById(id).value=""
-);
+ const recent=sales.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,7);
+ document.getElementById("recentSales").innerHTML=recent.length?
+ recent.map(s=>`
+  <div class="statline">
+   <span>${escapeHTML(s.invoice)}<br><small>${escapeHTML(s.customer||"Walk-in")}</small></span>
+   <strong>${money(s.total)}</strong>
+  </div>`).join(""):
+  '<div class="empty">No sales yet</div>';
 
-document.getElementById(
-"productLow"
-).value=5;
-
+ drawChart();
 }
 
+function drawChart(){
+ const canvas=document.getElementById("salesChart");
+ if(!canvas)return;
+ const box=canvas.parentElement;
+ const ratio=window.devicePixelRatio||1;
+ canvas.width=box.clientWidth*ratio;
+ canvas.height=box.clientHeight*ratio;
+ const ctx=canvas.getContext("2d");
+ ctx.scale(ratio,ratio);
 
-/* =========================================================
- POS
-========================================================= */
+ const w=box.clientWidth,h=box.clientHeight;
+ ctx.clearRect(0,0,w,h);
 
-function renderPOS(){
+ const values=[];
+ for(let i=29;i>=0;i--){
+  const d=new Date();
+  d.setDate(d.getDate()-i);
+  const ds=d.toISOString().slice(0,10);
+  values.push(db.sales.filter(s=>s.status!=="Deleted"&&s.date.slice(0,10)===ds)
+    .reduce((a,s)=>a+s.total,0));
+ }
 
-let q=
-(
-document.getElementById(
-"productSearch"
-)?.value || ""
-).toLowerCase();
+ const max=Math.max(...values,1);
+ const pad=28;
+ const cw=(w-pad*2)/(values.length-1);
 
+ ctx.strokeStyle="#33445d";
+ ctx.lineWidth=1;
 
-let list=
-products.filter(
-p =>
-p.name.toLowerCase().includes(q) ||
-(p.sku||"")
-.toLowerCase()
-.includes(q)
-);
+ for(let i=0;i<4;i++){
+  const y=pad+(h-pad*2)*(i/3);
+  ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke();
+ }
 
+ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue("--accent");
+ ctx.lineWidth=3;
+ ctx.beginPath();
 
-document.getElementById(
-"productGrid"
-).innerHTML=
-list.map(
-p=>`
+ values.forEach((v,i)=>{
+  const x=pad+i*cw;
+  const y=h-pad-(v/max)*(h-pad*2);
+  if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+ });
+ ctx.stroke();
 
-<button class="product-btn"
-onclick="addToCart(${p.id})">
-
-${
-p.image
-?
-`<img src="${escapeHTML(p.image)}"
-style="
-width:60px;
-height:60px;
-object-fit:cover;
-border-radius:9px
-">`
-:
-"📦"
+ values.forEach((v,i)=>{
+  const x=pad+i*cw;
+  const y=h-pad-(v/max)*(h-pad*2);
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue("--accent");
+  ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+ });
 }
 
-<br>
+/* POS */
+function renderPOSProducts(){
+ const q=(document.getElementById("posSearch")?.value||"").toLowerCase();
+ const list=db.products.filter(p=>
+  p.name.toLowerCase().includes(q)||
+  p.sku.toLowerCase().includes(q)
+ );
 
-<strong>
-${escapeHTML(p.name)}
-</strong>
-
-<br>
-
-${money(p.price)}
-
-<br>
-
-<small>
-Stock: ${p.stock}
-</small>
-
-</button>
-
-`
-).join("")
-||
-"<p>No products found.</p>";
-
-
-renderCustomerSelect();
-
-renderCart();
-
+ document.getElementById("posProducts").innerHTML=list.length?
+ list.map(p=>`
+  <div class="product-card" onclick="addToCart('${p.id}')">
+   ${p.image?
+    `<img class="product-img" src="${p.image}">`:
+    `<div class="product-img placeholder">📦</div>`}
+   <div class="name">${escapeHTML(p.name)}</div>
+   <div class="price">${money(p.price)}</div>
+   <div class="stock">Stock: ${p.stock}</div>
+  </div>`).join(""):
+ '<div class="empty">No product found</div>';
 }
 
+function addToCart(pid){
+ const p=db.products.find(x=>x.id===pid);
+ if(!p)return;
 
-function addToCart(id){
+ const existing=cart.find(x=>x.id===pid);
 
-let p=
-products.find(
-x=>x.id===id
-);
-
-if(!p || p.stock<=0){
-
-alert("Out of stock.");
-
-return;
-
+ if(existing){
+  if(existing.qty>=p.stock){
+   toast("Not enough stock");
+   return;
+  }
+  existing.qty++;
+ }else{
+  if(p.stock<=0){
+   toast("Product is out of stock");
+   return;
+  }
+  cart.push({id:p.id,qty:1});
+ }
+ updateCart();
 }
 
+function updateCart(){
+ const box=document.getElementById("cart");
+ if(!cart.length){
+  box.innerHTML='<div class="empty">Cart is empty</div>';
+  document.getElementById("cartTotal").textContent=money(0);
+  document.getElementById("cartPaid").textContent=money(0);
+  document.getElementById("cartDue").textContent=money(0);
+  return;
+ }
 
-let item=
-cart.find(
-x=>x.id===id
-);
+ let total=0;
 
+ box.innerHTML=cart.map((item,i)=>{
+  const p=db.products.find(x=>x.id===item.id);
+  if(!p)return "";
+  const sub=p.price*item.qty;
+  total+=sub;
 
-if(item){
+  return `
+   <div class="cart-row">
+    <div>
+     <strong>${escapeHTML(p.name)}</strong><br>
+     <small>${money(p.price)}</small>
+    </div>
+    <input type="number" min="1" max="${p.stock}" value="${item.qty}"
+      onchange="changeCartQty(${i},this.value)">
+    <strong>${money(sub)}</strong>
+    <button class="btn danger small" onclick="removeCart(${i})">×</button>
+   </div>`;
+ }).join("");
 
-if(item.qty>=p.stock){
+ const paid=Number(document.getElementById("salePaid").value||0);
+ const due=Math.max(total-paid,0);
 
-alert("Not enough stock.");
-
-return;
-
+ document.getElementById("cartTotal").textContent=money(total);
+ document.getElementById("cartPaid").textContent=money(Math.min(paid,total));
+ document.getElementById("cartDue").textContent=money(due);
 }
 
-item.qty++;
-
-}else{
-
-cart.push({
-id:p.id,
-qty:1
-});
-
+function changeCartQty(i,v){
+ const item=cart[i];
+ const p=db.products.find(x=>x.id===item.id);
+ let q=Math.floor(Number(v));
+ if(!q||q<1)q=1;
+ if(q>p.stock)q=p.stock;
+ item.qty=q;
+ updateCart();
 }
 
-
-renderCart();
-
+function removeCart(i){
+ cart.splice(i,1);
+ updateCart();
 }
-
-
-function changeQty(id,n){
-
-let item=
-cart.find(
-x=>x.id===id
-);
-
-let p=
-products.find(
-x=>x.id===id
-);
-
-if(!item || !p)return;
-
-
-item.qty+=n;
-
-
-if(item.qty<=0){
-
-cart=
-cart.filter(
-x=>x.id!==id
-);
-
-}
-
-
-if(item && item.qty>p.stock){
-
-item.qty=p.stock;
-
-}
-
-
-renderCart();
-
-}
-
-
-function removeCart(id){
-
-cart=
-cart.filter(
-x=>x.id!==id
-);
-
-renderCart();
-
-}
-
 
 function clearCart(){
-
-cart=[];
-
-document.getElementById(
-"saleNote"
-).value="";
-
-document.getElementById(
-"saleDiscount"
-).value=0;
-
-document.getElementById(
-"amountPaid"
-).value=0;
-
-renderCart();
-
+ if(!cart.length)return;
+ if(confirm("Clear current cart?")){
+  cart=[];
+  document.getElementById("salePaid").value="";
+  document.getElementById("saleCustomer").value="";
+  document.getElementById("saleNote").value="";
+  updateCart();
+ }
 }
-
-
-function calculateCart(){
-
-let subtotal=
-cart.reduce(
-(sum,i)=>{
-
-let p=
-products.find(
-x=>x.id===i.id
-);
-
-return sum+
-(
-p
-?
-p.price*i.qty
-:
-0
-);
-
-},
-0
-);
-
-
-let discount=
-Number(
-document.getElementById(
-"saleDiscount"
-).value
-)||0;
-
-
-let total=
-Math.max(
-0,
-subtotal-discount
-);
-
-
-let paid=
-Number(
-document.getElementById(
-"amountPaid"
-).value
-)||0;
-
-
-let due=
-Math.max(
-0,
-total-paid
-);
-
-
-return{
-subtotal,
-discount,
-total,
-paid,
-due
-};
-
-}
-
-
-function renderCart(){
-
-let box=
-document.getElementById(
-"cart"
-);
-
-if(!box)return;
-
-
-box.innerHTML=
-cart.map(
-i=>{
-
-let p=
-products.find(
-x=>x.id===i.id
-);
-
-if(!p)return"";
-
-
-return`
-
-<div class="cart-row">
-
-<div style="flex:1">
-
-<strong>
-${escapeHTML(p.name)}
-</strong>
-
-<br>
-
-<small>
-${money(p.price)}
-×
-${i.qty}
-</small>
-
-</div>
-
-
-<div class="qty-controls">
-
-<button class="small-btn"
-onclick="changeQty(${p.id},-1)">
-−
-</button>
-
-<strong>
-${i.qty}
-</strong>
-
-<button class="small-btn"
-onclick="changeQty(${p.id},1)">
-+
-</button>
-
-<button class="small-btn danger"
-onclick="removeCart(${p.id})">
-×
-</button>
-
-</div>
-
-</div>
-
-`;
-
-}
-).join("")
-||
-"<p style='color:#999'>
-Cart is empty.
-</p>";
-
-
-updateTotals();
-
-}
-
-
-function updateTotals(){
-
-let t=
-calculateCart();
-
-
-document.getElementById(
-"cartSubtotal"
-).innerText=
-money(t.subtotal);
-
-document.getElementById(
-"cartDiscount"
-).innerText=
-money(t.discount);
-
-document.getElementById(
-"cartTotal"
-).innerText=
-money(t.total);
-
-document.getElementById(
-"cartPaid"
-).innerText=
-money(t.paid);
-
-document.getElementById(
-"cartDue"
-).innerText=
-money(t.due);
-
-}
-
-
-/* =========================================================
- SALE CHECK
-========================================================= */
-
-function checkSaleBeforeComplete(){
-
-if(!cart.length){
-
-alert("Cart is empty.");
-
-return;
-
-}
-
-
-let t=
-calculateCart();
-
-
-let problems=[];
-
-
-cart.forEach(
-i=>{
-
-let p=
-products.find(
-x=>x.id===i.id
-);
-
-if(!p){
-
-problems.push(
-"Product missing."
-);
-
-return;
-
-}
-
-if(i.qty>p.stock){
-
-problems.push(
-p.name+
-": insufficient stock."
-);
-
-}
-
-}
-);
-
-
-if(t.total<=0){
-
-problems.push(
-"Sale total must be greater than zero."
-);
-
-}
-
-
-if(problems.length){
-
-alert(
-"⚠️ SALE CHECK FAILED\n\n"+
-problems.join("\n")
-);
-
-return;
-
-}
-
-
-alert(
-"✅ SALE CHECK PASSED\n\n"+
-"Items: "+cart.length+
-"\nSubtotal: "+money(t.subtotal)+
-"\nDiscount: "+money(t.discount)+
-"\nTotal: "+money(t.total)+
-"\nPaid: "+money(t.paid)+
-"\nDue: "+money(t.due)
-);
-
-}
-
-
-/* =========================================================
- COMPLETE SALE
-========================================================= */
 
 function completeSale(){
+ if(!cart.length){
+  toast("Cart is empty");
+  return;
+ }
 
-if(!cart.length){
+ let total=0;
+ let profit=0;
 
-alert("Cart is empty.");
+ const items=cart.map(item=>{
+  const p=db.products.find(x=>x.id===item.id);
+  if(!p||item.qty>p.stock)throw new Error("Insufficient stock");
+  const subtotal=p.price*item.qty;
+  total+=subtotal;
+  profit+=(p.price-p.cost)*item.qty;
+  return {
+   productId:p.id,name:p.name,sku:p.sku,
+   qty:item.qty,price:p.price,cost:p.cost,subtotal
+  };
+ });
 
-return;
+ const paid=Math.min(Number(document.getElementById("salePaid").value||0),total);
 
+ const sale={
+  id:id("sale"),
+  invoice:"INV-"+Date.now().toString().slice(-8),
+  date:new Date().toISOString(),
+  createdAt:Date.now(),
+  customer:document.getElementById("saleCustomer").value.trim()||"Walk-in Customer",
+  payment:document.getElementById("salePayment").value,
+  total,
+  paid,
+  due:Math.max(total-paid,0),
+  profit,
+  note:document.getElementById("saleNote").value.trim(),
+  status:"Completed",
+  cashier:currentUser.username,
+  items
+ };
+
+ items.forEach(item=>{
+  const p=db.products.find(x=>x.id===item.productId);
+  p.stock-=item.qty;
+ });
+
+ db.sales.push(sale);
+ saveDB();
+
+ cart=[];
+ document.getElementById("salePaid").value="";
+ document.getElementById("saleCustomer").value="";
+ document.getElementById("saleNote").value="";
+
+ updateCart();
+ refreshAll();
+ toast("Sale completed: "+sale.invoice);
+
+ if(confirm("Sale completed. Print receipt now?")){
+  printReceipt(sale.id);
+ }
 }
 
+/* PRODUCTS */
+function renderProducts(){
+ const q=(document.getElementById("productSearch")?.value||"").toLowerCase();
+ const list=db.products.filter(p=>
+  p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)
+ );
 
-let t=
-calculateCart();
-
-
-if(t.total<=0){
-
-alert("Invalid sale total.");
-
-return;
-
+ document.getElementById("productsTable").innerHTML=list.length?
+ list.map(p=>`
+ <tr>
+  <td>${p.image?`<img src="${p.image}" style="width:42px;height:42px;object-fit:cover;border-radius:6px">`:"📦"}</td>
+  <td><strong>${escapeHTML(p.name)}</strong></td>
+  <td>${escapeHTML(p.sku)}</td>
+  <td>${money(p.cost)}</td>
+  <td>${money(p.price)}</td>
+  <td>${p.stock}</td>
+  <td>
+   <button class="btn small" onclick="openProductModal('${p.id}')">Edit</button>
+   ${isAdmin()?`<button class="btn danger small" onclick="deleteProduct('${p.id}')">Delete</button>`:""}
+  </td>
+ </tr>`).join(""):
+ '<tr><td colspan="7" class="empty">No products</td></tr>';
 }
 
+function openProductModal(pid=""){
+ editingProductId=pid;
+ const p=pid?db.products.find(x=>x.id===pid):{
+  name:"",sku:"",cost:"",price:"",stock:"",min:5,image:""
+ };
 
-let method=
-document.getElementById(
-"paymentMethod"
-).value;
+ document.getElementById("modalTitle").textContent=pid?"Edit Product":"Add Product";
 
+ document.getElementById("modalBody").innerHTML=`
+ <div class="form-grid">
+  <div class="form-group"><label>Product Name</label><input id="mName" value="${attr(p.name)}"></div>
+  <div class="form-group"><label>SKU / Barcode</label><input id="mSku" value="${attr(p.sku)}"></div>
+  <div class="form-group"><label>Cost Price</label><input id="mCost" type="number" value="${p.cost}"></div>
+  <div class="form-group"><label>Selling Price</label><input id="mPrice" type="number" value="${p.price}"></div>
+  <div class="form-group"><label>Stock</label><input id="mStock" type="number" value="${p.stock}"></div>
+  <div class="form-group"><label>Low Stock Alert</label><input id="mMin" type="number" value="${p.min||5}"></div>
+  <div class="form-group fullcol"><label>Product Image</label><input id="mImage" type="file" accept="image/*"></div>
+ </div>
+ <button class="btn full" style="margin-top:14px" onclick="saveProduct()">Save Product</button>`;
 
-if(
-method!=="Credit / Due" &&
-t.paid<t.total
-){
-
-alert(
-"Paid amount is less than total.\n"+
-"Use Credit / Due if customer owes."
-);
-
-return;
-
+ openModal();
 }
 
+function saveProduct(){
+ const name=document.getElementById("mName").value.trim();
+ const sku=document.getElementById("mSku").value.trim();
 
-let customerId=
-document.getElementById(
-"saleCustomerSelect"
-).value;
+ if(!name||!sku){
+  toast("Product name and SKU are required");
+  return;
+ }
 
+ const duplicate=db.products.find(p=>p.sku.toLowerCase()===sku.toLowerCase()&&p.id!==editingProductId);
+ if(duplicate){
+  toast("SKU already exists");
+  return;
+ }
 
-let customer=
-customers.find(
-c =>
-String(c.id)===
-String(customerId)
-);
+ const finish=image=>{
+  const obj={
+   name,sku,
+   cost:Number(document.getElementById("mCost").value||0),
+   price:Number(document.getElementById("mPrice").value||0),
+   stock:Number(document.getElementById("mStock").value||0),
+   min:Number(document.getElementById("mMin").value||5),
+   image:image||""
+  };
 
+  if(editingProductId){
+   const index=db.products.findIndex(p=>p.id===editingProductId);
+   if(index>=0){
+    obj.id=editingProductId;
+    if(!obj.image)obj.image=db.products[index].image||"";
+    db.products[index]=obj;
+   }
+  }else{
+   obj.id=id("product");
+   db.products.push(obj);
+  }
 
-let profit=0;
+  saveDB();
+  closeModal();
+  refreshAll();
+  toast("Product saved");
+ };
 
-
-let items=
-cart.map(
-i=>{
-
-let p=
-products.find(
-x=>x.id===i.id
-);
-
-
-profit+=
-(p.price-p.cost)*i.qty;
-
-
-return{
-
-productId:p.id,
-product:p.name,
-sku:p.sku,
-qty:i.qty,
-price:p.price,
-cost:p.cost
-
-};
-
-}
-);
-
-
-items.forEach(
-i=>{
-
-let p=
-products.find(
-x=>x.id===i.productId
-);
-
-if(p)
-p.stock-=i.qty;
-
-}
-);
-
-
-let prefix=
-localStorage.getItem(
-"dl_invoice_prefix"
-)||"INV";
-
-
-let sale={
-
-id:Date.now(),
-
-invoice:
-prefix+
-"-"+
-Date.now()
-.toString()
-.slice(-7),
-
-date:
-new Date()
-.toISOString(),
-
-customerId:
-customerId||"",
-
-customer:
-customer
-?
-customer.name
-:
-"Walk-in Customer",
-
-note:
-document.getElementById(
-"saleNote"
-).value,
-
-items,
-
-subtotal:t.subtotal,
-discount:t.discount,
-total:t.total,
-paid:t.paid,
-due:t.due,
-payment:method,
-profit
-
-};
-
-
-sales.unshift(sale);
-
-save();
-
-clearCart();
-
-refreshAll();
-
-alert(
-"Sale completed successfully.\n\n"+
-sale.invoice
-);
-
-go("sales");
-
+ const file=document.getElementById("mImage").files[0];
+ if(file){
+  const reader=new FileReader();
+  reader.onload=()=>finish(reader.result);
+  reader.readAsDataURL(file);
+ }else{
+  finish("");
+ }
 }
 
+function deleteProduct(pid){
+ if(!isAdmin()){
+  toast("Admin only");
+  return;
+ }
+ const p=db.products.find(x=>x.id===pid);
+ if(!p)return;
 
-/* =========================================================
- DELETE / CANCEL SALE
-========================================================= */
-
-function cancelSavedSale(id){
-
-let s=
-sales.find(
-x=>x.id===id
-);
-
-if(!s)return;
-
-
-if(
-!confirm(
-"Cancel this sale?\n"+
-"Stock will be restored."
-)
-)return;
-
-
-s.items.forEach(
-i=>{
-
-let p=
-products.find(
-x=>x.id===i.productId
-);
-
-if(p)
-p.stock+=i.qty;
-
-}
-);
-
-
-sales=
-sales.filter(
-x=>x.id!==id
-);
-
-save();
-
-refreshAll();
-
+ if(confirm("Delete "+p.name+" permanently?")){
+  db.products=db.products.filter(x=>x.id!==pid);
+  saveDB();
+  refreshAll();
+  toast("Product deleted");
+ }
 }
 
-
-function permanentDeleteSale(id){
-
-let s=
-sales.find(
-x=>x.id===id
-);
-
-if(!s)return;
-
-
-if(
-!confirm(
-"PERMANENT DELETE?\n\n"+
-"This will remove the sale completely."
-)
-)return;
-
-
-sales=
-sales.filter(
-x=>x.id!==id
-);
-
-save();
-
-refreshAll();
-
+/* INVENTORY */
+function renderInventory(){
+ document.getElementById("inventoryTable").innerHTML=db.products.map(p=>{
+  const low=p.stock<=p.min;
+  return `<tr>
+   <td>${escapeHTML(p.name)}</td>
+   <td>${escapeHTML(p.sku)}</td>
+   <td><strong>${p.stock}</strong></td>
+   <td>${money(p.stock*p.cost)}</td>
+   <td>${money(p.stock*p.price)}</td>
+   <td><span class="badge ${low?"red":"green"}">${low?"Low Stock":"Good"}</span></td>
+  </tr>`;
+ }).join("");
 }
 
+function stockAdjustment(){
+ if(!isAdmin()){
+  toast("Admin only");
+  return;
+ }
 
-/* =========================================================
- EXPENSE
-========================================================= */
+ const options=db.products.map(p=>`<option value="${p.id}">${escapeHTML(p.name)} (${p.stock})</option>`).join("");
 
-function addExpense(){
-
-let name=
-document.getElementById(
-"expenseName"
-).value.trim();
-
-let category=
-document.getElementById(
-"expenseCategory"
-).value.trim();
-
-let amount=
-Number(
-document.getElementById(
-"expenseAmount"
-).value
-);
-
-
-if(!name || amount<=0){
-
-alert("Enter valid expense.");
-
-return;
-
+ document.getElementById("modalTitle").textContent="Stock Adjustment";
+ document.getElementById("modalBody").innerHTML=`
+ <div class="form-group">
+  <label>Product</label>
+  <select id="adjProduct">${options}</select>
+ </div>
+ <div class="form-group" style="margin-top:10px">
+  <label>Adjustment (+ or -)</label>
+  <input id="adjQty" type="number" placeholder="e.g. 10 or -5">
+ </div>
+ <button class="btn full" style="margin-top:14px" onclick="saveAdjustment()">Save Adjustment</button>`;
+ openModal();
 }
 
+function saveAdjustment(){
+ const p=db.products.find(x=>x.id===document.getElementById("adjProduct").value);
+ const q=Number(document.getElementById("adjQty").value||0);
+ if(!p||!q)return;
 
-expenses.unshift({
-
-id:Date.now(),
-
-date:
-new Date().toISOString(),
-
-name,
-category,
-amount
-
-});
-
-
-save();
-
-refreshAll();
-
+ p.stock=Math.max(0,p.stock+q);
+ saveDB();closeModal();refreshAll();toast("Stock updated");
 }
 
+/* PURCHASES */
+function openPurchaseModal(){
+ const options=db.products.map(p=>`<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("");
 
-/* =========================================================
- PURCHASE
-========================================================= */
-
-function addPurchase(){
-
-let productId=
-Number(
-document.getElementById(
-"purchaseProduct"
-).value
-);
-
-let qty=
-Number(
-document.getElementById(
-"purchaseQty"
-).value
-);
-
-let cost=
-Number(
-document.getElementById(
-"purchaseCost"
-).value
-);
-
-let paid=
-Number(
-document.getElementById(
-"purchasePaid"
-).value
-);
-
-
-let p=
-products.find(
-x=>x.id===productId
-);
-
-
-if(!p || qty<=0 || cost<=0){
-
-alert("Enter valid purchase.");
-
-return;
-
+ document.getElementById("modalTitle").textContent="Add Purchase";
+ document.getElementById("modalBody").innerHTML=`
+ <div class="form-grid">
+  <div class="form-group fullcol"><label>Product</label><select id="purProduct">${options}</select></div>
+  <div class="form-group"><label>Quantity</label><input id="purQty" type="number" min="1"></div>
+  <div class="form-group"><label>Cost Per Unit</label><input id="purCost" type="number" min="0"></div>
+  <div class="form-group fullcol"><label>Supplier</label><input id="purSupplier"></div>
+ </div>
+ <button class="btn full" style="margin-top:14px" onclick="savePurchase()">Save Purchase</button>`;
+ openModal();
 }
 
+function savePurchase(){
+ const p=db.products.find(x=>x.id===document.getElementById("purProduct").value);
+ const qty=Number(document.getElementById("purQty").value||0);
+ const cost=Number(document.getElementById("purCost").value||0);
+ if(!p||qty<=0)return;
 
-let total=
-qty*cost;
+ const pur={
+  id:id("purchase"),
+  date:new Date().toISOString(),
+  productId:p.id,
+  product:p.name,
+  qty,cost,total:qty*cost,
+  supplier:document.getElementById("purSupplier").value.trim()
+ };
 
-let due=
-Math.max(
-0,
-total-paid
-);
-
-
-p.stock+=qty;
-
-p.cost=cost;
-
-
-purchases.unshift({
-
-id:Date.now(),
-
-date:
-new Date().toISOString(),
-
-productId,
-product:p.name,
-qty,
-cost,
-total,
-paid,
-due
-
-});
-
-
-save();
-
-refreshAll();
-
+ p.stock+=qty;
+ db.purchases.push(pur);
+ saveDB();closeModal();refreshAll();toast("Purchase added");
 }
 
+function renderPurchases(){
+ const total=db.purchases.reduce((a,p)=>a+p.total,0);
+ document.getElementById("purchaseTotal").textContent=money(total);
+ document.getElementById("purchaseCount").textContent=db.purchases.length;
 
-/* =========================================================
- STOCK ADJUSTMENT
-========================================================= */
-
-function adjustStock(){
-
-let id=
-Number(
-document.getElementById(
-"adjustProduct"
-).value
-);
-
-let type=
-document.getElementById(
-"adjustType"
-).value;
-
-let qty=
-Number(
-document.getElementById(
-"adjustQty"
-).value
-);
-
-let reason=
-document.getElementById(
-"adjustReason"
-).value.trim();
-
-
-let p=
-products.find(
-x=>x.id===id
-);
-
-
-if(!p || qty<=0){
-
-alert("Invalid adjustment.");
-
-return;
-
+ document.getElementById("purchasesTable").innerHTML=db.purchases.slice().reverse().map(p=>`
+ <tr>
+  <td>${new Date(p.date).toLocaleString()}</td>
+  <td>${escapeHTML(p.product)}</td>
+  <td>${p.qty}</td>
+  <td>${money(p.cost)}</td>
+  <td>${money(p.total)}</td>
+  <td>${escapeHTML(p.supplier||"-")}</td>
+  <td><button class="btn danger small" onclick="deletePurchase('${p.id}')">Delete</button></td>
+ </tr>`).join("")||'<tr><td colspan="7" class="empty">No purchases</td></tr>';
 }
 
-
-if(
-type==="reduce" &&
-qty>p.stock
-){
-
-alert("Cannot reduce more than current stock.");
-
-return;
-
+function deletePurchase(pid){
+ if(!isAdmin()){toast("Admin only");return}
+ const p=db.purchases.find(x=>x.id===pid);
+ if(!p)return;
+ if(confirm("Delete this purchase?")){
+  const product=db.products.find(x=>x.id===p.productId);
+  if(product)product.stock=Math.max(0,product.stock-p.qty);
+  db.purchases=db.purchases.filter(x=>x.id!==pid);
+  saveDB();refreshAll();
+ }
 }
 
+/* SALES */
+function renderSales(){
+ const q=(document.getElementById("salesSearch")?.value||"").toLowerCase();
 
-if(type==="add")
-p.stock+=qty;
-else
-p.stock-=qty;
+ let list=db.sales.filter(s=>{
+  const text=(s.invoice+" "+s.customer+" "+s.payment+" "+s.status).toLowerCase();
+  return text.includes(q);
+ }).slice().reverse();
 
-
-adjustments.unshift({
-
-id:Date.now(),
-
-date:
-new Date().toISOString(),
-
-productId:id,
-
-product:p.name,
-
-type,
-qty,
-reason
-
-});
-
-
-save();
-
-refreshAll();
-
+ document.getElementById("salesTable").innerHTML=list.length?
+ list.map(s=>`
+ <tr>
+  <td>${escapeHTML(s.invoice)}</td>
+  <td>${new Date(s.date).toLocaleString()}</td>
+  <td>${escapeHTML(s.customer)}</td>
+  <td>${money(s.total)}</td>
+  <td>${money(s.paid)}</td>
+  <td>${money(s.due)}</td>
+  <td>${escapeHTML(s.payment)}</td>
+  <td><span class="badge ${s.status==="Completed"?"green":"red"}">${s.status}</span></td>
+  <td>
+   <button class="btn small" onclick="viewSale('${s.id}')">View</button>
+   <button class="btn warning small" onclick="editSale('${s.id}')">Edit</button>
+   ${isAdmin()?`<button class="btn danger small" onclick="deleteSale('${s.id}')">Delete</button>`:""}
+  </td>
+ </tr>`).join(""):
+ '<tr><td colspan="9" class="empty">No sales</td></tr>';
 }
 
-
-/* =========================================================
- CUSTOMERS
-========================================================= */
-
-function addCustomer(){
-
-let name=
-document.getElementById(
-"customerName"
-).value.trim();
-
-let phone=
-document.getElementById(
-"customerPhone"
-).value.trim();
-
-let address=
-document.getElementById(
-"customerAddress"
-).value.trim();
-
-
-if(!name){
-
-alert("Enter customer name.");
-
-return;
-
+function viewSale(id){
+ const s=db.sales.find(x=>x.id===id);
+ if(!s)return;
+ document.getElementById("modalTitle").textContent=s.invoice;
+ document.getElementById("modalBody").innerHTML=saleReceiptHTML(s);
+ openModal();
 }
 
+function editSale(id){
+ const s=db.sales.find(x=>x.id===id);
+ if(!s)return;
 
-customers.push({
-
-id:Date.now(),
-name,
-phone,
-address,
-note:""
-
-});
-
-
-save();
-
-refreshAll();
-
+ document.getElementById("modalTitle").textContent="Edit Sale — "+s.invoice;
+ document.getElementById("modalBody").innerHTML=`
+ <div class="form-grid">
+  <div class="form-group"><label>Customer</label><input id="editCustomer" value="${attr(s.customer)}"></div>
+  <div class="form-group"><label>Payment</label>
+   <select id="editPayment">
+    ${["Cash","Card","POS","Transfer"].map(x=>`<option ${s.payment===x?"selected":""}>${x}</option>`).join("")}
+   </select>
+  </div>
+  <div class="form-group"><label>Paid</label><input id="editPaid" type="number" value="${s.paid}"></div>
+  <div class="form-group fullcol"><label>Note</label><textarea id="editNote">${escapeHTML(s.note||"")}</textarea></div>
+ </div>
+ <button class="btn full" style="margin-top:14px" onclick="saveEditedSale('${id}')">Save Sale</button>`;
+ openModal();
 }
 
+function saveEditedSale(id){
+ const s=db.sales.find(x=>x.id===id);
+ if(!s)return;
 
-/* =========================================================
- CONTACTS
-========================================================= */
+ s.customer=document.getElementById("editCustomer").value.trim()||"Walk-in Customer";
+ s.payment=document.getElementById("editPayment").value;
+ s.paid=Math.min(Number(document.getElementById("editPaid").value||0),s.total);
+ s.due=Math.max(s.total-s.paid,0);
+ s.note=document.getElementById("editNote").value;
 
-function addContact(){
-
-let name=
-document.getElementById(
-"contactName"
-).value.trim();
-
-let phone=
-document.getElementById(
-"contactPhone"
-).value.trim();
-
-let type=
-document.getElementById(
-"contactType"
-).value.trim();
-
-
-if(!name)return;
-
-
-contacts.push({
-
-id:Date.now(),
-name,
-phone,
-type
-
-});
-
-
-save();
-
-refreshAll();
-
+ saveDB();closeModal();refreshAll();toast("Sale updated");
 }
 
+function deleteSale(id){
+ if(!isAdmin()){toast("Admin only");return}
+ const s=db.sales.find(x=>x.id===id);
+ if(!s)return;
 
-/* =========================================================
- USERS
-========================================================= */
+ if(!confirm("Permanently delete this sale? Stock will be returned."))return;
 
-function addUser(){
+ s.items.forEach(item=>{
+  const p=db.products.find(x=>x.id===item.productId);
+  if(p)p.stock+=item.qty;
+ });
 
-let session=
-JSON.parse(
-localStorage.getItem(
-"dl_session"
-)||"{}"
-);
-
-
-if(session.role!=="admin"){
-
-alert(
-"Only Admin can manage users."
-);
-
-return;
-
+ db.sales=db.sales.filter(x=>x.id!==id);
+ saveDB();refreshAll();toast("Sale permanently deleted");
 }
 
+/* CUSTOMERS */
+function openCustomerModal(idc=""){
+ const c=idc?db.customers.find(x=>x.id===idc):{name:"",phone:"",address:"",note:""};
 
-let username=
-document.getElementById(
-"newUserName"
-).value.trim();
-
-let password=
-document.getElementById(
-"newUserPassword"
-).value;
-
-let role=
-document.getElementById(
-"newUserRole"
-).value;
-
-
-if(!username || !password){
-
-alert("Enter username and password.");
-
-return;
-
+ document.getElementById("modalTitle").textContent=idc?"Edit Customer":"Add Customer";
+ document.getElementById("modalBody").innerHTML=`
+ <div class="form-grid">
+  <div class="form-group"><label>Name</label><input id="cName" value="${attr(c.name)}"></div>
+  <div class="form-group"><label>Phone</label><input id="cPhone" value="${attr(c.phone)}"></div>
+  <div class="form-group fullcol"><label>Address</label><input id="cAddress" value="${attr(c.address)}"></div>
+  <div class="form-group fullcol"><label>Note</label><textarea id="cNote">${escapeHTML(c.note||"")}</textarea></div>
+ </div>
+ <button class="btn full" style="margin-top:14px" onclick="saveCustomer('${idc}')">Save Customer</button>`;
+ openModal();
 }
 
+function saveCustomer(cid){
+ const obj={
+  name:document.getElementById("cName").value.trim(),
+  phone:document.getElementById("cPhone").value.trim(),
+  address:document.getElementById("cAddress").value.trim(),
+  note:document.getElementById("cNote").value
+ };
 
-users.push({
+ if(!obj.name){toast("Customer name required");return}
 
-id:Date.now(),
-username,
-password,
-role,
-permissions:{
-sales:true,
-products:role==="admin",
-reports:true,
-settings:role==="admin"
+ if(cid){
+  const i=db.customers.findIndex(x=>x.id===cid);
+  obj.id=cid;db.customers[i]=obj;
+ }else{
+  obj.id=id("customer");db.customers.push(obj);
+ }
+
+ saveDB();closeModal();refreshAll();
 }
 
-});
-
-
-save();
-
-refreshAll();
-
+function renderCustomers(){
+ document.getElementById("customersTable").innerHTML=db.customers.map(c=>`
+ <tr>
+  <td>${escapeHTML(c.name)}</td>
+  <td>${escapeHTML(c.phone)}</td>
+  <td>${escapeHTML(c.address)}</td>
+  <td>${escapeHTML(c.note)}</td>
+  <td>
+   <button class="btn small" onclick="openCustomerModal('${c.id}')">Edit</button>
+   <button class="btn danger small" onclick="deleteCustomer('${c.id}')">Delete</button>
+  </td>
+ </tr>`).join("")||'<tr><td colspan="5" class="empty">No customers</td></tr>';
 }
 
-
-/* =========================================================
- SETTINGS
-========================================================= */
-
-function setTheme(color){
-
-document.documentElement
-.style.setProperty(
-"--header",
-color
-);
-
-localStorage.setItem(
-"dl_theme",
-color
-);
-
+function deleteCustomer(idc){
+ if(confirm("Delete customer?")){
+  db.customers=db.customers.filter(x=>x.id!==idc);
+  saveDB();refreshAll();
+ }
 }
 
-
-function toggleBlinking(){
-
-document.body
-.classList.toggle("blinking");
-
-localStorage.setItem(
-"dl_blinking",
-document.body
-.classList.contains("blinking")
-);
-
+/* EXPENSES */
+function openExpenseModal(){
+ document.getElementById("modalTitle").textContent="Add Expense";
+ document.getElementById("modalBody").innerHTML=`
+ <div class="form-grid">
+  <div class="form-group"><label>Category</label><input id="eCategory" placeholder="Transport, Electricity..."></div>
+  <div class="form-group"><label>Amount</label><input id="eAmount" type="number"></div>
+  <div class="form-group fullcol"><label>Description</label><textarea id="eDescription"></textarea></div>
+ </div>
+ <button class="btn full" style="margin-top:14px" onclick="saveExpense()">Save Expense</button>`;
+ openModal();
 }
 
+function saveExpense(){
+ const amount=Number(document.getElementById("eAmount").value||0);
+ if(amount<=0){toast("Enter amount");return}
 
-function saveBusinessSettings(){
+ db.expenses.push({
+  id:id("expense"),
+  date:new Date().toISOString(),
+  category:document.getElementById("eCategory").value.trim()||"General",
+  description:document.getElementById("eDescription").value.trim(),
+  amount
+ });
 
-localStorage.setItem(
-"dl_business_name",
-document.getElementById(
-"businessName"
-).value
-);
-
-localStorage.setItem(
-"dl_business_address",
-document.getElementById(
-"businessAddress"
-).value
-);
-
-localStorage.setItem(
-"dl_business_phone",
-document.getElementById(
-"businessPhone"
-).value
-);
-
-localStorage.setItem(
-"dl_business_logo",
-document.getElementById(
-"businessLogo"
-).value
-);
-
-localStorage.setItem(
-"dl_wallpaper",
-document.getElementById(
-"wallpaper"
-).value
-);
-
-localStorage.setItem(
-"dl_thank",
-document.getElementById(
-"thankMessage"
-).value
-);
-
-applyWallpaper();
-
-alert(
-"Business settings saved."
-);
-
+ saveDB();closeModal();refreshAll();
 }
 
+function renderExpenses(){
+ const total=db.expenses.reduce((a,e)=>a+e.amount,0);
+ document.getElementById("expenseTotal").textContent=money(total);
 
-function savePrintSettings(){
-
-localStorage.setItem(
-"dl_receipt_size",
-document.getElementById(
-"receiptSize"
-).value
-);
-
-localStorage.setItem(
-"dl_invoice_prefix",
-document.getElementById(
-"invoicePrefix"
-).value
-);
-
-localStorage.setItem(
-"dl_auto_print",
-document.getElementById(
-"autoPrint"
-).checked
-);
-
-alert(
-"Invoice settings saved."
-);
-
+ document.getElementById("expensesTable").innerHTML=db.expenses.slice().reverse().map(e=>`
+ <tr>
+  <td>${new Date(e.date).toLocaleString()}</td>
+  <td>${escapeHTML(e.category)}</td>
+  <td>${escapeHTML(e.description)}</td>
+  <td>${money(e.amount)}</td>
+  <td><button class="btn danger small" onclick="deleteExpense('${e.id}')">Delete</button></td>
+ </tr>`).join("")||'<tr><td colspan="5" class="empty">No expenses</td></tr>';
 }
 
-
-function saveBarcodeSettings(){
-
-localStorage.setItem(
-"dl_barcode_prefix",
-document.getElementById(
-"barcodePrefix"
-).value
-);
-
-alert(
-"Barcode settings saved."
-);
-
+function deleteExpense(idc){
+ if(confirm("Delete expense?")){
+  db.expenses=db.expenses.filter(x=>x.id!==idc);
+  saveDB();refreshAll();
+ }
 }
 
+/* REPORTS */
+function renderReports(){
+ const sales=db.sales.filter(s=>s.status!=="Deleted");
+ const total=sales.reduce((a,s)=>a+s.total,0);
+ const cost=sales.reduce((a,s)=>a+s.items.reduce((z,i)=>z+i.cost*i.qty,0),0);
+ const profit=total-cost;
+ const expense=db.expenses.reduce((a,e)=>a+e.amount,0);
+ const due=sales.reduce((a,s)=>a+s.due,0);
+ const units=db.products.reduce((a,p)=>a+p.stock,0);
+ const stockValue=db.products.reduce((a,p)=>a+p.stock*p.cost,0);
 
-/* =========================================================
- PASSWORD
-========================================================= */
+ document.getElementById("reportSales").textContent=money(total);
+ document.getElementById("reportCost").textContent=money(cost);
+ document.getElementById("reportProfit").textContent=money(profit);
+ document.getElementById("reportExpense").textContent=money(expense);
 
+ document.getElementById("r1").textContent=money(total);
+ document.getElementById("r2").textContent=money(db.purchases.reduce((a,p)=>a+p.total,0));
+ document.getElementById("r3").textContent=money(expense);
+ document.getElementById("r4").textContent=money(profit-expense);
+ document.getElementById("r5").textContent=money(due);
+ document.getElementById("r6").textContent=db.products.length;
+ document.getElementById("r7").textContent=units;
+ document.getElementById("r8").textContent=db.products.filter(p=>p.stock<=p.min).length;
+ document.getElementById("r9").textContent=money(stockValue);
+}
+
+/* USERS */
+function renderUsers(){
+ document.getElementById("usersTable").innerHTML=db.users.map(u=>`
+ <tr>
+  <td>${escapeHTML(u.username)}</td>
+  <td><span class="badge ${u.role==="Admin"?"green":"yellow"}">${u.role}</span></td>
+  <td>
+   ${u.id!=="u1"?`
+   <button class="btn small" onclick="editUser('${u.id}')">Edit</button>
+   <button class="btn danger small" onclick="deleteUser('${u.id}')">Delete</button>`:"Main Admin"}
+  </td>
+ </tr>`).join("");
+}
+
+function openUserModal(){
+ if(!isAdmin()){toast("Admin only");return}
+
+ document.getElementById("modalTitle").textContent="Add User";
+ document.getElementById("modalBody").innerHTML=`
+ <div class="form-grid">
+  <div class="form-group"><label>Username</label><input id="uName"></div>
+  <div class="form-group"><label>Password</label><input id="uPass" type="password"></div>
+  <div class="form-group fullcol"><label>Role</label>
+   <select id="uRole"><option>Cashier</option><option>Admin</option></select>
+  </div>
+ </div>
+ <button class="btn full" style="margin-top:14px" onclick="saveUser()">Save User</button>`;
+ openModal();
+}
+
+function saveUser(){
+ const username=document.getElementById("uName").value.trim();
+ const password=document.getElementById("uPass").value;
+ const role=document.getElementById("uRole").value;
+
+ if(!username||!password){toast("Username and password required");return}
+ if(db.users.some(u=>u.username===username)){toast("Username already exists");return}
+
+ db.users.push({id:id("user"),username,password,role});
+ saveDB();closeModal();renderUsers();
+}
+
+function editUser(uid){
+ const u=db.users.find(x=>x.id===uid);
+ if(!u)return;
+
+ document.getElementById("modalTitle").textContent="Edit User";
+ document.getElementById("modalBody").innerHTML=`
+ <div class="form-grid">
+  <div class="form-group"><label>Username</label><input id="uName" value="${attr(u.username)}"></div>
+  <div class="form-group"><label>New Password</label><input id="uPass" type="password" placeholder="Leave empty to keep current"></div>
+  <div class="form-group fullcol"><label>Role</label>
+   <select id="uRole">
+    <option ${u.role==="Cashier"?"selected":""}>Cashier</option>
+    <option ${u.role==="Admin"?"selected":""}>Admin</option>
+   </select>
+  </div>
+ </div>
+ <button class="btn full" style="margin-top:14px" onclick="updateUser('${uid}')">Update User</button>`;
+ openModal();
+}
+
+function updateUser(uid){
+ const u=db.users.find(x=>x.id===uid);
+ if(!u)return;
+
+ u.username=document.getElementById("uName").value.trim()||u.username;
+ const pass=document.getElementById("uPass").value;
+ if(pass)u.password=pass;
+ u.role=document.getElementById("uRole").value;
+
+ saveDB();closeModal();renderUsers();toast("User updated");
+}
+
+function deleteUser(uid){
+ if(!isAdmin())return;
+ if(confirm("Delete this user?")){
+  db.users=db.users.filter(x=>x.id!==uid);
+  saveDB();renderUsers();
+ }
+}
+
+/* SETTINGS */
+function loadSettings(){
+ const s=db.settings;
+ document.getElementById("setBusiness").value=s.business||"";
+ document.getElementById("setPhone").value=s.phone||"";
+ document.getElementById("setAddress").value=s.address||"";
+ document.getElementById("setCurrency").value=s.currency||"₦";
+ document.getElementById("setThanks").value=s.thanks||"";
+}
+
+function saveSettings(){
+ if(!isAdmin()){toast("Admin only");return}
+
+ db.settings.business=document.getElementById("setBusiness").value.trim()||"Dlimans Supermarket";
+ db.settings.phone=document.getElementById("setPhone").value.trim();
+ db.settings.address=document.getElementById("setAddress").value.trim();
+ db.settings.currency=document.getElementById("setCurrency").value.trim()||"₦";
+ db.settings.thanks=document.getElementById("setThanks").value.trim();
+
+ saveDB();
+ document.title=db.settings.business;
+ refreshAll();
+ toast("Settings saved");
+}
+
+function loadLogo(e){
+ const file=e.target.files[0];
+ if(!file)return;
+ const r=new FileReader();
+ r.onload=()=>{
+  db.settings.logo=r.result;
+  saveDB();
+  toast("Logo saved");
+ };
+ r.readAsDataURL(file);
+}
+
+function setTheme(name){
+ const themes={
+  blue:["#07111f","#101b2d","#152238","#00e676","#00bfa5","#f5f7fb","#9aa9bd"],
+  green:["#071b13","#0d261c","#123525","#39ff88","#00c896","#f3fff8","#9bc5ae"],
+  maroon:["#210b12","#32131c","#421923","#ff5d78","#ff3158","#fff5f7","#cba8af"],
+  purple:["#150d25","#21133a","#2d1a49","#b56cff","#8b5cf6","#faf7ff","#b9aacb"],
+  gold:["#201707","#2d210b","#3b2c0d","#ffd54a","#f59e0b","#fffaf0","#c7b98f"],
+  yellow:["#201d08","#302c0b","#403a0e","#ffe44d","#f5c400","#fffef0","#c9c28e"],
+  chocolate:["#1d1109","#2a180d","#382112","#ffb36b","#d97706","#fff8f1","#c7ad98"],
+  black:["#050505","#0c0c0c","#151515","#ffffff","#aaaaaa","#ffffff","#999999"],
+  light:["#edf1f5","#ffffff","#f5f7fa","#168a55","#087a67","#18202a","#657384"]
+ };
+
+ const t=themes[name]||themes.blue;
+ const root=document.documentElement;
+ root.style.setProperty("--bg",t[0]);
+ root.style.setProperty("--panel",t[1]);
+ root.style.setProperty("--panel2",t[2]);
+ root.style.setProperty("--accent",t[3]);
+ root.style.setProperty("--accent2",t[4]);
+ root.style.setProperty("--text",t[5]);
+ root.style.setProperty("--muted",t[6]);
+ root.style.setProperty("--header",t[0]);
+
+ db.settings.theme=name;
+ saveDB();
+ drawChart();
+ toast(name+" theme applied");
+}
+
+/* PASSWORD */
 function changePassword(){
+ const old=prompt("Enter current password:");
+ if(old===null)return;
 
-let session=
-JSON.parse(
-localStorage.getItem(
-"dl_session"
-)||"{}"
-);
+ const u=db.users.find(x=>x.id===currentUser.id);
+ if(!u||u.password!==old){
+  alert("Current password is incorrect");
+  return;
+ }
 
+ const n=prompt("Enter new password:");
+ if(!n)return;
 
-if(session.role!=="admin"){
+ u.password=n;
+ saveDB();
 
-alert(
-"Only Admin can change password."
-);
+ if(localStorage.getItem(LOGIN_KEY)){
+  localStorage.setItem(LOGIN_KEY,JSON.stringify({
+   username:u.username,password:n
+  }));
+ }
 
-return;
-
+ toast("Password changed");
 }
 
+/* BACKUP */
+function backupData(){
+ const data={
+  version:3,
+  exportedAt:new Date().toISOString(),
+  database:db
+ };
 
-let p=
-document.getElementById(
-"changePasswordInput"
-).value;
-
-
-if(p.length<4){
-
-alert(
-"Password must be at least 4 characters."
-);
-
-return;
-
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="Dlimans_POS_Backup_"+today()+".json";
+ a.click();
+ URL.revokeObjectURL(a.href);
 }
 
+function restoreData(){
+ const file=document.getElementById("restoreFile").files[0];
+ if(!file){toast("Choose backup file");return}
 
-localStorage.setItem(
-"dl_admin_password",
-p
-);
+ if(!confirm("Restore backup? Current data will be replaced."))return;
 
-
-document.getElementById(
-"changePasswordInput"
-).value="";
-
-
-alert(
-"Password changed successfully."
-);
-
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const x=JSON.parse(reader.result);
+   const restored=x.database||x;
+   if(!restored.products||!restored.sales){
+    throw new Error("Invalid backup");
+   }
+   db=restored;
+   saveDB();
+   refreshAll();
+   toast("Backup restored successfully");
+  }catch(e){
+   alert("Invalid backup file");
+  }
+ };
+ reader.readAsText(file);
 }
 
-
-function resetPassword(){
-
-alert(
-"Password reset requires Admin control."
-);
-
+/* RECEIPT */
+function saleReceiptHTML(s){
+ return `
+ <div class="receipt">
+  ${db.settings.logo?`<div class="center"><img src="${db.settings.logo}" style="max-width:100px;max-height:70px"></div>`:""}
+  <h2>${escapeHTML(db.settings.business)}</h2>
+  <div class="center">${escapeHTML(db.settings.address||"")}</div>
+  <div class="center">${escapeHTML(db.settings.phone||"")}</div>
+  <hr>
+  <div><strong>Invoice:</strong> ${escapeHTML(s.invoice)}</div>
+  <div><strong>Date:</strong> ${new Date(s.date).toLocaleString()}</div>
+  <div><strong>Customer:</strong> ${escapeHTML(s.customer)}</div>
+  <div><strong>Payment:</strong> ${escapeHTML(s.payment)}</div>
+  <hr>
+  <table>
+   <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+   <tbody>
+    ${s.items.map(i=>`
+     <tr>
+      <td>${escapeHTML(i.name)}</td>
+      <td>${i.qty}</td>
+      <td>${money(i.subtotal)}</td>
+     </tr>`).join("")}
+   </tbody>
+  </table>
+  <hr>
+  <div style="display:flex;justify-content:space-between"><strong>TOTAL</strong><strong>${money(s.total)}</strong></div>
+  <div style="display:flex;justify-content:space-between"><span>Paid</span><span>${money(s.paid)}</span></div>
+  <div style="display:flex;justify-content:space-between"><span>Due</span><span>${money(s.due)}</span></div>
+  ${s.note?`<hr><div><strong>Note:</strong> ${escapeHTML(s.note)}</div>`:""}
+  <hr>
+  <div class="center">${escapeHTML(db.settings.thanks)}</div>
+  <div class="center" style="margin-top:8px;font-size:11px">Powered by Dlimans POS</div>
+ </div>`;
 }
 
+function printReceipt(id){
+ const s=db.sales.find(x=>x.id===id);
+ if(!s)return;
 
-/* =========================================================
- BACKUP
-========================================================= */
+ const w=window.open("","_blank","width=500,height=700");
+ if(!w){alert("Please allow popups for printing");return}
 
-function backup(){
-
-let data={
-
-version:"Dlimans POS Complete",
-
-date:
-new Date().toISOString(),
-
-products,
-sales,
-customers,
-expenses,
-purchases,
-adjustments,
-contacts,
-users,
-
-settings:{
-business:
-localStorage.getItem(
-"dl_business_name"
-),
-address:
-localStorage.getItem(
-"dl_business_address"
-),
-phone:
-localStorage.getItem(
-"dl_business_phone"
-)
+ w.document.write(`
+ <!DOCTYPE html>
+ <html>
+ <head>
+ <title>${escapeHTML(s.invoice)}</title>
+ <style>
+ body{margin:0;padding:15px;font-family:Arial;background:#fff}
+ .receipt{max-width:420px;margin:auto;color:#111}
+ .receipt h2{text-align:center}
+ .center{text-align:center}
+ table{width:100%;border-collapse:collapse}
+ th,td{padding:6px;border-bottom:1px dashed #aaa;text-align:left}
+ hr{border:0;border-top:1px dashed #777}
+ @media print{body{padding:0}}
+ </style>
+ </head>
+ <body>${saleReceiptHTML(s)}
+ <script>window.onload=function(){window.print()}<\/script>
+ </body>
+ </html>`);
+ w.document.close();
 }
 
-};
+/* CSV */
+function exportSalesCSV(){
+ let csv="Invoice,Date,Customer,Total,Paid,Due,Payment,Status\n";
+ db.sales.forEach(s=>{
+  csv+=`"${s.invoice}","${new Date(s.date).toLocaleString()}","${(s.customer||"").replaceAll('"','""')}",${s.total},${s.paid},${s.due},"${s.payment}","${s.status}"\n`;
+ });
 
-
-let blob=
-new Blob(
-[
-JSON.stringify(
-data,
-null,
-2
-)
-],
-{
-type:"application/json"
-}
-);
-
-
-let url=
-URL.createObjectURL(blob);
-
-let a=
-document.createElement("a");
-
-a.href=url;
-
-a.download=
-"Dlimans_POS_Backup.json";
-
-a.click();
-
-URL.revokeObjectURL(url);
-
+ const blob=new Blob([csv],{type:"text/csv"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="Dlimans_Sales_"+today()+".csv";
+ a.click();
 }
 
-
-/* =========================================================
- RESTORE
-========================================================= */
-
-function restoreBackup(event){
-
-let file=
-event.target.files[0];
-
-if(!file)return;
-
-
-let reader=
-new FileReader();
-
-
-reader.onload=function(){
-
-try{
-
-let data=
-JSON.parse(
-reader.result
-);
-
-
-if(
-!confirm(
-"Replace current POS data?"
-)
-)return;
-
-
-products=
-data.products||[];
-
-sales=
-data.sales||[];
-
-customers=
-data.customers||[];
-
-expenses=
-data.expenses||[];
-
-purchases=
-data.purchases||[];
-
-adjustments=
-data.adjustments||[];
-
-contacts=
-data.contacts||[];
-
-users=
-data.users||[];
-
-
-save();
-
-refreshAll();
-
-
-alert(
-"Backup restored successfully."
-);
-
-
-}catch(e){
-
-alert(
-"Invalid backup file."
-);
-
+/* MODAL */
+function openModal(){
+ document.getElementById("modal").classList.remove("hidden");
 }
 
-};
-
-
-reader.readAsText(file);
-
+function closeModal(){
+ document.getElementById("modal").classList.add("hidden");
+ document.getElementById("modalBody").innerHTML="";
 }
 
-
-/* =========================================================
- VOICE CONTROL
-========================================================= */
-
-function startVoice(){
-
-const SpeechRecognition=
-window.SpeechRecognition ||
-window.webkitSpeechRecognition;
-
-
-if(!SpeechRecognition){
-
-alert(
-"Voice recognition is not supported by this browser."
-);
-
-return;
-
-}
-
-
-const recognition=
-new SpeechRecognition();
-
-
-recognition.lang="en-US";
-
-recognition.interimResults=false;
-
-recognition.continuous=false;
-
-
-recognition.onresult=function(event){
-
-let command=
-event.results[0][0]
-.transcript
-.toLowerCase();
-
-
-document.getElementById(
-"voiceResult"
-).innerText=
-"You said: "+command;
-
-
-if(
-command.includes("dashboard") ||
-command.includes("home")
-){
-
-go("dashboard");
-
-}
-
-else if(
-command.includes("pos") ||
-command.includes("new sale") ||
-command.includes("sale")
-){
-
-go("pos");
-
-}
-
-else if(
-command.includes("product")
-){
-
-go("products");
-
-}
-
-else if(
-command.includes("inventory") ||
-command.includes("stock")
-){
-
-go("inventory");
-
-}
-
-else if(
-command.includes("customer")
-){
-
-go("customers");
-
-}
-
-else if(
-command.includes("purchase")
-){
-
-go("purchases");
-
-}
-
-else if(
-command.includes("report")
-){
-
-go("reports");
-
-}
-
-else if(
-command.includes("setting")
-){
-
-go("settings");
-
-}
-
-else if(
-command.includes("clear cart")
-){
-
-clearCart();
-
-}
-
-else if(
-command==="back" ||
-command.includes("go back")
-){
-
-appBack();
-
-}
-
-else{
-
-document.getElementById(
-"voiceResult"
-).innerText=
-"Command not recognized: "+
-command;
-
-}
-
-};
-
-
-recognition.onerror=function(){
-
-document.getElementById(
-"voiceResult"
-).innerText=
-"Voice recognition failed.";
-
-};
-
-
-recognition.start();
-
-}
-
-
-/* =========================================================
- BARCODE
-========================================================= */
-
-function startBarcodeScan(){
-
-let code=
-prompt(
-"Enter or scan SKU / Barcode:"
-);
-
-if(!code)return;
-
-
-document.getElementById(
-"productSearch"
-).value=code;
-
-
-renderPOS();
-
-
-let p=
-products.find(
-x =>
-String(x.sku)
-.toLowerCase()===
-code.toLowerCase()
-);
-
-
-if(p){
-
-addToCart(p.id);
-
-}
-
-}
-
-
-/* =========================================================
- BLUETOOTH PRINTER
-========================================================= */
-
-async function connectBluetoothPrinter(){
-
-if(!navigator.bluetooth){
-
-alert(
-"Bluetooth Web API is not available in this browser."
-);
-
-return;
-
-}
-
-
-try{
-
-let device=
-await navigator.bluetooth.requestDevice({
-
-acceptAllDevices:true
-
+document.getElementById("modal").addEventListener("click",e=>{
+ if(e.target.id==="modal")closeModal();
 });
 
-
-localStorage.setItem(
-"dl_printer_name",
-device.name||"Bluetooth Printer"
-);
-
-
-alert(
-"Printer selected: "+
-(device.name||"Bluetooth Printer")
-);
-
-}catch(e){
-
-alert(
-"Bluetooth printer connection cancelled."
-);
-
+/* CALCULATOR */
+function calcAdd(x){
+ document.getElementById("calcDisplay").value+=x;
+}
+function calcClear(){
+ document.getElementById("calcDisplay").value="";
+}
+function calcResult(){
+ const d=document.getElementById("calcDisplay");
+ try{
+  if(!/^[0-9+\-*/().\s]+$/.test(d.value))throw new Error();
+  d.value=Function("return "+d.value)();
+ }catch(e){
+  d.value="Error";
+ }
 }
 
+/* UTILITIES */
+function escapeHTML(x){
+ return String(x??"").replace(/[&<>"']/g,m=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+ }[m]));
 }
 
-
-/* =========================================================
- PRINT
-========================================================= */
-
-function testPrint(){
-
-let w=
-window.open(
-"",
-"_blank"
-);
-
-if(!w){
-
-alert(
-"Allow pop-ups to print."
-);
-
-return;
-
+function attr(x){
+ return escapeHTML(x).replace(/"/g,"&quot;");
 }
-
-
-w.document.write(`
-
-<html>
-
-<body style="
-font-family:Arial;
-text-align:center;
-padding:20px
-">
-
-<h2>
-Dlimans Supermarket
-</h2>
-
-<p>
-TEST RECEIPT
-</p>
-
-<hr>
-
-<p>
-Printer test successful.
-</p>
-
-<p>
-Thank you for shopping with us!
-</p>
-
-</body>
-
-</html>
-
-`);
-
-
-w.document.close();
-
-w.print();
-
-}
-
-
-/* =========================================================
- REFRESH
-========================================================= */
 
 function refreshAll(){
-
-renderProducts();
-renderPOS();
-renderSales();
-renderCustomers();
-renderExpenses();
-renderPurchases();
-renderAdjustments();
-renderInventory();
-renderContacts();
-renderUsers();
-refreshDashboard();
-renderProfitLoss();
-renderLedger();
-renderSettings();
-
+ renderDashboard();
+ renderPOSProducts();
+ renderProducts();
+ renderInventory();
+ renderPurchases();
+ renderSales();
+ renderCustomers();
+ renderExpenses();
+ renderReports();
+ renderUsers();
+ loadSettings();
 }
 
-
-/* =========================================================
- UTILITY
-========================================================= */
-
-function formatDate(v){
-
-return new Date(v)
-.toLocaleString(
-"en-NG"
-);
-
-}
-
-
-function escapeHTML(v){
-
-return String(v??"")
-.replaceAll("&","&amp;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;")
-.replaceAll('"',"&quot;")
-.replaceAll("'","&#039;");
-
-}
-
-
-function renderSettings(){
-
-let name=
-localStorage.getItem(
-"dl_business_name"
-)||"Dlimans Supermarket";
-
-document.getElementById(
-"businessName"
-).value=name;
-
-document.getElementById(
-"businessAddress"
-).value=
-localStorage.getItem(
-"dl_business_address"
-)||"";
-
-document.getElementById(
-"businessPhone"
-).value=
-localStorage.getItem(
-"dl_business_phone"
-)||"";
-
-document.getElementById(
-"businessLogo"
-).value=
-localStorage.getItem(
-"dl_business_logo"
-)||"";
-
-document.getElementById(
-"wallpaper"
-).value=
-localStorage.getItem(
-"dl_wallpaper"
-)||"";
-
-document.getElementById(
-"thankMessage"
-).value=
-localStorage.getItem(
-"dl_thank"
-)||
-"Thank you for shopping with us!";
-
-document.getElementById(
-"receiptSize"
-).value=
-localStorage.getItem(
-"dl_receipt_size"
-)||"58mm";
-
-document.getElementById(
-"invoicePrefix"
-).value=
-localStorage.getItem(
-"dl_invoice_prefix"
-)||"INV";
-
-document.getElementById(
-"autoPrint"
-).checked=
-localStorage.getItem(
-"dl_auto_print"
-)==="true";
-
-document.getElementById(
-"barcodePrefix"
-).value=
-localStorage.getItem(
-"dl_barcode_prefix"
-)||"DL";
-
-applyWallpaper();
-
-}
-
-
-function applyWallpaper(){
-
-let wallpaper=
-localStorage.getItem(
-"dl_wallpaper"
-);
-
-if(wallpaper){
-
-document.body.style.backgroundImage=
-`url("${wallpaper}")`;
-
-}
-
-}
-
-
-/* =========================================================
- STARTUP
-========================================================= */
-
-window.addEventListener(
-"load",
-function(){
-
-let theme=
-localStorage.getItem(
-"dl_theme"
-);
-
-if(theme){
-
-document.documentElement
-.style.setProperty(
-"--header",
-theme
-);
-
-}
-
-
-if(
-localStorage.getItem(
-"dl_blinking"
-)==="true"
-){
-
-document.body
-.classList.add("blinking");
-
-}
-
-
-let session=
-localStorage.getItem(
-"dl_session"
-);
-
-let remember=
-localStorage.getItem(
-"dl_remember"
-);
-
-
-if(
-session &&
-remember==="true"
-){
-
-openApp();
-
-}
-
-}
-);
-
-
-/* =========================================================
- ENTER LOGIN
-========================================================= */
-
-document.getElementById(
-"password"
-).addEventListener(
-"keydown",
-function(e){
-
-if(e.key==="Enter")
-login();
-
+window.addEventListener("resize",()=>{
+ if(currentPage==="dashboard")drawChart();
 });
 
+window.addEventListener("keydown",e=>{
+ if(e.key==="Escape")closeModal();
 
-/* =========================================================
- ANDROID / PC BACK
-========================================================= */
-
-window.addEventListener(
-"popstate",
-function(){
-
-appBack();
-
+ if(e.key==="Enter" &&
+    !document.getElementById("loginScreen").classList.contains("hidden") &&
+    document.activeElement.tagName!=="TEXTAREA"){
+  login();
+ }
 });
 
+/* INITIALIZE */
+loadDB();
 
+document.title=db.settings.business||"Dlimans Supermarket POS";
+setTheme(db.settings.theme||"blue");
+autoLogin();
+
+/* Do not automatically login — only fill saved credentials. */
 </script>
 
 </body>

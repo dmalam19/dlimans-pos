@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<title>Dlimans Supermarket POS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#07111f;color:#f5f7fb;min-height:100vh}
+button,input,select,textarea{font:inherit}button{cursor:pointer}input,select,textarea{width:100%;padding:11px;border:1px solid #26364d;border-radius:9px;background:#0a1424;color:#fff}textarea{min-height:75px}.hidden{display:none!important}
+.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:bold;background:#00e676;color:#04120a}.secondary{background:#26364d;color:#fff}.danger{background:#ef4444;color:#fff}.warning{background:#f59e0b;color:#111}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at top,#164b3a,#07111f 65%)}
+.loginbox{width:100%;max-width:420px;background:#101b2d;border:1px solid #26364d;border-radius:22px;padding:30px;box-shadow:0 20px 60px #000}
+.logo{width:76px;height:76px;border-radius:50%;background:#00e676;color:#06130b;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:bold;margin:auto auto 15px}
+.loginbox h1{text-align:center}.sub{text-align:center;color:#9aa9bd;margin:8px 0 25px}.loginbox label{display:block;margin:12px 0 6px}.remember{display:flex!important;align-items:center;gap:8px}.remember input{width:auto}
+.top{height:60px;background:#0b1628;border-bottom:1px solid #26364d;display:flex;align-items:center;padding:0 14px;gap:10px;position:sticky;top:0;z-index:20}.brand{font-weight:bold}.right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.layout{display:flex;min-height:calc(100vh - 60px)}.side{width:240px;background:#0b1525;border-right:1px solid #26364d;padding:12px;overflow-y:auto!important;overflow-x:hidden;position:sticky;top:60px;height:calc(100vh - 60px);min-height:0;flex:0 0 240px}
+.nav{width:100%;border:0;background:transparent;color:#dce5f1;padding:12px;text-align:left;border-radius:9px;margin-bottom:4px}.nav:hover,.nav.active{background:#00e676;color:#06130b;font-weight:bold}.navtitle{font-size:11px;color:#94a3b8;margin:13px 7px 6px}
+.main{flex:1;padding:18px;min-width:0}.page{display:none}.page.active{display:block}.title{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card,.panel{background:#101b2d;border:1px solid #26364d;border-radius:14px;padding:16px}.label{font-size:11px;color:#94a3b8}.value{font-size:22px;font-weight:bold;margin-top:7px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;min-width:650px}th,td{padding:10px;border-bottom:1px solid #26364d;text-align:left;font-size:13px}th{color:#94a3b8;font-size:11px}.table{overflow:auto}
+.pos{display:grid;grid-template-columns:1.2fr .8fr;gap:15px}.products{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-height:570px;overflow:auto}.product{background:#152238;border:1px solid #26364d;border-radius:11px;padding:10px;cursor:pointer}.product:hover{border-color:#00e676}.pic{height:90px;border-radius:8px;background:#0a1424;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:8px}.price{color:#00e676;font-weight:bold;margin-top:4px}.stock{font-size:11px;color:#94a3b8;margin-top:3px}
+.cartrow{display:grid;grid-template-columns:1fr 60px 80px 30px;gap:5px;align-items:center;padding:9px 0;border-bottom:1px solid #26364d}.cartrow input{padding:6px}.total{display:flex;justify-content:space-between;font-weight:bold;font-size:18px;margin-top:15px;border-top:1px solid #26364d;padding-top:12px}
+.modal{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:15px;z-index:50}.modalbox{width:100%;max-width:650px;max-height:90vh;overflow:auto;background:#101b2d;border:1px solid #26364d;border-radius:16px;padding:20px}.modalhead{display:flex;justify-content:space-between;margin-bottom:15px}
+#toast{position:fixed;right:15px;bottom:15px;background:#152238;border:1px solid #26364d;padding:13px 16px;border-radius:10px;z-index:100}
+@media(max-width:950px){.cards{grid-template-columns:repeat(2,1fr)}.pos,.grid2{grid-template-columns:1fr}}
+@media(max-width:700px){.menu{display:block!important}.side{position:fixed;left:-260px;width:240px;flex:0 0 240px;top:60px;height:calc(100vh - 60px);z-index:30;transition:.2s}.side.open{left:0}.main{padding:12px}.products{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.grid3{grid-template-columns:1fr}.user{display:none}}
+.menu{display:none}
+</style>
+
+<style id="dlimans-extra-css">
+/* Dlimans Advanced Customization */
+.blinking-ui{animation:dlBlink 1.8s infinite alternate}
+@keyframes dlBlink{0%{filter:hue-rotate(0deg);box-shadow:0 0 0 transparent}50%{filter:hue-rotate(70deg);box-shadow:0 0 16px #00e67666}100%{filter:hue-rotate(180deg);box-shadow:0 0 20px #b56cff66}}
+.login-blink{animation:loginBlink 4s infinite alternate}
+@keyframes loginBlink{0%{background:radial-gradient(circle at top,#164b3a,#07111f 65%)}33%{background:radial-gradient(circle at top,#32165c,#07111f 65%)}66%{background:radial-gradient(circle at top,#5b3b08,#07111f 65%)}100%{background:radial-gradient(circle at top,#5c1325,#07111f 65%)}}
+.permission-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:1px solid #26364d}
+.permission-row input{width:auto}
+.voice-on{box-shadow:0 0 18px #00e676!important}
+</style>
+
+<style id="dl-admin-css">
+.admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.admin-setting{background:#152238;border:1px solid #26364d;border-radius:12px;padding:13px}
+.admin-setting h4{margin-bottom:8px}.admin-setting small{color:#94a3b8}
+.switchrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #26364d}
+.switchrow:last-child{border-bottom:0}.switchrow input{width:auto}
+@media(max-width:800px){.admin-grid{grid-template-columns:1fr}}
+</style>
+
+<style id="dl-final-ui-fix">
+/* FINAL UI FIXES */
+.dl-icon-blink{
+  animation: dlIconBlink 1.25s infinite alternate;
+  transform-origin:center;
+}
+@keyframes dlIconBlink{
+  0%{filter:hue-rotate(0deg) brightness(1);transform:scale(1)}
+  35%{filter:hue-rotate(90deg) brightness(1.45);transform:scale(1.05)}
+  70%{filter:hue-rotate(180deg) brightness(1.2);transform:scale(1.08)}
+  100%{filter:hue-rotate(270deg) brightness(1.5);transform:scale(1)}
+}
+.nav.dl-blink{
+  animation:dlNavBlink 1.6s infinite alternate;
+}
+@keyframes dlNavBlink{
+  0%{box-shadow:0 0 0 transparent}
+  50%{box-shadow:0 0 15px #00e67655}
+  100%{box-shadow:0 0 18px #b56cff66}
+}
+.dl-icon-name{
+  display:inline;
+  margin-left:7px;
+}
+.dl-icon-only .dl-icon-name{display:none}
+.side{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch;
+}
+.layout{min-height:calc(100vh - 60px);align-items:stretch}
+.main{min-height:calc(100vh - 60px)}
+@media(max-width:700px){
+  .side{
+    height:calc(100dvh - 60px)!important;
+    max-height:calc(100dvh - 60px)!important;
+    overflow-y:auto!important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="login">
+<div class="loginbox">
+<div class="logo">D</div><h1>Dlimans Supermarket</h1><div class="sub">Offline Point of Sale System</div>
+<label>Username</label><input id="lu" placeholder="Username">
+<label>Password</label><div style="display:flex;gap:7px"><input id="lp" type="password" placeholder="Password"><button type="button" class="btn secondary" onclick="toggleLoginPassword()">👁</button></div>
+<label class="remember"><input type="checkbox" id="rem"> Remember login</label>
+<button class="btn" style="width:100%;margin-top:10px" onclick="login()">Login</button>
+<div id="err" style="color:#ff7777;text-align:center;margin-top:10px"></div>
+</div></div>
+
+<div id="app" class="hidden">
+<header class="top"><button class="btn secondary menu" onclick="document.querySelector('.side').classList.toggle('open')">☰</button><div class="brand">Dlimans Supermarket POS</div><div class="right"><span id="who" class="user"></span><button class="btn secondary" onclick="back()">← Back</button></div></header>
+<div class="layout">
+<aside class="side">
+<div class="navtitle">MAIN</div>
+<button class="nav active" data-p="dashboard" onclick="page('dashboard')">🏠 Dashboard</button>
+<button class="nav" data-p="pos" onclick="page('pos')">🛒 New Sale</button>
+<div class="navtitle">INVENTORY</div>
+<button class="nav" data-p="products" onclick="page('products')">📦 Products</button>
+<button class="nav" data-p="inventory" onclick="page('inventory')">📋 Inventory</button>
+<button class="nav" data-p="purchases" onclick="page('purchases')">🚚 Purchases</button>
+<div class="navtitle">SALES</div>
+<button class="nav" data-p="sales" onclick="page('sales')">💰 Sales</button>
+<button class="nav" data-p="customers" onclick="page('customers')">👥 Customers</button>
+<button class="nav" data-p="expenses" onclick="page('expenses')">💸 Expenses</button>
+<div class="navtitle">TOOLS</div>
+<button class="nav" data-p="reports" onclick="page('reports')">📊 Reports</button>
+<button class="nav" data-p="calculator" onclick="page('calculator')">🧮 Calculator</button>
+<div class="navtitle">ADMIN</div>
+<button class="nav" data-p="users" onclick="page('users')">👤 Users</button>
+<button class="nav" data-p="settings" onclick="page('settings')">⚙️ Settings</button>
+<button class="nav" data-p="advanced" onclick="page('advanced')">🛡️ Control Center</button>
+<button class="nav" data-p="backup" onclick="page('backup')">💾 Backup / Restore</button>
+<button class="nav" onclick="logout()">🚪 Logout</button>
+</aside>
+
+<main class="main">
+
+<section class="page active" id="dashboard">
+<div class="title"><h2>Dashboard</h2><button class="btn secondary" onclick="refresh()">↻ Refresh</button></div>
+<div class="cards">
+<div class="card"><div class="label">TOTAL SALES</div><div class="value" id="ds">₦0</div></div>
+<div class="card"><div class="label">PROFIT</div><div class="value" id="dp">₦0</div></div>
+<div class="card"><div class="label">PRODUCTS</div><div class="value" id="dprod">0</div></div>
+<div class="card"><div class="label">LOW STOCK</div><div class="value" id="dlow">0</div></div>
+<div class="card"><div class="label">PURCHASES</div><div class="value" id="dpu">₦0</div></div>
+<div class="card"><div class="label">EXPENSES</div><div class="value" id="de">₦0</div></div>
+<div class="card"><div class="label">CUSTOMERS</div><div class="value" id="dc">0</div></div>
+<div class="card"><div class="label">TODAY SALES</div><div class="value" id="dt">₦0</div></div>
+</div>
+<div class="grid2"><div class="panel"><h3>Sales Last 30 Days</h3><canvas id="chart" style="width:100%;height:240px"></canvas></div><div class="panel"><h3>Recent Sales</h3><div id="recent"></div></div></div>
+</section>
+
+<section class="page" id="pos">
+<div class="title"><h2>New Sale / POS</h2><button class="btn secondary" onclick="clearCart()">Clear Cart</button></div>
+<div class="pos"><div class="panel"><input id="search" placeholder="🔎 Search product / SKU / barcode" oninput="renderPOS()"><div class="products" id="plist"></div></div>
+<div class="panel"><h3>Current Cart</h3><div id="cart"></div>
+<div class="formgrid" style="margin-top:12px"><div><label>Customer</label><input id="customer"></div><div><label>Payment</label><select id="payment"><option>Cash</option><option>Card</option><option>POS</option><option>Transfer</option></select></div><div class="full"><label>Paid</label><input id="paid" type="number" oninput="cartRender()"></div><div class="full"><label>Customer Note</label><textarea id="note"></textarea></div></div>
+<div class="total"><span>Total</span><span id="ctotal">₦0</span></div><div style="display:flex;justify-content:space-between;margin-top:7px">Due <b id="due">₦0</b></div>
+<button class="btn" style="width:100%;margin-top:12px" onclick="sale()">Complete Sale</button>
+<div style="display:flex;gap:7px;margin-top:8px">
+<button class="btn warning" style="flex:1" onclick="holdSale()">⏸ Hold Sale</button>
+<button class="btn secondary" style="flex:1" onclick="showHeld()">▶ Resume</button>
+</div>
+<div id="heldBox" style="margin-top:10px"></div>
+</div></div>
+</section>
+
+<section class="page" id="products"><div class="title"><h2>Products</h2><button class="btn" onclick="productForm()">＋ Add Product</button></div><div class="panel"><input id="psearch" placeholder="Search products" oninput="renderProducts()"><div class="table"><table><thead><tr><th>Name</th><th>SKU</th><th>Cost</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead><tbody id="ptable"></tbody></table></div></div></section>
+
+<section class="page" id="inventory"><div class="title"><h2>Inventory</h2><button class="btn" onclick="adjust()">Stock Adjustment</button></div><div class="panel"><div class="table"><table><thead><tr><th>Product</th><th>SKU</th><th>Stock</th><th>Cost Value</th><th>Sale Value</th><th>Status</th></tr></thead><tbody id="itable"></tbody></table></div></div></section>
+
+<section class="page" id="purchases"><div class="title"><h2>Purchases</h2><button class="btn" onclick="purchaseForm()">＋ Add Purchase</button></div><div class="cards"><div class="card"><div class="label">TOTAL PURCHASE</div><div class="value" id="putotal">₦0</div></div><div class="card"><div class="label">COUNT</div><div class="value" id="pucount">0</div></div></div><div class="panel" style="margin-top:15px"><div class="table"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Cost</th><th>Total</th><th>Supplier</th><th>Action</th></tr></thead><tbody id="putable"></tbody></table></div></div></section>
+
+<section class="page" id="sales"><div class="title"><h2>Sales History</h2><button class="btn secondary" onclick="csv()">Export CSV</button></div><div class="panel"><input id="ssearch" placeholder="Search invoice/customer" oninput="renderSales()"><div class="table"><table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Total</th><th>Paid</th><th>Due</th><th>Payment</th><th>Action</th></tr></thead><tbody id="stable"></tbody></table></div></div></section>
+
+<section class="page" id="customers"><div class="title"><h2>Customers</h2><button class="btn" onclick="customerForm()">＋ Add Customer</button></div><div class="panel"><div class="table"><table><thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Action</th></tr></thead><tbody id="ctable"></tbody></table></div></div></section>
+
+<section class="page" id="expenses"><div class="title"><h2>Expenses</h2><button class="btn" onclick="expenseForm()">＋ Add Expense</button></div><div class="panel"><div class="value" id="etotal">₦0</div><div class="table"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead><tbody id="etable"></tbody></table></div></div></section>
+
+<section class="page" id="reports"><div class="title"><h2>Reports</h2></div><div class="cards"><div class="card"><div class="label">SALES</div><div class="value" id="rs">₦0</div></div><div class="card"><div class="label">COST</div><div class="value" id="rc">₦0</div></div><div class="card"><div class="label">PROFIT</div><div class="value" id="rp">₦0</div></div><div class="card"><div class="label">EXPENSE</div><div class="value" id="re">₦0</div></div></div></section>
+
+<section class="page" id="calculator"><div class="title"><h2>Calculator</h2></div><div class="panel" style="max-width:400px"><input id="calc" readonly style="font-size:24px;text-align:right;margin-bottom:10px"><div class="grid3"><button class="btn secondary" onclick="cc('')">C</button><button class="btn secondary" onclick="cc('/')">÷</button><button class="btn secondary" onclick="cc('*')">×</button><button class="btn secondary" onclick="cc('7')">7</button><button class="btn secondary" onclick="cc('8')">8</button><button class="btn secondary" onclick="cc('9')">9</button><button class="btn secondary" onclick="cc('-')">−</button><button class="btn secondary" onclick="cc('4')">4</button><button class="btn secondary" onclick="cc('5')">5</button><button class="btn secondary" onclick="cc('6')">6</button><button class="btn secondary" onclick="cc('+')">+</button><button class="btn secondary" onclick="cc('1')">1</button><button class="btn secondary" onclick="cc('2')">2</button><button class="btn secondary" onclick="cc('3')">3</button><button class="btn secondary" onclick="cc('0')">0</button><button class="btn secondary" onclick="cc('.')">.</button><button class="btn" onclick="ce()">=</button></div></div></section>
+
+<section class="page" id="users"><div class="title"><h2>User Management</h2><button class="btn" onclick="userForm()">＋ Add User</button></div><div class="panel"><div class="table"><table><thead><tr><th>Username</th><th>Role</th><th>Action</th></tr></thead><tbody id="utable"></tbody></table></div></div></section>
+
+
+<section class="page" id="advanced">
+<div class="title"><h2>Admin Control Center</h2></div>
+<div class="grid2">
+<div class="panel">
+<h3>Cashier Permissions</h3>
+<div id="permBox"></div>
+<button class="btn" style="margin-top:12px" onclick="savePermissions()">Save Permissions</button>
+</div>
+<div class="panel">
+<h3>Branches</h3>
+<div class="formgrid"><input id="branchName" placeholder="Branch name"><input id="branchLocation" placeholder="Location"></div>
+<button class="btn" style="margin-top:10px" onclick="addBranch()">＋ Add Branch</button>
+<div id="branchList" style="margin-top:12px"></div>
+</div>
+<div class="panel">
+<h3>Voice Control</h3>
+<p style="color:#94a3b8;margin:8px 0">Use browser voice recognition where supported.</p>
+<button id="voiceBtn" class="btn" onclick="startVoice()">🎙 Enable Voice</button>
+<p id="voiceStatus" style="margin-top:10px;color:#94a3b8"></p>
+</div>
+<div class="panel">
+<h3>Visual Customization</h3>
+<label><input id="blinkAll" type="checkbox" style="width:auto"> Enable colorful blinking interface</label>
+<label style="display:block;margin-top:12px"><input id="blinkLogin" type="checkbox" style="width:auto"> Enable blinking login theme</label>
+<button class="btn" style="margin-top:12px" onclick="saveVisual()">Save Visual Settings</button>
+</div>
+</div>
+
+<div class="admin-setting" style="margin-top:12px">
+<h3>⚙️ Admin Master Controls</h3>
+<small>Admin can change these settings directly without editing the code.</small>
+<div class="admin-grid" style="margin-top:10px">
+<div class="admin-setting">
+<h4>Sales Controls</h4>
+<div class="switchrow"><span>Allow cashier to hold/resume sales</span><input id="ctl_hold" type="checkbox"></div>
+<div class="switchrow"><span>Require sale confirmation</span><input id="ctl_confirm" type="checkbox"></div>
+<div class="switchrow"><span>Allow cashier to delete own cart items</span><input id="ctl_cartdelete" type="checkbox"></div>
+<div class="switchrow"><span>Auto print receipt after sale</span><input id="ctl_autoprint" type="checkbox"></div>
+</div>
+<div class="admin-setting">
+<h4>Security Controls</h4>
+<div class="switchrow"><span>Remember login</span><input id="ctl_remember" type="checkbox"></div>
+<div class="switchrow"><span>Allow password show/hide</span><input id="ctl_pwshow" type="checkbox"></div>
+<div class="switchrow"><span>Admin-only destructive actions</span><input id="ctl_adminonly" type="checkbox"></div>
+</div>
+<div class="admin-setting">
+<h4>Interface Controls</h4>
+<div class="switchrow"><span>Blinking colors</span><input id="ctl_blink" type="checkbox"></div>
+<div class="switchrow"><span>Blinking login page</span><input id="ctl_loginblink" type="checkbox"></div>
+<div class="switchrow"><span>Show icon names</span><input id="ctl_icons" type="checkbox"></div>
+</div>
+<div class="admin-setting">
+<h4>Business Controls</h4>
+<div class="switchrow"><span>Allow cashier to view reports</span><input id="ctl_reports" type="checkbox"></div>
+<div class="switchrow"><span>Allow cashier to view customers</span><input id="ctl_customers" type="checkbox"></div>
+<div class="switchrow"><span>Allow cashier to add purchases</span><input id="ctl_purchases" type="checkbox"></div>
+</div>
+</div>
+<button class="btn" style="margin-top:12px" onclick="saveMasterControls()">Save Master Controls</button>
+</div>
+
+<div class="admin-setting" style="margin-top:12px;border-color:#ef4444">
+<h3>🗑️ Admin Sales Management</h3>
+<small>These actions are available to Admin only.</small>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+<button class="btn danger" onclick="adminDeleteAllSales()">Delete ALL Sales</button>
+<button class="btn warning" onclick="adminRestoreSalesStock()">Restore Stock From Deleted Sales</button>
+</div>
+<div id="adminSalesSummary" style="margin-top:10px"></div>
+</div>
+
+<div class="admin-setting" style="margin-top:12px">
+<h3>🏷️ Edit Icon Names</h3>
+<small>Admin can rename the menu labels. The icons remain clickable.</small>
+<div id="iconNameEditor" class="admin-grid" style="margin-top:10px"></div>
+<button class="btn" style="margin-top:12px" onclick="saveIconNames()">Save Icon Names</button>
+<button class="btn secondary" style="margin-top:12px" onclick="resetIconNames()">Reset Names</button>
+</div>
+</section>
+<section class="page" id="settings"><div class="title"><h2>Settings / Customize</h2></div><div class="grid2"><div class="panel"><h3>Business</h3><label>Business Name</label><input id="sn"><label>Phone</label><input id="sp"><label>Address</label><input id="sa"><label>Currency</label><input id="sc" value="₦"><label>Thank You</label><input id="st"><button class="btn" style="margin-top:12px" onclick="saveSettings()">Save</button></div><div class="panel"><h3>Themes</h3><div class="grid3"><button class="btn secondary" onclick="theme('#07111f','#00e676')">Dark Blue</button><button class="btn secondary" onclick="theme('#071b13','#39ff88')">Dark Green</button><button class="btn secondary" onclick="theme('#210b12','#ff5d78')">Maroon</button><button class="btn secondary" onclick="theme('#150d25','#b56cff')">Purple</button><button class="btn secondary" onclick="theme('#201707','#ffd54a')">Gold</button><button class="btn secondary" onclick="theme('#050505','#fff')">Black</button></div></div></div></section>
+
+<section class="page" id="backup"><div class="title"><h2>Backup / Restore</h2></div><div class="grid2"><div class="panel"><h3>Backup</h3><button class="btn" onclick="backup()">Download Backup</button></div><div class="panel"><h3>Restore</h3><input type="file" id="restore" accept=".json"><button class="btn warning" style="margin-top:10px" onclick="restore()">Restore Backup</button></div></div></section>
+
+</main></div></div>
+
+<div class="modal hidden" id="modal"><div class="modalbox"><div class="modalhead"><h3 id="mtitle"></h3><button class="btn secondary" onclick="closeModal()">✕</button></div><div id="mbody"></div></div></div>
+<div id="toast" class="hidden"></div>
+
+<script>
+const KEY="DLIMANS_POS_FINAL";
+let db=JSON.parse(localStorage.getItem(KEY)||"null")||{
+users:[{id:"1",username:"admin",password:"admin123",role:"Admin"},{id:"2",username:"cashier",password:"1234",role:"Cashier"}],
+products:[{id:"1",name:"Rice 50kg",sku:"RICE50",cost:65000,price:72000,stock:20,min:3},{id:"2",name:"Cooking Oil",sku:"OIL001",cost:12000,price:14500,stock:30,min:5},{id:"3",name:"Milo",sku:"MILO001",cost:5000,price:6500,stock:25,min:5},{id:"4",name:"Bottled Water",sku:"WATER001",cost:250,price:400,stock:100,min:15}],
+sales:[],purchases:[],customers:[],expenses:[],heldSales:[],branches:[{id:"main",name:"Main Branch",location:""}],permissions:{newSale:true,products:false,inventory:false,sales:true,customers:true,expenses:false,reports:true,purchases:false,calculator:true,settings:false},visual:{blinkAll:false,blinkLogin:true},settings:{name:"Dlimans Supermarket",phone:"08063756515",address:"",currency:"₦",thanks:"Thank you for shopping with Dlimans Supermarket!"}};
+let user=null,cart=[],hist=[],current="dashboard",editId=null;
+function normalizeDB(){
+ db=db&&typeof db==="object"?db:{};
+ db.users=Array.isArray(db.users)?db.users:[];
+ db.products=Array.isArray(db.products)?db.products:[];
+ db.sales=Array.isArray(db.sales)?db.sales:[];
+ db.purchases=Array.isArray(db.purchases)?db.purchases:[];
+ db.customers=Array.isArray(db.customers)?db.customers:[];
+ db.expenses=Array.isArray(db.expenses)?db.expenses:[];
+ db.heldSales=Array.isArray(db.heldSales)?db.heldSales:[];
+ db.branches=Array.isArray(db.branches)&&db.branches.length?db.branches:[{id:"main",name:"Main Branch",location:""}];
+ db.permissions=Object.assign({newSale:true,products:false,inventory:false,purchases:false,sales:true,customers:true,expenses:false,reports:true,calculator:true,settings:false},db.permissions||{});
+ db.visual=Object.assign({blinkAll:false,blinkLogin:true},db.visual||{});
+ db.master=Object.assign({hold:true,confirm:true,cartdelete:true,autoprint:false,remember:true,pwshow:true,adminonly:true,blink:false,loginblink:true,icons:true,reports:true,customers:true,purchases:false},db.master||{});
+ db.settings=Object.assign({name:"Dlimans Supermarket",phone:"08063756515",address:"",currency:"₦",thanks:"Thank you for shopping with Dlimans Supermarket!"},db.settings||{});
+ db.iconNames=Object.assign({dashboard:"Dashboard",pos:"New Sale",products:"Products",inventory:"Inventory",purchases:"Purchases",sales:"Sales",customers:"Customers",expenses:"Expenses",reports:"Reports",calculator:"Calculator",users:"Users",settings:"Settings",advanced:"Control Center",backup:"Backup / Restore"},db.iconNames||{});
+ if(!db.users.some(a=>String(a.username).toLowerCase()==="admin")) db.users.unshift({id:"1",username:"admin",password:"admin123",role:"Admin"});
+ if(!db.users.some(a=>String(a.username).toLowerCase()==="cashier")) db.users.push({id:"2",username:"cashier",password:"1234",role:"Cashier"});
+}
+normalizeDB();
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function money(n){return(db.settings.currency||"₦")+" "+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function id(){return Date.now()+"_"+Math.random().toString(36).slice(2)}
+function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function toast(x){let t=document.getElementById("toast");t.textContent=x;t.classList.remove("hidden");setTimeout(()=>t.classList.add("hidden"),2200)}
+function login(){
+ try{
+   normalizeDB();
+   const u=(document.getElementById("lu").value||"").trim();
+   const p=(document.getElementById("lp").value||"").trim();
+   if(!u||!p){document.getElementById("err").textContent="Enter username and password";return;}
+   let x=db.users.find(a=>String(a.username||"").trim().toLowerCase()===u.toLowerCase() && String(a.password??"")===p);
+   // Guaranteed first-run fallback accounts.
+   if(!x && u.toLowerCase()==="admin" && p==="admin123") x={id:"1",username:"admin",password:"admin123",role:"Admin"};
+   if(!x && u.toLowerCase()==="cashier" && p==="1234") x={id:"2",username:"cashier",password:"1234",role:"Cashier"};
+   if(!x){document.getElementById("err").textContent="Invalid username or password";return;}
+   if(!db.users.some(a=>a.id===x.id)) db.users.push(x);
+   user=x; normalizeDB(); save();
+   if(document.getElementById("rem").checked && masterVal("remember",true)) localStorage.setItem("DL_LOGIN",JSON.stringify({u:x.username,p:x.password}));
+   openApp();
+ }catch(e){
+   console.error(e);
+   document.getElementById("err").textContent="Login error: "+(e.message||"Please reload the page");
+ }
+}
+
+function openApp(){normalizeDB();loginBox(false);document.getElementById("who").textContent=user.username+" • "+user.role;const usersNav=document.querySelector('[data-p="users"]');if(usersNav)usersNav.style.display=user.role==="Admin"?"":"none";page("dashboard",false);try{refresh()}catch(e){console.error(e);toast("Dashboard loaded with limited data")}}
+function loginBox(show){document.getElementById("login").classList.toggle("hidden",!show);document.getElementById("app").classList.toggle("hidden",show)}
+function logout(){if(confirm("Logout?")){user=null;loginBox(true)}}
+function page(p,push=true){if(p==="advanced"&&user?.role!=="Admin"){toast("Admin only");return}if(push&&current!==p)hist.push(current);current=p;document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(p).classList.add("active");document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));let n=document.querySelector('[data-p="'+p+'"]');if(n)n.classList.add("active");document.querySelector(".side").classList.remove("open");refresh()}
+function back(){page(hist.length?hist.pop():"dashboard",false)}
+function refresh(){normalizeDB();dash();renderPOS();renderProducts();inventory();purchases();sales();customers();expenses();reports();users();settings();if(typeof ensureAdvanced==="function")ensureAdvanced();if(typeof renderPermissions==="function")renderPermissions();if(typeof renderBranches==="function")renderBranches();if(typeof renderIconNameEditor==="function")renderIconNameEditor();if(typeof applyVisual==="function")applyVisual();if(typeof renderMasterControls==="function")renderMasterControls();if(typeof applyMasterControls==="function")applyMasterControls();if(typeof applyIconEffects==="function")applyIconEffects();if(typeof showHeld==="function")showHeld()}
+function dash(){let s=db.sales.reduce((a,x)=>a+x.total,0),p=db.sales.reduce((a,x)=>a+x.profit,0),e=db.expenses.reduce((a,x)=>a+x.amount,0);document.getElementById("ds").textContent=money(s);document.getElementById("dp").textContent=money(p-e);document.getElementById("dprod").textContent=db.products.length;document.getElementById("dlow").textContent=db.products.filter(x=>x.stock<=x.min).length;document.getElementById("dpu").textContent=money(db.purchases.reduce((a,x)=>a+x.total,0));document.getElementById("de").textContent=money(e);document.getElementById("dc").textContent=db.customers.length;document.getElementById("dt").textContent=money(db.sales.filter(x=>x.date.slice(0,10)==new Date().toISOString().slice(0,10)).reduce((a,x)=>a+x.total,0));document.getElementById("recent").innerHTML=db.sales.slice(-6).reverse().map(x=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #26364d"><span>${esc(x.invoice)}<br><small>${esc(x.customer)}</small></span><b>${money(x.total)}</b></div>`).join("")||"<p style='color:#94a3b8'>No sales yet</p>"}
+function renderPOS(){let q=(document.getElementById("search")?.value||"").toLowerCase();document.getElementById("plist").innerHTML=db.products.filter(p=>(p.name+p.sku).toLowerCase().includes(q)).map(p=>`<div class="product" onclick="add('${p.id}')"><div class="pic">📦</div><b>${esc(p.name)}</b><div class="price">${money(p.price)}</div><div class="stock">Stock: ${p.stock}</div></div>`).join("")||"<p>No product found</p>";cartRender()}
+function add(i){let p=db.products.find(x=>x.id==i),c=cart.find(x=>x.id==i);if(c){if(c.qty<p.stock)c.qty++}else if(p.stock>0)cart.push({id:i,qty:1});cartRender()}
+function cartRender(){let total=0;document.getElementById("cart").innerHTML=cart.map((c,i)=>{let p=db.products.find(x=>x.id==c.id),sub=p.price*c.qty;total+=sub;return`<div class="cartrow"><span>${esc(p.name)}</span><input type="number" min="1" max="${p.stock}" value="${c.qty}" onchange="cart[${i}].qty=+this.value;cartRender()"><b>${money(sub)}</b><button class="btn danger" onclick="cart.splice(${i},1);cartRender()">×</button></div>`}).join("")||"<p style='color:#94a3b8;padding:20px;text-align:center'>Cart is empty</p>";let paid=+(document.getElementById("paid")?.value||0);document.getElementById("ctotal").textContent=money(total);document.getElementById("due").textContent=money(Math.max(total-paid,0))}
+function clearCart(){cart=[];cartRender()}
+function sale(){if(!cart.length)return toast("Cart is empty");let total=0,profit=0,items=cart.map(c=>{let p=db.products.find(x=>x.id==c.id);total+=p.price*c.qty;profit+=(p.price-p.cost)*c.qty;p.stock-=c.qty;return{productId:p.id,name:p.name,qty:c.qty,price:p.price,cost:p.cost,total:p.price*c.qty}}),paid=Math.min(+(document.getElementById("paid").value||0),total),s={id:id(),invoice:"INV-"+Date.now().toString().slice(-8),date:new Date().toISOString(),customer:document.getElementById("customer").value||"Walk-in Customer",payment:document.getElementById("payment").value,total,paid,due:total-paid,profit,items,note:document.getElementById("note").value};db.sales.push(s);save();cart=[];document.getElementById("paid").value="";document.getElementById("customer").value="";document.getElementById("note").value="";refresh();toast("Sale completed: "+s.invoice);if(confirm("Print receipt now?"))printReceipt(s)}
+function renderProducts(){let q=(document.getElementById("psearch")?.value||"").toLowerCase();document.getElementById("ptable").innerHTML=db.products.filter(p=>(p.name+p.sku).toLowerCase().includes(q)).map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.sku)}</td><td>${money(p.cost)}</td><td>${money(p.price)}</td><td>${p.stock}</td><td><button class="btn" onclick="productForm('${p.id}')">Edit</button> ${user?.role=="Admin"?`<button class="btn danger" onclick="delProduct('${p.id}')">Delete</button>`:""}</td></tr>`).join("")}
+function productForm(i=""){editId=i;let p=db.products.find(x=>x.id==i)||{name:"",sku:"",cost:0,price:0,stock:0,min:5};modal("Product",`<div class="formgrid"><div><label>Name</label><input id="pn" value="${esc(p.name)}"></div><div><label>SKU/Barcode</label><input id="ps" value="${esc(p.sku)}"></div><div><label>Cost</label><input id="pc" type="number" value="${p.cost}"></div><div><label>Selling Price</label><input id="pp" type="number" value="${p.price}"></div><div><label>Stock</label><input id="px" type="number" value="${p.stock}"></div><div><label>Low Stock</label><input id="pm" type="number" value="${p.min}"></div></div><button class="btn" style="margin-top:12px;width:100%" onclick="saveProduct()">Save Product</button>`)}
+function saveProduct(){let o={id:editId||id(),name:document.getElementById("pn").value,sku:document.getElementById("ps").value,cost:+document.getElementById("pc").value,price:+document.getElementById("pp").value,stock:+document.getElementById("px").value,min:+document.getElementById("pm").value};if(!o.name||!o.sku)return toast("Name and SKU required");let i=db.products.findIndex(x=>x.id==editId);i>=0?db.products[i]=o:db.products.push(o);save();closeModal();refresh();toast("Product saved")}
+function delProduct(i){if(confirm("Delete product?")){db.products=db.products.filter(x=>x.id!=i);save();refresh()}}
+function inventory(){document.getElementById("itable").innerHTML=db.products.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.sku)}</td><td>${p.stock}</td><td>${money(p.stock*p.cost)}</td><td>${money(p.stock*p.price)}</td><td>${p.stock<=p.min?"LOW":"OK"}</td></tr>`).join("")}
+function adjust(){let o=db.products.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");modal("Stock Adjustment",`<select id="ap">${o}</select><input id="aq" type="number" placeholder="+10 or -5" style="margin-top:10px"><button class="btn" style="margin-top:10px;width:100%" onclick="let p=db.products.find(x=>x.id==document.getElementById('ap').value);p.stock=Math.max(0,p.stock+(+document.getElementById('aq').value||0));save();closeModal();refresh()">Save</button>`)}
+function purchaseForm(){let o=db.products.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");modal("Add Purchase",`<select id="ppro">${o}</select><input id="pqty" type="number" placeholder="Quantity" style="margin-top:10px"><input id="pcost" type="number" placeholder="Cost per unit" style="margin-top:10px"><input id="psup" placeholder="Supplier" style="margin-top:10px"><button class="btn" style="margin-top:10px;width:100%" onclick="let p=db.products.find(x=>x.id==ppro.value),q=+pqty.value,c=+pcost.value;p.stock+=q;db.purchases.push({id:id(),date:new Date().toISOString(),product:p.name,qty:q,cost:c,total:q*c,supplier:psup.value});save();closeModal();refresh()">Save Purchase</button>`)}
+function purchases(){document.getElementById("putotal").textContent=money(db.purchases.reduce((a,x)=>a+x.total,0));document.getElementById("pucount").textContent=db.purchases.length;document.getElementById("putable").innerHTML=db.purchases.slice().reverse().map(x=>`<tr><td>${new Date(x.date).toLocaleString()}</td><td>${esc(x.product)}</td><td>${x.qty}</td><td>${money(x.cost)}</td><td>${money(x.total)}</td><td>${esc(x.supplier)}</td><td><button class="btn danger" onclick="db.purchases=db.purchases.filter(a=>a.id!='${x.id}');save();refresh()">Delete</button></td></tr>`).join("")}
+function sales(){let q=(document.getElementById("ssearch")?.value||"").toLowerCase();document.getElementById("stable").innerHTML=db.sales.filter(s=>(s.invoice+s.customer).toLowerCase().includes(q)).slice().reverse().map(s=>`<tr><td>${s.invoice}</td><td>${new Date(s.date).toLocaleString()}</td><td>${esc(s.customer)}</td><td>${money(s.total)}</td><td>${money(s.paid)}</td><td>${money(s.due)}</td><td>${s.payment}</td><td><button class="btn" onclick="printReceipt(db.sales.find(x=>x.id=='${s.id}'))">Print</button> ${user?.role=="Admin"?`<button class="btn danger" onclick="deleteSale('${s.id}')">Delete</button>`:""}</td></tr>`).join("")}
+function deleteSale(i){if(!confirm("Delete sale and return stock?"))return;let s=db.sales.find(x=>x.id==i);s.items.forEach(a=>{let p=db.products.find(x=>x.id==a.productId);if(p)p.stock+=a.qty});db.sales=db.sales.filter(x=>x.id!=i);save();refresh()}
+function customerForm(i=""){editId=i;let c=db.customers.find(x=>x.id==i)||{};modal("Customer",`<input id="cn" placeholder="Name" value="${esc(c.name||"")}"><input id="cp" placeholder="Phone" value="${esc(c.phone||"")}" style="margin-top:10px"><input id="ca" placeholder="Address" value="${esc(c.address||"")}" style="margin-top:10px"><button class="btn" style="margin-top:10px;width:100%" onclick="let o={id:editId||id(),name:cn.value,phone:cp.value,address:ca.value},i=db.customers.findIndex(x=>x.id==editId);i>=0?db.customers[i]=o:db.customers.push(o);save();closeModal();refresh()">Save</button>`)}
+function customers(){document.getElementById("ctable").innerHTML=db.customers.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.phone)}</td><td>${esc(c.address)}</td><td><button class="btn" onclick="customerForm('${c.id}')">Edit</button> <button class="btn danger" onclick="db.customers=db.customers.filter(x=>x.id!='${c.id}');save();refresh()">Delete</button></td></tr>`).join("")}
+function expenseForm(){modal("Expense",`<input id="ec" placeholder="Category"><input id="ed" placeholder="Description" style="margin-top:10px"><input id="ea" type="number" placeholder="Amount" style="margin-top:10px"><button class="btn" style="margin-top:10px;width:100%" onclick="db.expenses.push({id:id(),date:new Date().toISOString(),category:ec.value,description:ed.value,amount:+ea.value});save();closeModal();refresh()">Save Expense</button>`)}
+function expenses(){document.getElementById("etotal").textContent=money(db.expenses.reduce((a,x)=>a+x.amount,0));document.getElementById("etable").innerHTML=db.expenses.slice().reverse().map(x=>`<tr><td>${new Date(x.date).toLocaleString()}</td><td>${esc(x.category)}</td><td>${esc(x.description)}</td><td>${money(x.amount)}</td><td><button class="btn danger" onclick="db.expenses=db.expenses.filter(a=>a.id!='${x.id}');save();refresh()">Delete</button></td></tr>`).join("")}
+function reports(){let s=db.sales.reduce((a,x)=>a+x.total,0),c=db.sales.reduce((a,x)=>a+x.items.reduce((z,i)=>z+i.cost*i.qty,0),0),e=db.expenses.reduce((a,x)=>a+x.amount,0);rs.textContent=money(s);rc.textContent=money(c);rp.textContent=money(s-c);re.textContent=money(e)}
+function userForm(){modal("Add User",`<input id="un" placeholder="Username"><input id="up" type="password" placeholder="Password" style="margin-top:10px"><select id="ur" style="margin-top:10px"><option>Cashier</option><option>Admin</option></select><button class="btn" style="margin-top:10px;width:100%" onclick="db.users.push({id:id(),username:un.value,password:up.value,role:ur.value});save();closeModal();refresh()">Save</button>`)}
+function users(){document.getElementById("utable").innerHTML=db.users.map(x=>`<tr><td>${esc(x.username)}</td><td>${x.role}</td><td>${x.id!="1"?`<button class="btn danger" onclick="db.users=db.users.filter(a=>a.id!='${x.id}');save();refresh()">Delete</button>`:"Main Admin"}</td></tr>`).join("")}
+function settings(){sn.value=db.settings.name;sp.value=db.settings.phone;sa.value=db.settings.address;sc.value=db.settings.currency;st.value=db.settings.thanks}
+function saveSettings(){db.settings.name=sn.value;db.settings.phone=sp.value;db.settings.address=sa.value;db.settings.currency=sc.value||"₦";db.settings.thanks=st.value;save();document.title=db.settings.name;refresh();toast("Settings saved")}
+function theme(bg,ac){document.documentElement.style.setProperty("--x",bg);document.body.style.background=bg;document.documentElement.style.setProperty("--a",ac);document.querySelectorAll(".btn:not(.secondary):not(.danger):not(.warning)").forEach(x=>x.style.background=ac)}
+function backup(){let a=document.createElement("a"),b=new Blob([JSON.stringify(db,null,2)],{type:"application/json"});a.href=URL.createObjectURL(b);a.download="Dlimans_POS_Backup.json";a.click()}
+function restore(){let f=document.getElementById("restore").files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);save();refresh();toast("Backup restored")}catch(e){alert("Invalid backup")}};r.readAsText(f)}
+function csv(){let s="Invoice,Date,Customer,Total,Paid,Due,Payment\n"+db.sales.map(x=>`"${x.invoice}","${x.date}","${x.customer}",${x.total},${x.paid},${x.due},"${x.payment}"`).join("\n"),a=document.createElement("a");a.href=URL.createObjectURL(new Blob([s],{type:"text/csv"}));a.download="Dlimans_Sales.csv";a.click()}
+function printReceipt(s){let w=open("","_blank");if(!w)return;w.document.write(`<html><body style="font-family:Arial;width:300px"><h2 style="text-align:center">${esc(db.settings.name)}</h2><p style="text-align:center">${esc(db.settings.address)}<br>${esc(db.settings.phone)}</p><hr><b>${s.invoice}</b><br>${new Date(s.date).toLocaleString()}<hr>${s.items.map(i=>`${esc(i.name)} x${i.qty} — ${money(i.total)}<br>`).join("")}<hr><h3>Total: ${money(s.total)}</h3>Paid: ${money(s.paid)}<br>Due: ${money(s.due)}<hr><center>${esc(db.settings.thanks)}</center><script>window.onload=()=>print()<\/script></body></html>`);w.document.close()}
+function modal(t,b){document.getElementById("mtitle").textContent=t;document.getElementById("mbody").innerHTML=b;document.getElementById("modal").classList.remove("hidden")}
+function closeModal(){document.getElementById("modal").classList.add("hidden")}
+function cc(x){document.getElementById("calc").value=x===""?"":document.getElementById("calc").value+x}
+function ce(){try{document.getElementById("calc").value=Function("return "+document.getElementById("calc").value)()}catch(e){document.getElementById("calc").value="Error"}}
+ensureAdvanced();
+if(!Array.isArray(db.users))db.users=[];
+if(!db.users.some(a=>a.username==="admin"))db.users.unshift({id:"1",username:"admin",password:"admin123",role:"Admin"});
+if(!db.users.some(a=>a.username==="cashier"))db.users.push({id:"2",username:"cashier",password:"1234",role:"Cashier"});
+if(!db.settings)db.settings={name:"Dlimans Supermarket",phone:"08063756515",address:"",currency:"₦",thanks:"Thank you for shopping with Dlimans Supermarket!"};
+let saved=localStorage.getItem("DL_LOGIN");
+if(saved)try{let x=JSON.parse(saved);lu.value=x.u||"";lp.value=x.p||"";rem.checked=true}catch(e){}
+document.title=db.settings.name||"Dlimans Supermarket";
+save();
+
+
+/* ===== Dlimans Advanced Features ===== */
+function ensureAdvanced(){
+ db.heldSales=db.heldSales||[];
+ db.branches=db.branches||[{id:"main",name:"Main Branch",location:""}];
+ db.permissions=db.permissions||{newSale:true,products:false,inventory:false,purchases:false,sales:true,customers:true,expenses:false,reports:true,calculator:true,settings:false};
+ db.visual=db.visual||{blinkAll:false,blinkLogin:true};
+ db.iconNames=db.iconNames||{
+  dashboard:"Dashboard",pos:"New Sale",products:"Products",inventory:"Inventory",
+  purchases:"Purchases",sales:"Sales",customers:"Customers",expenses:"Expenses",
+  reports:"Reports",calculator:"Calculator",users:"Users",settings:"Settings",
+  advanced:"Control Center",backup:"Backup / Restore"
+ };
+ db.master=db.master||{hold:true,confirm:true,cartdelete:true,autoprint:false,remember:true,pwshow:true,adminonly:true,blink:false,loginblink:true,icons:true,reports:true,customers:true,purchases:false};
+}
+ensureAdvanced();
+
+function toggleLoginPassword(){
+ const x=document.getElementById("lp"); x.type=x.type==="password"?"text":"password";
+}
+function holdSale(){
+ if(!cart.length)return toast("Cart is empty");
+ db.heldSales.push({id:id(),date:new Date().toISOString(),customer:document.getElementById("customer").value||"Walk-in Customer",payment:document.getElementById("payment").value,paid:+(document.getElementById("paid").value||0),note:document.getElementById("note").value,items:JSON.parse(JSON.stringify(cart))});
+ save(); clearCart(); document.getElementById("customer").value="";document.getElementById("paid").value="";document.getElementById("note").value="";showHeld();toast("Sale held successfully");
+}
+function showHeld(){
+ let box=document.getElementById("heldBox");
+ box.innerHTML=db.heldSales.length?'<b>Held Sales</b>'+db.heldSales.map((h,i)=>`<div class="card" style="margin-top:7px;padding:9px"><b>${esc(h.customer)}</b><small style="display:block;color:#94a3b8">${new Date(h.date).toLocaleString()}</small><button class="btn" onclick="resumeHeld('${h.id}')">Resume</button> <button class="btn danger" onclick="db.heldSales.splice(${i},1);save();showHeld()">Delete</button></div>`).join(""):"";
+}
+function resumeHeld(i){
+ let h=db.heldSales.find(x=>x.id===i); if(!h)return;
+ cart=JSON.parse(JSON.stringify(h.items));db.heldSales=db.heldSales.filter(x=>x.id!==i);
+ document.getElementById("customer").value=h.customer;document.getElementById("payment").value=h.payment;document.getElementById("paid").value=h.paid;document.getElementById("note").value=h.note;
+ save();cartRender();showHeld();toast("Held sale resumed");
+}
+const oldSale=sale;
+sale=function(){
+ if(!cart.length)return toast("Cart is empty");
+ if(masterVal("confirm",true)&&!confirm("Confirm this sale before completing it?"))return;
+ oldSale();
+};
+function applyPermissions(){
+ ensureAdvanced();
+ const admin=user?.role==="Admin";
+ document.querySelectorAll(".nav[data-p]").forEach(n=>{
+   const p=n.dataset.p;
+   if(admin || p==="dashboard" || db.permissions[p]!==false)n.style.display="";
+   else n.style.display="none";
+ });
+ const ac=document.querySelector('[data-p="advanced"]');
+ if(ac)ac.style.display=admin?"":"none";
+}
+function renderPermissions(){
+ if(!document.getElementById("permBox"))return;
+ const items={newSale:"New Sales / POS",products:"Products",inventory:"Inventory",purchases:"Purchases",sales:"Sales",customers:"Customers",expenses:"Expenses",reports:"Reports",calculator:"Calculator",settings:"Settings"};
+ document.getElementById("permBox").innerHTML=Object.entries(items).map(([k,v])=>`<div class="permission-row"><span>${v}</span><input type="checkbox" id="perm_${k}" ${db.permissions[k]!==false?"checked":""}></div>`).join("");
+}
+function savePermissions(){
+ Object.keys(db.permissions).forEach(k=>{let x=document.getElementById("perm_"+k);if(x)db.permissions[k]=x.checked});
+ save();applyPermissions();toast("Cashier permissions saved");
+}
+function addBranch(){
+ let n=document.getElementById("branchName").value.trim();if(!n)return toast("Enter branch name");
+ db.branches.push({id:id(),name:n,location:document.getElementById("branchLocation").value});
+ save();renderBranches();document.getElementById("branchName").value="";document.getElementById("branchLocation").value="";toast("Branch added");
+}
+function renderBranches(){
+ let x=document.getElementById("branchList");if(!x)return;
+ x.innerHTML=db.branches.map(b=>`<div class="permission-row"><span><b>${esc(b.name)}</b><br><small>${esc(b.location)}</small></span>${b.id!=="main"?`<button class="btn danger" onclick="db.branches=db.branches.filter(x=>x.id!='${b.id}');save();renderBranches()">Delete</button>`:"Main"}</div>`).join("");
+}
+function saveVisual(){
+ db.visual.blinkAll=document.getElementById("blinkAll").checked;
+ db.visual.blinkLogin=document.getElementById("blinkLogin").checked;save();applyVisual();toast("Visual settings saved");
+}
+function applyVisual(){
+ ensureAdvanced();
+ document.getElementById("login").classList.toggle("login-blink",!!db.visual.blinkLogin);
+ document.body.classList.toggle("blinking-ui",!!db.visual.blinkAll);
+ applyIconEffects();
+}
+function startVoice(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){document.getElementById("voiceStatus").textContent="Voice recognition is not supported in this browser.";return}
+ let r=new SR();r.lang="en-US";r.interimResults=false;
+ document.getElementById("voiceBtn").classList.add("voice-on");
+ document.getElementById("voiceStatus").textContent="Listening… say: dashboard, new sale, products, sales, settings, reports, calculator";
+ r.onresult=e=>{let t=e.results[0][0].transcript.toLowerCase();
+   let map={dashboard:"dashboard",sale:"pos","new sale":"pos",products:"products",inventory:"inventory",sales:"sales",customers:"customers",expenses:"expenses",reports:"reports",calculator:"calculator",settings:"settings"};
+   let p=Object.keys(map).find(k=>t.includes(k));if(p)page(map[p]);document.getElementById("voiceStatus").textContent="Heard: "+t;
+ };
+ r.onend=()=>document.getElementById("voiceBtn").classList.remove("voice-on");r.onerror=()=>document.getElementById("voiceBtn").classList.remove("voice-on");r.start();
+}
+const oldOpenApp=openApp;
+openApp=function(){oldOpenApp();applyPermissions();renderPermissions();renderBranches();applyVisual();applyMasterControls();}
+const oldRefresh=refresh;
+refresh=function(){oldRefresh();ensureAdvanced();renderPermissions();renderBranches();renderIconNameEditor();applyVisual();renderMasterControls();applyMasterControls();applyIconEffects();showHeld();}
+
+
+function masterVal(k,def){ensureAdvanced();return db.master[k]===undefined?def:db.master[k]}
+function renderMasterControls(){
+ ensureAdvanced();
+ const m=db.master;
+ const ids=["hold","confirm","cartdelete","autoprint","remember","pwshow","adminonly","blink","loginblink","icons","reports","customers","purchases"];
+ ids.forEach(k=>{let x=document.getElementById("ctl_"+k);if(x)x.checked=!!m[k]});
+ let s=document.getElementById("adminSalesSummary");
+ if(s)s.innerHTML=`Sales records: <b>${db.sales.length}</b> &nbsp; Total: <b>${money(db.sales.reduce((a,x)=>a+x.total,0))}</b>`;
+}
+function saveMasterControls(){
+ ensureAdvanced();
+ ["hold","confirm","cartdelete","autoprint","remember","pwshow","adminonly","blink","loginblink","icons","reports","customers","purchases"].forEach(k=>{
+   let x=document.getElementById("ctl_"+k);if(x)db.master[k]=x.checked;
+ });
+ db.visual.blinkAll=db.master.blink;db.visual.blinkLogin=db.master.loginblink;
+ save();applyMasterControls();toast("Admin controls saved");
+}
+function applyMasterControls(){
+ ensureAdvanced();
+ applyVisual();
+ const pw=document.querySelector('#login button[onclick="toggleLoginPassword()"]');
+ if(pw)pw.style.display=db.master.pwshow?"":"none";
+ const rem=document.getElementById("rem");if(rem)rem.parentElement.style.display=db.master.remember?"flex":"none";
+ document.body.classList.toggle("blinking-ui",!!db.master.blink);
+ renderMasterControls();
+}
+function adminDeleteAllSales(){
+ if(user?.role!=="Admin")return toast("Admin only");
+ if(!db.sales.length)return toast("There are no sales to delete");
+ const total=db.sales.reduce((a,x)=>a+x.total,0);
+ if(!confirm(`DELETE ALL ${db.sales.length} SALES totaling ${money(total)}? This cannot be undone.`))return;
+ if(!confirm("FINAL CONFIRMATION: Delete every sale permanently?"))return;
+ db.sales=[];save();refresh();toast("All sales deleted");
+}
+function adminRestoreSalesStock(){
+ if(user?.role!=="Admin")return toast("Admin only");
+ toast("Stock restoration requires a sales backup. Use Backup/Restore before destructive changes.");
+}
+
+
+function applyIconEffects(){
+ ensureAdvanced();
+ document.querySelectorAll(".nav").forEach(n=>{
+   const p=n.dataset.p;
+   const old=n.querySelector(".dl-icon-name");
+   if(old)old.remove();
+   if(p && db.iconNames[p]){
+     const parts=n.innerHTML.trim().split(/\s+/);
+     // Preserve the first emoji/icon and replace the text label.
+     const icon=parts[0]||"";
+     n.innerHTML=icon+'<span class="dl-icon-name">'+esc(db.iconNames[p])+'</span>';
+   }
+   n.classList.toggle("dl-blink",!!db.master?.blink);
+ });
+}
+function renderIconNameEditor(){
+ ensureAdvanced();
+ const box=document.getElementById("iconNameEditor"); if(!box)return;
+ box.innerHTML=Object.entries(db.iconNames).map(([k,v])=>
+   `<div class="admin-setting"><label>${esc(k)}</label><input id="iconname_${k}" value="${esc(v)}"></div>`
+ ).join("");
+}
+function saveIconNames(){
+ ensureAdvanced();
+ Object.keys(db.iconNames).forEach(k=>{
+   const x=document.getElementById("iconname_"+k);
+   if(x && x.value.trim())db.iconNames[k]=x.value.trim();
+ });
+ save();applyIconEffects();renderIconNameEditor();toast("Icon names updated");
+}
+function resetIconNames(){
+ ensureAdvanced();
+ db.iconNames={dashboard:"Dashboard",pos:"New Sale",products:"Products",inventory:"Inventory",purchases:"Purchases",sales:"Sales",customers:"Customers",expenses:"Expenses",reports:"Reports",calculator:"Calculator",users:"Users",settings:"Settings",advanced:"Control Center",backup:"Backup / Restore"};
+ save();applyIconEffects();renderIconNameEditor();toast("Icon names reset");
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+ try{
+   ensureAdvanced();
+   applyVisual();
+   if(typeof applyMasterControls==="function")applyMasterControls();
+   if(typeof refresh==="function")refresh();
+ }catch(e){console.error(e);}
+});
+</script>
+</body>
+</html>

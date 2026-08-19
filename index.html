@@ -540,12 +540,51 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
         </div>
       </section>
 
+      <section class="view" id="view-invoice">
+        <div class="section-title">
+          <div><h2>Invoice</h2><div class="small">Create, preview, search and reprint customer invoices.</div></div>
+          <button class="btn" onclick="invoicePreviewLatest()">🧾 Preview Latest</button>
+        </div>
+        <div class="grid grid2">
+          <div class="card">
+            <h3>Invoice Search</h3>
+            <div class="row wrap">
+              <input id="invoiceSearch" class="grow" placeholder="Invoice number e.g. INV-000001">
+              <button class="btn primary" onclick="findInvoice()">Find</button>
+            </div>
+            <div id="invoiceResult" style="margin-top:12px"></div>
+          </div>
+          <div class="card">
+            <h3>Invoice Settings</h3>
+            <div class="grid grid2">
+              <div><label class="small">Invoice prefix</label><input id="invPrefix" placeholder="INV-"></div>
+              <div><label class="small">Next number</label><input id="invNext" type="number" min="1"></div>
+              <div><label class="small">Invoice title</label><input id="invTitle" placeholder="INVOICE"></div>
+              <div><label class="small">Footer message</label><input id="invFooter" placeholder="Thank you"></div>
+            </div>
+            <label class="remember"><input id="invShowNote" type="checkbox"> Show customer note</label>
+            <label class="remember"><input id="invShowDue" type="checkbox"> Show due amount</label>
+            <label class="remember"><input id="invShowPaid" type="checkbox"> Show paid amount</label>
+            <label class="remember"><input id="invShowLogo" type="checkbox"> Show business logo/initial</label>
+            <button class="btn primary" onclick="saveInvoiceSettings()">Save Invoice Settings</button>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <h3>Recent Invoices</h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Total</th><th>Paid</th><th>Due</th><th>Action</th></tr></thead>
+            <tbody id="invoiceTable"></tbody>
+          </table></div>
+        </div>
+      </section>
+
       <section class="view" id="view-settings">
         <div class="section-title"><h2>Settings</h2></div>
         <div class="card"><div class="grid grid2">
           <button class="btn" onclick="showView('control')">⚙️ Business / Theme / Control Center</button>
           <button class="btn" onclick="showView('users')">👤 Users & Permissions</button>
           <button class="btn" onclick="showView('printer')">🖨 Printer Settings</button>
+          <button class="btn" onclick="showView('invoice')">🧾 Invoice / Invoice Settings</button>
           <button class="btn" onclick="showView('control')">🎨 Customize</button>
         </div></div>
       </section>
@@ -575,7 +614,8 @@ const defaultState={
  settings:{
   business:'Dlimans Supermarket',phone:'08063756515',address:'Nigeria',currency:'₦',
   thanks:'Thank you for shopping with Dlimans Supermarket!',theme:'darkblue',blink:true,
-  paper:'58mm',autoPrint:false
+  paper:'58mm',autoPrint:false,
+  invoice:{prefix:'INV-',nextNumber:1,title:'INVOICE',footer:'Thank you for shopping with Dlimans Supermarket!',showCustomerNote:true,showDue:true,showPaid:true,showLogo:false}
  },
  users:[
   {id:'u-admin',username:'admin',password:'admin123',role:'Admin',active:true},
@@ -601,6 +641,7 @@ function normalizeState(saved){
  if(!saved || typeof saved!=='object') return base;
  const out={...base,...saved};
  out.settings={...base.settings,...(saved.settings||{})};
+ out.settings.invoice={...base.settings.invoice,...(saved.settings?.invoice||{})};
  out.settings.menuNames={...base.settings.menuNames,...(saved.settings?.menuNames||{})};
  out.users=Array.isArray(saved.users)?saved.users:[];
  if(!out.users.some(u=>u&&u.username==='admin')) out.users.unshift(base.users[0]);
@@ -690,6 +731,7 @@ const builtInNav=[
  ['accounting','📒','Accounting','accounting'],
  ['branches','🔗','Branching','branches'],
  ['printer','🖨️','Printer / Receipt','printer'],
+ ['invoice','🧾','Invoice','invoice'],
  ['users','👤','Users / Roles','users'],
  ['control','🎛️','Control Center','control'],
  ['settings','⚙️','Settings / Customize','settings']
@@ -797,7 +839,8 @@ function finalizeSale(){
  closeModal();
  const total=cartTotal(),paid=document.getElementById('paidAmount').value===''?total:Number(document.getElementById('paidAmount').value);
 
- const sale={id:uid(),invoice:'INV-'+Date.now().toString().slice(-8),date:today(),customer:document.getElementById('customerName').value.trim()||'Walk-in',note:document.getElementById('customerNote').value.trim(),payment:document.getElementById('paymentMethod').value,items:structuredClone(cart),total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser.username};
+ const sale={id:uid(),invoice:invoiceNumber(),date:today(),customer:document.getElementById('customerName').value.trim()||'Walk-in',note:document.getElementById('customerNote').value.trim(),payment:document.getElementById('paymentMethod').value,items:structuredClone(cart),total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser.username};
+ advanceInvoiceNumber();
  state.sales.push(sale);
  sale.items.forEach(i=>{const p=state.products.find(x=>x.id===i.productId);if(p)p.stock-=i.qty});
  const cn=sale.customer;if(cn!=='Walk-in'){
@@ -807,7 +850,7 @@ function finalizeSale(){
  }
  save();cart=[];document.getElementById('customerName').value='';document.getElementById('customerNote').value='';document.getElementById('paidAmount').value='';
  renderCart();refreshAll();toast('Sale confirmed successfully');
- if(state.settings.autoPrint)testPrint(sale);
+ if(state.settings.autoPrint)receiptPrint(sale);
 }
 function holdSale(){
  if(!cart.length){toast('Cart is empty');return}
@@ -979,6 +1022,45 @@ function renderCustomIcons(){document.getElementById('customIconsList').innerHTM
 function removeCustomIcon(id){state.customIcons=state.customIcons.filter(x=>x.id!==id);save();buildSidebar();renderCustomIcons()}
 function customNav(target){showView(target)}
 
+function invoiceNumber(){
+ const inv=state.settings.invoice||defaultState.settings.invoice;
+ const prefix=String(inv.prefix||'INV-');
+ const n=Math.max(1,Number(inv.nextNumber)||1);
+ return prefix+String(n).padStart(6,'0');
+}
+function advanceInvoiceNumber(){
+ if(!state.settings.invoice) state.settings.invoice=JSON.parse(JSON.stringify(defaultState.settings.invoice));
+ state.settings.invoice.nextNumber=Math.max(1,Number(state.settings.invoice.nextNumber)||1)+1;
+}
+function saveInvoiceSettings(){
+ if(!isAdmin()){toast('Admin only');return}
+ const inv=state.settings.invoice||(state.settings.invoice=JSON.parse(JSON.stringify(defaultState.settings.invoice)));
+ inv.prefix=document.getElementById('invPrefix').value.trim()||'INV-';
+ inv.nextNumber=Math.max(1,Number(document.getElementById('invNext').value)||1);
+ inv.title=document.getElementById('invTitle').value.trim()||'INVOICE';
+ inv.footer=document.getElementById('invFooter').value;
+ inv.showCustomerNote=document.getElementById('invShowNote').checked;
+ inv.showDue=document.getElementById('invShowDue').checked;
+ inv.showPaid=document.getElementById('invShowPaid').checked;
+ inv.showLogo=document.getElementById('invShowLogo').checked;
+ save();renderInvoiceList();toast('Invoice settings saved');
+}
+function renderInvoiceList(){
+ const box=document.getElementById('invoiceTable');if(!box)return;
+ const arr=state.sales.slice().reverse();
+ box.innerHTML=arr.map(s=>`<tr><td>${escapeHTML(s.invoice)}</td><td>${fmtDate(s.date)}</td><td>${escapeHTML(s.customer)}</td><td>${money(s.total)}</td><td>${money(s.paid)}</td><td>${money(s.due)}</td><td><button class="btn sm" onclick="receiptPrint(state.sales.find(x=>x.id==='${s.id}'))">Print</button></td></tr>`).join('')||'<tr><td colspan="7">No invoices yet</td></tr>';
+}
+function findInvoice(){
+ const q=(document.getElementById('invoiceSearch').value||'').trim().toLowerCase();
+ const box=document.getElementById('invoiceResult');
+ const sale=state.sales.find(x=>String(x.invoice).toLowerCase()===q);
+ if(!sale){box.innerHTML='<div class="badge red">Invoice not found</div>';return}
+ box.innerHTML=`<div class="card" style="margin-top:8px"><b>${escapeHTML(sale.invoice)}</b><div class="small">${fmtDate(sale.date)} • ${escapeHTML(sale.customer)}</div><div style="margin-top:8px"><b>Total: ${money(sale.total)}</b> • Paid: ${money(sale.paid)} • Due: ${money(sale.due)}</div><button class="btn primary" style="margin-top:10px" onclick="receiptPrint(state.sales.find(x=>x.id==='${sale.id}'))">🖨 Print / Preview Invoice</button></div>`;
+}
+function invoicePreviewLatest(){
+ const sale=state.sales[state.sales.length-1];
+ if(sale) receiptPrint(sale); else testPrint();
+}
 function saveBusiness(){
  if(!isAdmin()){toast('Admin only');return}
  state.settings.business=document.getElementById('setBusiness').value.trim()||state.settings.business;
@@ -1001,7 +1083,11 @@ function toggleBlink(on){state.settings.blink=on;save();document.querySelector('
 function loadControl(){
  const set=(id,val)=>{const e=document.getElementById(id);if(e)e.value=val};
  const check=(id,val)=>{const e=document.getElementById(id);if(e)e.checked=!!val};
- set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);set('paperSize',state.settings.paper);check('blinkTheme',state.settings.blink);check('autoPrint',state.settings.autoPrint);
+ set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);
+ const inv=state.settings.invoice||defaultState.settings.invoice;
+ set('invPrefix',inv.prefix);set('invNext',inv.nextNumber);set('invTitle',inv.title);set('invFooter',inv.footer);
+ check('invShowNote',inv.showCustomerNote);check('invShowDue',inv.showDue);check('invShowPaid',inv.showPaid);check('invShowLogo',inv.showLogo);
+ set('paperSize',state.settings.paper);check('autoPrint',state.settings.autoPrint);t('paperSize',state.settings.paper);check('blinkTheme',state.settings.blink);check('autoPrint',state.settings.autoPrint);
 }
 function renderDashboard(){
  const sales=state.sales.reduce((a,s)=>a+s.total,0),cost=state.sales.reduce((a,s)=>a+s.items.reduce((q,i)=>{const p=state.products.find(x=>x.id===i.productId);return q+i.qty*(p?.cost||0)},0),0),exp=state.expenses.reduce((a,e)=>a+e.amount,0),purchases=state.purchases.reduce((a,p)=>a+p.total,0),due=state.sales.reduce((a,s)=>a+s.due,0);
@@ -1056,9 +1142,31 @@ function printSale(id){
  const s=state.sales.find(x=>x.id===id);if(!s)return;receiptPrint(s)
 }
 function receiptPrint(s){
- const win=window.open('','_blank','width=420,height=700');if(!win){toast('Allow popups to print receipt');return}
- const items=s.items.map(i=>{const p=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td>${i.qty}</td><td>${money(i.qty*i.price)}</td></tr>`}).join('');
- win.document.write(`<html><head><title>${escapeHTML(s.invoice)}</title><style>body{font-family:Arial;width:${state.settings.paper==='A4'?'90%':'300px'};margin:auto;font-size:12px}h2{text-align:center}table{width:100%;border-collapse:collapse}td{padding:5px 0;border-bottom:1px dashed #bbb}.right{text-align:right}.thanks{text-align:center;margin-top:15px}</style></head><body><h2>${escapeHTML(state.settings.business)}</h2><div style="text-align:center">${escapeHTML(state.settings.address)}<br>${escapeHTML(state.settings.phone)}</div><hr><p>Invoice: ${escapeHTML(s.invoice)}<br>${fmtDate(s.date)}<br>Customer: ${escapeHTML(s.customer)}</p><table>${items}</table><p class="right"><b>Total: ${money(s.total)}</b><br>Paid: ${money(s.paid)}<br>Due: ${money(s.due)}</p><div class="thanks">${escapeHTML(state.settings.thanks)}</div><script>window.onload=()=>window.print()<\/script></body></html>`);win.document.close()
+ if(!s){toast('Invoice not found');return}
+ const inv=state.settings.invoice||defaultState.settings.invoice;
+ const win=window.open('','_blank','width=520,height=760');
+ if(!win){toast('Allow popups to print invoice');return}
+ const items=s.items.map(i=>{const p=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td class="qty">${i.qty}</td><td class="right">${money(i.qty*i.price)}</td></tr>`}).join('');
+ const logo=inv.showLogo?`<div class="logo">${escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`:'';
+ const note=inv.showCustomerNote&&s.note?`<p><b>Note:</b> ${escapeHTML(s.note)}</p>`:'';
+ const paid=inv.showPaid?`<br>Paid: ${money(s.paid)}`:'';
+ const due=inv.showDue?`<br>Due: ${money(s.due)}`:'';
+ const paper=state.settings.paper==='A4'?'90%':'300px';
+ win.document.write(`<html><head><title>${escapeHTML(s.invoice)}</title><style>
+ body{font-family:Arial,sans-serif;width:${paper};margin:20px auto;font-size:12px;color:#111}
+ h2{text-align:center;margin:4px 0}.logo{width:48px;height:48px;border-radius:12px;background:#111;color:#fff;display:grid;place-items:center;margin:0 auto 6px;font-size:24px;font-weight:bold}
+ .center{text-align:center}.line{border-top:1px dashed #777;margin:10px 0}
+ table{width:100%;border-collapse:collapse}th,td{padding:5px 2px;border-bottom:1px dashed #ccc;text-align:left}.qty{text-align:center;width:45px}.right{text-align:right}
+ .total{font-size:16px;font-weight:bold;text-align:right;margin-top:8px}.thanks{text-align:center;margin-top:16px;font-weight:bold}
+ @media print{body{margin:0 auto}}
+ </style></head><body>${logo}<h2>${escapeHTML(inv.title||'INVOICE')}</h2>
+ <div class="center"><b>${escapeHTML(state.settings.business)}</b><br>${escapeHTML(state.settings.address)}<br>${escapeHTML(state.settings.phone)}</div>
+ <div class="line"></div><div>Invoice: <b>${escapeHTML(s.invoice)}</b><br>${fmtDate(s.date)}<br>Customer: ${escapeHTML(s.customer)}<br>Payment: ${escapeHTML(s.payment||'')}</div>
+ <div class="line"></div><table><thead><tr><th>Item</th><th class="qty">Qty</th><th class="right">Amount</th></tr></thead><tbody>${items}</tbody></table>
+ <div class="total">Total: ${money(s.total)}</div><div style="text-align:right">${paid}${due}</div>${note}
+ <div class="line"></div><div class="thanks">${escapeHTML(inv.footer||state.settings.thanks)}</div>
+ <script>window.onload=()=>window.print()<\/script></body></html>`);
+ win.document.close()
 }
 function testPrint(){receiptPrint({invoice:'TEST-0001',date:today(),customer:'Test Customer',items:[{productId:state.products[0]?.id,qty:1,price:state.products[0]?.price||0}],total:state.products[0]?.price||0,paid:state.products[0]?.price||0,due:0})}
 async function connectBluetooth(){
@@ -1094,13 +1202,14 @@ function handleVoice(t){
   [['products','product'],'products'],[['inventory','stock'],'inventory'],[['purchase','purchases'],'purchases'],
   [['sales','sale history'],'sales'],[['customers','customer'],'customers'],[['expenses','expense'],'expenses'],
   [['reports','report'],'reports'],[['accounting'],'accounting'],[['printer','print settings'],'printer'],
-  [['users','user management'],'users'],[['control center','control'],'control'],[['settings','customize'],'settings']
+  [['users','user management'],'users'],[['invoice','invoices'],'invoice'],[['control center','control'],'control'],[['settings','customize'],'settings']
  ];
  for(const [words,target] of commands)if(words.some(w=>t.includes(w))){showView(target);toast('Opening '+target);return}
  if(t.includes('hold sale')){holdSale();return}
  if(t.includes('clear cart')){clearCart();toast('Cart cleared');return}
  if(t.includes('confirm sale')||t.includes('complete sale')){confirmSale();return}
- if(t.includes('print receipt')){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
+ if(t.includes('invoice')){showView('invoice');return}
+ if(t.includes('print receipt')||t.includes('print invoice')){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
  if(t.includes('logout')){logout();return}
  toast('Voice command not recognized')
 }
@@ -1129,7 +1238,7 @@ function loadSettings(){
 function safeRun(fn){try{fn()}catch(e){console.error('Dlimans render error:',e)}}
 function safeRefresh(){
  safeRun(()=>buildSidebar());safeRun(()=>loadSettings());
- [renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,renderCustomers,renderExpenses,renderPurchases,renderUsers,renderPermissions,renderCustomIcons,renderDashboard,refreshReports]
+ [renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,renderCustomers,renderExpenses,renderPurchases,renderUsers,renderPermissions,renderCustomIcons,renderDashboard,refreshReports,renderInvoiceList]
   .forEach(fn=>safeRun(fn));
 }
 function refreshAll(){safeRefresh()}

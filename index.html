@@ -121,18 +121,12 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 .purchase-table-wrap{max-height:560px;overflow:auto;position:relative}
 .purchase-table{min-width:780px}
 .purchase-table td,.purchase-table th{white-space:nowrap}
-.purchase-actions{display:flex;gap:5px;flex-wrap:wrap;min-width:118px}
-.purchase-table th:last-child,
-.purchase-table td:last-child{
-  position:sticky;
-  right:0;
-  z-index:3;
-  background:var(--panel);
-  box-shadow:-8px 0 14px #0005;
-  min-width:125px;
+.purchase-actions{display:flex;gap:5px;flex-wrap:wrap;min-width:122px}
+.purchase-table th:last-child,.purchase-table td:last-child{
+ position:sticky;right:0;z-index:3;background:var(--panel);
+ box-shadow:-8px 0 14px #0005;min-width:122px
 }
 .purchase-table th:last-child{z-index:4}
-.purchase-actions .danger{display:inline-flex!important}
 .purchase-detail{margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:#ffffff04}
 @media(max-width:800px){
  .purchase-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -312,6 +306,15 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
  .side-label{display:block!important;font-size:14px!important;font-weight:700!important}
  .side-group{display:block!important}
 }
+
+/* Optional Noisy Theme effect — visual only, does not change app data. */
+body.noisy-theme::after{
+ content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.055;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+ animation:noiseMove .18s steps(2) infinite;
+}
+@keyframes noiseMove{0%{transform:translate(0,0)}25%{transform:translate(-2%,1%)}50%{transform:translate(1%,-2%)}75%{transform:translate(2%,2%)}100%{transform:translate(0,0)}}
+
 </style>
 </head>
 <body>
@@ -574,6 +577,7 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
               <option value="chocolate">Chocolate</option><option value="salad">Salad Green</option><option value="black">Black</option>
             </select>
             <label class="remember"><input id="blinkTheme" type="checkbox" onchange="toggleBlink(this.checked)"> Blinking theme/icons</label>
+            <label class="remember"><input id="noisyTheme" type="checkbox" onchange="toggleNoisyTheme(this.checked)"> Noisy theme / animated background</label>
             <button class="btn" onclick="document.body.classList.toggle('blink')">Toggle universal blink</button>
           </div>
           <div class="card">
@@ -703,7 +707,7 @@ let currentUser=null, cart=[], held=[], selectedSales=new Set(), voiceRec=null;
 const defaultState={
  settings:{
   business:'Dlimans Supermarket',phone:'08063756515',address:'Nigeria',currency:'₦',
-  thanks:'Thank you for shopping with Dlimans Supermarket!',theme:'darkblue',blink:true,
+  thanks:'Thank you for shopping with Dlimans Supermarket!',theme:'darkblue',blink:true,noisy:false,
   paper:'58mm',autoPrint:false,
   invoice:{prefix:'INV-',nextNumber:1,title:'INVOICE',footer:'Thank you for shopping with Dlimans Supermarket!',showCustomerNote:true,showDue:true,showPaid:true,showLogo:false}
  },
@@ -1339,10 +1343,17 @@ function applyTheme(name,saveIt=true){
  if(saveIt){state.settings.theme=name;save()}
 }
 function toggleBlink(on){state.settings.blink=on;save();document.querySelector('.login-box')?.classList.toggle('login-blink',on);document.querySelectorAll('.side-icon').forEach(x=>x.classList.toggle('blink',on));}
+function toggleNoisyTheme(on){
+ state.settings.noisy=!!on;
+ document.body.classList.toggle('noisy-theme',!!on);
+ save();
+}
 function loadControl(){
  const set=(id,val)=>{const e=document.getElementById(id);if(e)e.value=val};
  const check=(id,val)=>{const e=document.getElementById(id);if(e)e.checked=!!val};
  set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);
+ check('noisyTheme',!!state.settings.noisy);
+ document.body.classList.toggle('noisy-theme',!!state.settings.noisy);
  const inv=state.settings.invoice||defaultState.settings.invoice;
  set('invPrefix',inv.prefix);set('invNext',inv.nextNumber);set('invTitle',inv.title);set('invFooter',inv.footer);
  check('invShowNote',inv.showCustomerNote);check('invShowDue',inv.showDue);check('invShowPaid',inv.showPaid);check('invShowLogo',inv.showLogo);
@@ -1450,23 +1461,21 @@ function startVoice(){
  const status=document.getElementById('voiceStatus');
 
  if(!SR){
-   if(status)status.textContent='Voice recognition is not supported by this browser. Open the app in Chrome.';
-   toast('Voice is not supported here. Open Dlimans in Chrome.');
+   const msg='Voice recognition is not supported here. Open the live HTTPS app in Chrome and allow microphone access.';
+   if(status)status.textContent='⚠ '+msg;
+   toast(msg);
    return;
  }
-
  if(voiceRec){
    try{voiceRec.abort()}catch(e){}
    voiceRec=null;
  }
-
  try{
    voiceRec=new SR();
    voiceRec.lang='en-US';
    voiceRec.continuous=false;
    voiceRec.interimResults=false;
    voiceRec.maxAlternatives=1;
-
    if(btn)btn.classList.add('voice-listening');
    if(status)status.textContent='🎙 Listening... Speak now';
 
@@ -1474,37 +1483,36 @@ function startVoice(){
      if(btn)btn.classList.add('voice-listening');
      if(status)status.textContent='🎙 Listening... Speak now';
    };
-
    voiceRec.onresult=(e)=>{
-     const text=(e.results && e.results[0] && e.results[0][0])
-       ? e.results[0][0].transcript.trim().toLowerCase() : '';
-     if(status)status.textContent=text ? 'Heard: '+text : 'No words heard';
+     const r=e.results?.[0]?.[0];
+     const text=r ? String(r.transcript||'').trim().toLowerCase() : '';
+     if(status)status.textContent=text?'Heard: '+text:'No speech detected';
      if(text)handleVoice(text);
    };
-
    voiceRec.onerror=(e)=>{
-     const msg={
+     const messages={
        'not-allowed':'Microphone permission was denied. Allow microphone permission for Chrome.',
+       'service-not-allowed':'Microphone/speech service is not allowed. Use the HTTPS live app.',
        'audio-capture':'No microphone was found.',
        'network':'Voice service/network error.',
        'no-speech':'No speech detected. Tap Voice and speak again.',
        'aborted':'Voice stopped.'
-     }[e.error] || ('Voice error: '+e.error);
+     };
+     const msg=messages[e.error]||('Voice error: '+e.error);
      if(status)status.textContent='⚠ '+msg;
      if(e.error!=='aborted')toast(msg);
    };
-
    voiceRec.onend=()=>{
      if(btn)btn.classList.remove('voice-listening');
      voiceRec=null;
    };
-
    voiceRec.start();
  }catch(err){
    if(btn)btn.classList.remove('voice-listening');
    voiceRec=null;
-   if(status)status.textContent='⚠ Could not start microphone. Allow microphone permission and try again.';
-   toast('Could not start Voice. Allow microphone permission and try again.');
+   const msg='Could not start Voice. Allow microphone permission and try again.';
+   if(status)status.textContent='⚠ '+msg;
+   toast(msg);
  }
 }
 function handleVoice(t){
@@ -1560,6 +1568,30 @@ window.addEventListener('error',function(e){
     try{buildSidebar()}catch(err){console.error(err)}
   }
 });
+
+
+/* Keep Android/browser Back inside the app instead of leaving the POS page. */
+(function(){
+  let backGuardReady=false;
+  function installBackGuard(){
+    if(backGuardReady)return;
+    backGuardReady=true;
+    try{
+      history.pushState({dlimansGuard:true},'',location.href);
+      window.addEventListener('popstate',function(){
+        history.pushState({dlimansGuard:true},'',location.href);
+        const active=document.querySelector('.view.active');
+        if(active && active.id!=='view-dashboard'){
+          showView('dashboard',true);
+          toast('Back: returned to Dashboard');
+        }else{
+          toast('Back is locked in the POS. Use Logout from the menu to leave.');
+        }
+      });
+    }catch(e){console.warn('Back guard unavailable',e)}
+  }
+  window.addEventListener('load',installBackGuard);
+})();
 
 </script>
 </body>

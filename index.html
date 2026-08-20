@@ -70,11 +70,20 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 .login-box h1{text-align:center}.login-box .subtitle{text-align:center;color:var(--muted);margin:7px 0 22px}
 .login-box label{display:block;margin:12px 0 6px;font-size:13px}
 .password-wrap{position:relative}.password-wrap input{padding-right:48px}.eye{position:absolute;right:5px;top:5px;border:0;background:transparent;color:#fff;padding:7px}
-.remember{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:12px 0;cursor:pointer;user-select:none}
-.remember input[type="checkbox"]{
- position:absolute!important;width:1px!important;height:1px!important;
- opacity:0!important;pointer-events:none!important;margin:0!important;padding:0!important;
+ .remember{display:flex;align-items:center;margin:12px 0}
+.remember input[type="checkbox"]{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.remember-toggle{
+ display:flex;align-items:center;gap:9px;width:auto;padding:2px 0;border:0;
+ background:transparent;color:var(--muted);font-size:13px;cursor:pointer;
+ text-align:left;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
 }
+.remember-box{
+ width:20px;height:20px;min-width:20px;border:2px solid #94a3b8;border-radius:5px;
+ background:#091321;display:inline-flex;align-items:center;justify-content:center;
+ color:transparent;font-weight:900;font-size:15px;line-height:1;
+}
+.remember-box.checked{background:var(--accent);border-color:var(--accent);color:#06130b}
+.remember-toggle:active .remember-box{transform:scale(.94)}
 .remember-box{
  width:19px;height:19px;min-width:19px;border:2px solid var(--muted);
  border-radius:5px;display:inline-flex;align-items:center;justify-content:center;
@@ -352,11 +361,13 @@ body.noisy-theme::after{
       <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password">
       <button class="eye" onclick="togglePass('loginPass',this)">👁</button>
     </div>
-    <label class="remember" onclick="toggleRememberLogin(event)">
-  <input id="rememberMe" type="checkbox" autocomplete="off">
-  <span id="rememberBoxVisual" class="remember-box" aria-hidden="true">✓</span>
-  <span>Remember login</span>
-</label>
+    <div class="remember" role="group" aria-label="Remember login">
+  <input id="rememberMe" type="checkbox" tabindex="-1" aria-hidden="true">
+  <button type="button" id="rememberToggle" class="remember-toggle" aria-checked="false" onclick="toggleRememberLogin(event)">
+    <span id="rememberBoxVisual" class="remember-box" aria-hidden="true"></span>
+    <span>Remember login</span>
+  </button>
+</div>
     <button class="btn primary" style="width:100%;padding:13px" onclick="login()">LOGIN</button>
     <button class="btn" style="width:100%;padding:12px;margin-top:8px" onclick="openBusinessRegister()">🏪 REGISTER NEW BUSINESS</button>
     <div class="small" style="text-align:center;margin-top:12px">Register a business once, then use the business email/password to access the same cloud data on PC and phone.</div>

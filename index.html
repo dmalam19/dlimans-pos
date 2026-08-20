@@ -70,13 +70,19 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 .login-box h1{text-align:center}.login-box .subtitle{text-align:center;color:var(--muted);margin:7px 0 22px}
 .login-box label{display:block;margin:12px 0 6px;font-size:13px}
 .password-wrap{position:relative}.password-wrap input{padding-right:48px}.eye{position:absolute;right:5px;top:5px;border:0;background:transparent;color:#fff;padding:7px}
-.remember{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:12px 0;cursor:pointer}
+.remember{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:12px 0;cursor:pointer;user-select:none}
 .remember input[type="checkbox"]{
- width:18px!important;height:18px!important;min-width:18px;min-height:18px;
- margin:0!important;padding:0!important;display:inline-block!important;
- appearance:auto!important;-webkit-appearance:checkbox!important;
- accent-color:var(--accent);cursor:pointer;flex:0 0 auto;
+ position:absolute!important;width:1px!important;height:1px!important;
+ opacity:0!important;pointer-events:none!important;margin:0!important;padding:0!important;
 }
+.remember-box{
+ width:19px;height:19px;min-width:19px;border:2px solid var(--muted);
+ border-radius:5px;display:inline-flex;align-items:center;justify-content:center;
+ font-size:14px;font-weight:900;color:#07111f;background:transparent;
+ transition:.15s;line-height:1;
+}
+.remember-box.checked{background:var(--accent);border-color:var(--accent);box-shadow:0 0 10px var(--accent)}
+
 #app{display:none;min-height:100vh}
 .topbar{height:62px;position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;padding:0 12px;background:#07101df2;backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 .brand{font-weight:900;letter-spacing:.3px;white-space:nowrap}.brand span{color:var(--accent)}
@@ -346,7 +352,11 @@ body.noisy-theme::after{
       <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password">
       <button class="eye" onclick="togglePass('loginPass',this)">👁</button>
     </div>
-    <label class="remember" for="rememberMe"><input id="rememberMe" type="checkbox" autocomplete="off" onchange="rememberLoginChanged(this.checked)"> <span>Remember login</span></label>
+    <label class="remember" onclick="toggleRememberLogin(event)">
+  <input id="rememberMe" type="checkbox" autocomplete="off">
+  <span id="rememberBoxVisual" class="remember-box" aria-hidden="true">✓</span>
+  <span>Remember login</span>
+</label>
     <button class="btn primary" style="width:100%;padding:13px" onclick="login()">LOGIN</button>
     <button class="btn" style="width:100%;padding:12px;margin-top:8px" onclick="openBusinessRegister()">🏪 REGISTER NEW BUSINESS</button>
     <div class="small" style="text-align:center;margin-top:12px">Register a business once, then use the business email/password to access the same cloud data on PC and phone.</div>
@@ -840,9 +850,18 @@ function toast(msg){
 function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function togglePass(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈'}
 
+function syncRememberVisual(){
+  const box=document.getElementById('rememberMe');
+  const visual=document.getElementById('rememberBoxVisual');
+  if(!box||!visual)return;
+  visual.classList.toggle('checked',!!box.checked);
+  visual.textContent=box.checked?'✓':'';
+  visual.setAttribute('aria-checked',box.checked?'true':'false');
+}
 function rememberLoginChanged(checked){
   const box=document.getElementById('rememberMe');
   if(box) box.checked=!!checked;
+  syncRememberVisual();
   try{
     if(checked){
       const u=(document.getElementById('loginUser')?.value||'').trim();
@@ -852,7 +871,13 @@ function rememberLoginChanged(checked){
     }
   }catch(e){console.warn('Remember login preference:',e)}
 }
-async function login(){
+function toggleRememberLogin(event){
+  if(event) event.preventDefault();
+  const box=document.getElementById('rememberMe');
+  if(!box)return;
+  box.checked=!box.checked;
+  rememberLoginChanged(box.checked);
+}async function login(){
  const loginBtn=document.querySelector('#loginScreen button[onclick="login()"]');
  try{
   const u=(document.getElementById('loginUser')?.value||'').trim();
@@ -909,9 +934,11 @@ async function login(){
   if(rememberBox?.checked){
     localStorage.setItem('DLIMANS_REMEMBER',u);
     rememberBox.checked=true;
+    syncRememberVisual();
   }else{
     localStorage.removeItem('DLIMANS_REMEMBER');
     if(rememberBox)rememberBox.checked=false;
+    syncRememberVisual();
   }
 
   // Link the normal POS Admin login to Firebase Cloud when possible.
@@ -1074,6 +1101,7 @@ function logout(){currentUser=null;cart=[];try{if(syncUnsub)syncUnsub()}catch(e)
   }else if(rememberBox){
     rememberBox.checked=false;
   }
+  syncRememberVisual();
   applyTheme(state.settings.theme||'darkblue',false);
   const a=document.getElementById('loginBusiness'),b=document.getElementById('topBusiness');if(a)a.textContent=state.settings.business;if(b)b.textContent=state.settings.business;
  }catch(e){console.error('Login init error',e)}

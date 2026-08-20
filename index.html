@@ -599,6 +599,27 @@ body.noisy-theme::after{
           </div>
           <div class="card">
             <h3>Data & Backup</h3>
+<h3>☁️ Automatic Cloud Sync</h3>
+<div class="card" id="syncCard">
+<p class="small">Optional cloud sync. Local/offline storage remains active if internet or cloud sync is unavailable.</p>
+<div class="grid two">
+<div><label>Firebase API Key</label><input id="syncApiKey" type="password"></div>
+<div><label>Auth Domain</label><input id="syncAuthDomain"></div>
+<div><label>Project ID</label><input id="syncProjectId"></div>
+<div><label>Storage Bucket</label><input id="syncStorageBucket"></div>
+<div><label>Messaging Sender ID</label><input id="syncSenderId"></div>
+<div><label>App ID</label><input id="syncAppId"></div>
+<div><label>Firebase Auth Email</label><input id="syncEmail" type="email" placeholder="admin@dlimans.com"></div>
+<div><label>Firebase Auth Password</label><input id="syncPassword" type="password" placeholder="Firebase account password"></div>
+</div>
+<div class="row wrap" style="margin-top:10px">
+<button class="btn primary" onclick="saveSyncConfig()">💾 Save Sync Config</button>
+<button class="btn" onclick="connectAutoSync()">☁️ Connect / Sync Now</button>
+<button class="btn danger" onclick="disconnectAutoSync()">Disconnect</button>
+</div>
+<div id="syncStatus" class="small" style="margin-top:10px">☁️ Automatic Sync: Not configured</div>
+</div>
+
             <div class="row wrap">
               <button class="btn" onclick="backupData()">⬇ Backup JSON</button>
               <label class="btn">⬆ Restore JSON<input id="restoreFile" type="file" accept=".json" onchange="restoreData(event)" hidden></label>
@@ -763,7 +784,13 @@ function load(){
   return normalizeState(saved);
  }catch(e){console.error('Dlimans load error',e);return cloneBase()}
 }
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(state));
+ if(window.__dlimansSyncRef && navigator.onLine){
+  clearTimeout(window.__dlimansSyncTimer);
+  window.__dlimansSyncTimer=setTimeout(()=>pushAutoSync(),650);
+ }
+}
 function toast(msg){
  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
  setTimeout(()=>el.classList.remove('show'),2400)
@@ -1546,6 +1573,7 @@ function factoryReset(){
 }
 
 function loadSettings(){
+ fillSyncConfig();
  document.getElementById('topBusiness').textContent=state.settings.business;
  document.getElementById('loginBusiness').textContent=state.settings.business;
  document.getElementById('loginLogo').textContent=(state.settings.business||'D').trim().charAt(0).toUpperCase();
@@ -1593,6 +1621,121 @@ window.addEventListener('error',function(e){
   window.addEventListener('load',installBackGuard);
 })();
 
+
+/* DLIMANS FIREBASE AUTOMATIC CLOUD SYNC — local-first, fail-safe */
+let syncFirebaseApp=null,syncDb=null,syncAuth=null,syncUser=null,syncUnsub=null;
+const SYNC_CONFIG_KEY='DLIMANS_FIREBASE_SYNC_CONFIG';
+const BUILTIN_FIREBASE_CONFIG={
+ apiKey:'AIzaSyDw_tLBAro6VhnS3JAAtSOjSO7V8hENdV4',
+ authDomain:'dlimans-supermarket.firebaseapp.com',
+ projectId:'dlimans-supermarket',
+ storageBucket:'dlimans-supermarket.firebasestorage.app',
+ messagingSenderId:'789374762924',
+ appId:'1:789374762924:web:3c77ec061efae759198409'
+};
+function getSyncConfig(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY)||'null')||{};
+  return {...BUILTIN_FIREBASE_CONFIG,...saved};
+ }catch(e){return {...BUILTIN_FIREBASE_CONFIG}}
+}
+function setSyncStatus(m){const e=document.getElementById('syncStatus');if(e)e.textContent=m}
+function fillSyncConfig(){
+ const c=getSyncConfig();
+ const map=[['syncApiKey','apiKey'],['syncAuthDomain','authDomain'],['syncProjectId','projectId'],['syncStorageBucket','storageBucket'],['syncSenderId','messagingSenderId'],['syncAppId','appId'],['syncEmail','email']];
+ map.forEach(([a,b])=>{const e=document.getElementById(a);if(e)e.value=c[b]||''});
+ const pw=document.getElementById('syncPassword');if(pw)pw.value='';
+ setSyncStatus(c.email?'☁️ Firebase configured — ready to connect':'☁️ Firebase configured — enter Auth email/password');
+}
+function saveSyncConfig(){
+ const c={
+  apiKey:document.getElementById('syncApiKey')?.value.trim()||BUILTIN_FIREBASE_CONFIG.apiKey,
+  authDomain:document.getElementById('syncAuthDomain')?.value.trim()||BUILTIN_FIREBASE_CONFIG.authDomain,
+  projectId:document.getElementById('syncProjectId')?.value.trim()||BUILTIN_FIREBASE_CONFIG.projectId,
+  storageBucket:document.getElementById('syncStorageBucket')?.value.trim()||BUILTIN_FIREBASE_CONFIG.storageBucket,
+  messagingSenderId:document.getElementById('syncSenderId')?.value.trim()||BUILTIN_FIREBASE_CONFIG.messagingSenderId,
+  appId:document.getElementById('syncAppId')?.value.trim()||BUILTIN_FIREBASE_CONFIG.appId,
+  email:document.getElementById('syncEmail')?.value.trim()||''
+ };
+ localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify(c));
+ setSyncStatus('☁️ Sync configuration saved');toast('Firebase Sync configuration saved');return true;
+}
+function loadFirebaseSDK(){
+ return new Promise((resolve,reject)=>{
+  if(window.firebase&&firebase.firestore&&firebase.auth){resolve();return}
+  const urls=[
+   'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js',
+   'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js',
+   'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js'
+  ];
+  let i=0;
+  function next(){
+   if(i>=urls.length){resolve();return}
+   const s=document.createElement('script');s.src=urls[i++];s.async=true;s.onload=next;s.onerror=()=>reject(Error('Firebase SDK unavailable'));document.head.appendChild(s)
+  }
+  next()
+ })
+}
+async function connectAutoSync(){
+ const c=getSyncConfig();
+ const email=(document.getElementById('syncEmail')?.value.trim()||c.email||'').trim();
+ const password=document.getElementById('syncPassword')?.value||'';
+ if(!email||!password){toast('Enter Firebase Auth email and password');return false}
+ c.email=email;localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify(c));
+ if(!navigator.onLine){setSyncStatus('📴 Offline — local storage active');toast('Internet is required for first cloud connection');return false}
+ try{
+  setSyncStatus('☁️ Connecting to Firebase...');
+  await loadFirebaseSDK();
+  if(!syncFirebaseApp){
+   syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
+   syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth();
+  }
+  if(!syncUser){
+   await syncAuth.signInWithEmailAndPassword(email,password);
+   syncUser=syncAuth.currentUser;
+  }
+  if(!syncUser)throw Error('Firebase authentication failed');
+  const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
+  const snap=await ref.get();
+  if(snap.exists&&snap.data()?.state){
+   const remote=snap.data().state;
+   if(remote&&Array.isArray(remote.products)&&Array.isArray(remote.sales)){
+    state=normalizeState(remote);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();toast('☁️ Cloud data loaded');
+   }
+  }else{
+   await ref.set({state:state,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  }
+  if(syncUnsub)syncUnsub();
+  syncUnsub=ref.onSnapshot(s=>{
+   const d=s.data()?.state;
+   if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))return;
+   state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
+  },e=>{console.warn('Sync listener',e);setSyncStatus('⚠️ Cloud listener error — local data still active')});
+  window.__dlimansSyncRef=ref;
+  setSyncStatus('🟢 Automatic Sync: Connected');
+  await pushAutoSync();
+  return true;
+ }catch(e){
+  console.error('Auto sync:',e);
+  let msg=e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'?'Firebase email/password is incorrect.':e.code==='auth/user-not-found'?'Firebase user not found.':e.code==='permission-denied'?'Firestore permission denied — check Rules and Authentication.':'Cloud Sync failed: '+(e.message||e);
+  setSyncStatus('⚠️ Sync unavailable — local mode still works');toast(msg);return false;
+ }
+}
+async function pushAutoSync(){
+ try{
+  if(!window.__dlimansSyncRef||!navigator.onLine)return;
+  await window.__dlimansSyncRef.set({state:state,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  setSyncStatus('🟢 Automatic Sync: Saved to cloud');
+ }catch(e){console.warn('Cloud write:',e);setSyncStatus('⚠️ Cloud save failed — local data is safe')}
+}
+function disconnectAutoSync(){
+ try{if(syncUnsub)syncUnsub()}catch(e){}
+ syncUnsub=null;syncUser=null;syncDb=null;syncAuth=null;syncFirebaseApp=null;window.__dlimansSyncRef=null;
+ setSyncStatus('☁️ Automatic Sync: Disconnected — local mode active');toast('Cloud Sync disconnected')
+}
+window.addEventListener('online',()=>{if(getSyncConfig().email){} });
+window.addEventListener('offline',()=>setSyncStatus('📴 Offline — local storage active'));
+window.addEventListener('load',()=>{setTimeout(fillSyncConfig,300)});
 </script>
 </body>
 </html>

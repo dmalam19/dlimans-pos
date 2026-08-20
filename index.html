@@ -863,21 +863,18 @@ async function login(){
     ]);
     syncUser=syncAuth.currentUser;
     if(!syncUser)throw Error('Firebase authentication failed');
-    const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
-    const snap=await ref.get();
-    if(!snap.exists)throw Error('Business cloud profile not found');
-    const remote=snap.data()?.state;
-    if(remote)state=normalizeState(remote);
-    localStorage.setItem(KEY,JSON.stringify(state));
-    window.__dlimansSyncRef=ref;
-    if(syncUnsub)syncUnsub();
-    syncUnsub=ref.onSnapshot(ds=>{const d=ds.data()?.state;if(!d)return;state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh()},e=>console.warn('Cloud listener',e));
+    // Authentication is enough to enter the POS. Do NOT wait for Firestore here.
+    // Firestore can be slow or blocked by rules/network; it must never freeze Login.
     localStorage.setItem('DLIMANS_CLOUD_EMAIL',u);
     found={id:'cloud-'+syncUser.uid,username:u,password:'',role:'Admin',active:true,cloud:true,businessId:syncUser.uid};
     state.users=state.users.filter(x=>x.username!==u);state.users.unshift(found);
     save();
-    setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
-    await pushAutoSync();
+    setSyncStatus('🟢 Firebase account connected • Sync starting...');
+    // Finish cloud data sync in the background after the POS opens.
+    setTimeout(()=>finishFirebaseCloudSync().catch(e=>{
+      console.warn('Background cloud sync:',e);
+      setSyncStatus('🟡 Cloud login OK • Local data active');
+    }),50);
    }catch(cloudErr){console.error('Cloud login',cloudErr);toast('Cloud login failed: '+(cloudErr.message||cloudErr));return false}
   }
   if(!found && u==='admin' && p==='admin123'){

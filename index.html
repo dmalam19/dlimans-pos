@@ -650,7 +650,7 @@ body.noisy-theme::after{
 </div>
 <div class="row wrap" style="margin-top:10px">
 <button class="btn primary" onclick="saveSyncConfig()">💾 Save Sync Config</button>
-<button class="btn" onclick="connectAutoSync()">☁️ Connect / Sync Now</button>
+<button type="button" class="btn" id="connectSyncBtn" onclick="window.dlimansConnectSync()">☁️ Connect / Sync Now</button>
 <button class="btn danger" onclick="disconnectAutoSync()">Disconnect</button>
 </div>
 <div id="syncStatus" class="small" style="margin-top:10px">☁️ Automatic Sync: Not configured</div>
@@ -835,19 +835,32 @@ function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;',
 function togglePass(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈'}
 
 async function login(){
+ const loginBtn=document.querySelector('#loginScreen button[onclick="login()"]');
  try{
   const u=(document.getElementById('loginUser')?.value||'').trim();
-  const p=document.getElementById('loginPass')?.value||'';
+  const p=(document.getElementById('loginPass')?.value||'');
+  if(!u||!p){toast('Enter username/email and password');return false}
+  if(loginBtn){loginBtn.disabled=true;loginBtn.dataset.oldText=loginBtn.textContent;loginBtn.textContent='⏳ LOGGING IN...'}
   let found=state.users.find(x=>x.username===u&&x.password===p&&x.active!==false);
 
   // Cloud business login: the same email/password works on every device.
   if(!found && u.includes('@')){
    try{
     if(!navigator.onLine){toast('Internet is required for the first cloud login');return false}
+    if(location.protocol==='file:' || location.protocol==='content:'){
+      toast('Open the GitHub/Vercel hosted link for Firebase email login');
+      return false;
+    }
     const c=getSyncConfig();
-    await loadFirebaseSDK();
+    await Promise.race([
+      loadFirebaseSDK(),
+      new Promise((_,reject)=>setTimeout(()=>reject(Error('Firebase connection timed out')),12000))
+    ]);
     if(!syncFirebaseApp){syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth()}
-    await syncAuth.signInWithEmailAndPassword(u,p);
+    await Promise.race([
+      syncAuth.signInWithEmailAndPassword(u,p),
+      new Promise((_,reject)=>setTimeout(()=>reject(Error('Firebase sign-in timed out')),12000))
+    ]);
     syncUser=syncAuth.currentUser;
     if(!syncUser)throw Error('Firebase authentication failed');
     const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
@@ -878,14 +891,103 @@ async function login(){
   if(!found){toast('Invalid username or password');return false}
   currentUser=found;
   if(document.getElementById('rememberMe')?.checked)localStorage.setItem('DLIMANS_REMEMBER',u);else localStorage.removeItem('DLIMANS_REMEMBER');
+
+  // Link the normal POS Admin login to Firebase Cloud when possible.
+  // Cloud credentials are never stored in localStorage. If this is an existing
+  // local Admin account, the one-time link uses a remembered business email
+  // (from Business Registration) or the login email itself.
+  if(found.role==='Admin' && !found.cloud && navigator.onLine){
+   try{
+    const cloudEmail=(localStorage.getItem('DLIMANS_CLOUD_EMAIL')||'').trim().toLowerCase();
+    // Built-in Admin login is linked automatically to the built-in Firebase
+    // business identity on the first connection. No second login screen is used.
+    const loginEmail=(u.includes('@')?u.toLowerCase():(cloudEmail||
+      (u==='admin' && p==='admin123'?'admin@dlimans.com':'')));
+    if(loginEmail){
+     // Do not block the local POS login while optional cloud linking runs.
+     connectFirebaseForLogin(loginEmail,p).then(linked=>{
+      if(linked){
+       found.cloud=true;
+       found.businessId=syncUser?.uid||found.businessId||'';
+       found.password='';
+       state.users=state.users.map(x=>x.id===found.id?found:x);
+       save();
+       setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
+      }
+     }).catch(cloudLinkErr=>{
+      console.warn('Admin/Firebase background link:',cloudLinkErr);
+      setSyncStatus('⚠️ Cloud not connected — local POS still works');
+     });
+    }
+   }catch(cloudLinkErr){
+    console.warn('Admin/Firebase link:',cloudLinkErr);
+    setSyncStatus('⚠️ Cloud not connected — local POS still works');
+   }
+  }
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('topRole').textContent=found.role;
   try{buildSidebar()}catch(e){console.error(e)}
   showView('dashboard',true);
   return true;
- }catch(e){console.error('Login error',e);toast('Login error — please try again');return false}
+ }catch(e){
+  console.error('Login error',e);
+  toast('Login error — '+(e.message||'please try again'));
+  return false;
+ }finally{
+  if(loginBtn){loginBtn.disabled=false;loginBtn.textContent=loginBtn.dataset.oldText||'LOGIN'}
+ }
 }
+async function connectFirebaseForLogin(email,password){
+ if(!email||!password||!navigator.onLine)return false;
+ const c=getSyncConfig();
+ await loadFirebaseSDK();
+ if(!syncFirebaseApp){syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth()}
+ try{
+  // If the Firebase session is already signed in, reuse it.
+  syncUser=syncAuth.currentUser;
+  if(!syncUser){
+   try{
+    await syncAuth.signInWithEmailAndPassword(email,password);
+   }catch(e){
+    // For the built-in local Admin account, create its Firebase identity once.
+    // For a real registered business account, do not silently create another account.
+    if(e.code==='auth/user-not-found' && email==='admin@dlimans.com'){
+     await syncAuth.createUserWithEmailAndPassword(email,password);
+    }else throw e;
+   }
+   syncUser=syncAuth.currentUser;
+  }
+  if(!syncUser)throw Error('Firebase authentication failed');
+  const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
+  const snap=await ref.get();
+  if(snap.exists&&snap.data()?.state){
+   const remote=snap.data().state;
+   if(remote)state=normalizeState(remote);
+  }else{
+   await ref.set({businessId:syncUser.uid,businessName:state.settings.business||'Business',email:syncUser.email||email,state,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  }
+  if(syncUnsub)syncUnsub();
+  syncUnsub=ref.onSnapshot(ds=>{
+   const d=ds.data()?.state;if(!d)return;
+   state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
+   setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
+  },e=>{console.warn('Cloud listener',e);setSyncStatus('⚠️ Cloud listener error — local data still active')});
+  window.__dlimansSyncRef=ref;
+  localStorage.setItem('DLIMANS_CLOUD_EMAIL',syncUser.email||email);
+  setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
+  await pushAutoSync();
+  return true;
+ }catch(e){
+  if(e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'||e.code==='auth/invalid-login-credentials')
+   toast('POS login succeeded, but the Firebase business account password is different. Use Business Registration/Login once to link Cloud.');
+  else if(e.code==='auth/email-already-in-use')
+   toast('This business email already has a Firebase account. Login with that business email once to connect Cloud.');
+  else console.warn('Firebase link failed:',e);
+  return false;
+ }
+}
+
 async function openBusinessRegister(){
  openModal(`<h3>🏪 Register New Business</h3>
  <div class="small" style="margin:8px 0 12px">Create one business account. Its POS data will be stored in Firebase Cloud and can be accessed from your phone and PC.</div>
@@ -1843,54 +1945,91 @@ function loadFirebaseSDK(){
  })
 }
 async function connectAutoSync(){
+ const btn=document.getElementById('connectSyncBtn');
+ if(btn){btn.disabled=true;btn.dataset.oldText=btn.textContent;btn.textContent='☁️ Connecting...'}
  const c=getSyncConfig();
- if(!navigator.onLine){setSyncStatus('📴 Offline — local storage active');toast('Internet is required for first cloud connection');return false}
+ if(!navigator.onLine){setSyncStatus('📴 Offline — local storage active');toast('Internet is required for first cloud connection');if(btn){btn.disabled=false;btn.textContent=btn.dataset.oldText||'☁️ Connect / Sync Now'}return false}
  try{
-  setSyncStatus('☁️ Connecting to Firebase with your business login...');
+  setSyncStatus('☁️ Connecting to Firebase...');
   await loadFirebaseSDK();
   if(!syncFirebaseApp){
    syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
    syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth();
   }
-  // IMPORTANT: use the Firebase Authentication session created by Register/Login.
-  // Never ask the user to enter/store a separate Firebase password here.
   syncUser=syncAuth.currentUser;
+
+  // If the Firebase session is not available (common after opening a downloaded
+  // HTML file), ask for the existing Firebase business login without changing
+  // the normal POS login. The password is used only for this sign-in and is
+  // never written to localStorage.
   if(!syncUser){
-   throw Object.assign(new Error('Please login to your business account first.'),{code:'auth/not-authenticated'});
+   openModal(`<h3>☁️ Firebase Business Login</h3>
+   <div class="small" style="margin:8px 0 12px">Sign in with the Firebase business account you already created. This is separate from the local POS admin/cashier login.</div>
+   <label>Business Email</label><input id="syncLoginEmail" type="email" value="${escapeHTML(localStorage.getItem('DLIMANS_CLOUD_EMAIL')||'')}" placeholder="Business email">
+   <label>Business Password</label><div class="password-wrap"><input id="syncLoginPassword" type="password" placeholder="Firebase password"><button class="eye" type="button" onclick="togglePass('syncLoginPassword',this)">👁</button></div>
+   <div class="row wrap" style="margin-top:12px"><button class="btn primary" type="button" onclick="finishFirebaseConnect()">☁️ Connect</button><button class="btn" type="button" onclick="closeModal();resetConnectButton()">Cancel</button></div>`);
+   setSyncStatus('☁️ Enter your Firebase business login to connect');
+   return false;
   }
-  const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
-  const snap=await ref.get();
-  if(snap.exists&&snap.data()?.state){
-   const remote=snap.data().state;
-   if(remote&&Array.isArray(remote.products)&&Array.isArray(remote.sales)){
-    state=normalizeState(remote);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
-   }
-  }else{
-   await ref.set({
-    businessId:syncUser.uid,
-    businessName:state.settings.business||'Business',
-    email:syncUser.email||'',
-    state:state,
-    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-   },{merge:true});
-  }
-  if(syncUnsub)syncUnsub();
-  syncUnsub=ref.onSnapshot(s=>{
-   const d=s.data()?.state;
-   if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))return;
-   state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
-   setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
-  },e=>{console.warn('Sync listener',e);setSyncStatus('⚠️ Cloud listener error — local data still active')});
-  window.__dlimansSyncRef=ref;
-  setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
-  await pushAutoSync();
+  await finishFirebaseCloudSync();
   return true;
  }catch(e){
   console.error('Auto sync:',e);
-  const msg=e.code==='auth/not-authenticated'?'Please login to your business account first.':e.code==='permission-denied'?'Firestore permission denied — check Firebase Authentication and Firestore Rules.':'Cloud Sync failed: '+(e.message||e);
-  setSyncStatus('⚠️ Sync unavailable — local mode still works');toast(msg);return false;
+  const code=e?.code||'';
+  const msg=code==='auth/invalid-credential'||code==='auth/wrong-password'||code==='auth/invalid-login-credentials'?'Firebase email/password is incorrect.':code==='auth/user-not-found'?'Firebase business account was not found.':code==='auth/operation-not-allowed'?'Firebase Email/Password Authentication is not enabled.':code==='permission-denied'?'Firestore permission denied — check Firebase Authentication and Firestore Rules.':String(e?.message||'').toLowerCase().includes('timed out')?'Firebase Authentication timed out. Check internet and Firebase Authentication.':'Cloud Sync failed: '+(e.message||e);
+  setSyncStatus('⚠️ Sync unavailable — local mode still works');toast(msg);resetConnectButton();return false;
  }
 }
+async function finishFirebaseConnect(){
+ try{
+  const email=(document.getElementById('syncLoginEmail')?.value||'').trim().toLowerCase();
+  const password=document.getElementById('syncLoginPassword')?.value||'';
+  if(!email||!password){toast('Enter the Firebase business email and password');return false}
+  setSyncStatus('☁️ Signing in to Firebase...');
+  await loadFirebaseSDK();
+  if(!syncFirebaseApp){const c=getSyncConfig();syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth()}
+  await syncAuth.signInWithEmailAndPassword(email,password);
+  syncUser=syncAuth.currentUser;
+  if(!syncUser)throw Error('Firebase authentication returned no user');
+  localStorage.setItem('DLIMANS_CLOUD_EMAIL',email);
+  closeModal();
+  await finishFirebaseCloudSync();
+  toast('☁️ Firebase Cloud connected successfully');
+  return true;
+ }catch(e){
+  console.error('Firebase business login:',e);
+  const code=e?.code||'';
+  const msg=code==='auth/invalid-credential'||code==='auth/wrong-password'||code==='auth/invalid-login-credentials'?'Firebase email/password is incorrect.':code==='auth/user-not-found'?'Firebase business account was not found.':code==='auth/network-request-failed'?'Firebase network request failed. Check internet.':'Firebase connection failed: '+(e.message||e);
+  setSyncStatus('⚠️ '+msg);toast(msg);return false;
+ }finally{resetConnectButton()}
+}
+async function finishFirebaseCloudSync(){
+ if(!syncUser)throw Error('Firebase authentication is not connected');
+ const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
+ setSyncStatus('☁️ Checking business cloud data...');
+ const snap=await ref.get();
+ if(snap.exists&&snap.data()?.state){
+  const remote=snap.data().state;
+  if(remote&&Array.isArray(remote.products)&&Array.isArray(remote.sales)){
+   state=normalizeState(remote);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
+  }
+ }else{
+  await ref.set({businessId:syncUser.uid,businessName:state.settings.business||'Dlimans Supermarket',email:syncUser.email||'',state:state,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+ }
+ if(syncUnsub)syncUnsub();
+ syncUnsub=ref.onSnapshot(s=>{
+  const d=s.data()?.state;if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))return;
+  state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
+  setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
+ },e=>{console.warn('Sync listener',e);setSyncStatus('⚠️ Cloud listener error — local data still active')});
+ window.__dlimansSyncRef=ref;
+ localStorage.setItem('DLIMANS_CLOUD_EMAIL',syncUser.email||'');
+ if(currentUser){currentUser.cloud=true;currentUser.businessId=syncUser.uid;state.users=state.users.map(x=>x.id===currentUser.id?currentUser:x);localStorage.setItem(KEY,JSON.stringify(state))}
+ setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
+ await pushAutoSync();
+}
+function resetConnectButton(){const b=document.getElementById('connectSyncBtn');if(b){b.disabled=false;b.textContent=b.dataset.oldText||'☁️ Connect / Sync Now'}}
+window.dlimansConnectSync=connectAutoSync;
 async function pushAutoSync(){
  try{
   if(!window.__dlimansSyncRef||!navigator.onLine)return;

@@ -70,19 +70,19 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 .login-box h1{text-align:center}.login-box .subtitle{text-align:center;color:var(--muted);margin:7px 0 22px}
 .login-box label{display:block;margin:12px 0 6px;font-size:13px}
 .password-wrap{position:relative}.password-wrap input{padding-right:48px}.eye{position:absolute;right:5px;top:5px;border:0;background:transparent;color:#fff;padding:7px}
- 
-.remember-real{
-  display:flex!important;align-items:center!important;gap:9px!important;
-  margin:12px 0!important;cursor:pointer!important;color:var(--muted)!important;
-  font-size:13px!important;touch-action:manipulation!important;
+ .remember{display:flex;align-items:center;margin:12px 0}
+.remember input[type="checkbox"]{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.remember-toggle{
+ display:flex;align-items:center;gap:9px;width:auto;padding:2px 0;border:0;
+ background:transparent;color:var(--muted);font-size:13px;cursor:pointer;
+ text-align:left;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
 }
-.remember-real input[type="checkbox"]{
-  position:relative!important;opacity:1!important;pointer-events:auto!important;
-  width:20px!important;height:20px!important;min-width:20px!important;
-  margin:0!important;padding:0!important;display:inline-block!important;
-  appearance:auto!important;-webkit-appearance:checkbox!important;
-  accent-color:var(--accent)!important;cursor:pointer!important;
+.remember-box{
+ width:20px;height:20px;min-width:20px;border:2px solid #94a3b8;border-radius:5px;
+ background:#091321;display:inline-flex;align-items:center;justify-content:center;
+ color:transparent;font-weight:900;font-size:15px;line-height:1;
 }
+.remember-box.checked{background:var(--accent);border-color:var(--accent);color:#06130b}
 .remember-toggle:active .remember-box{transform:scale(.94)}
 .remember-box{
  width:19px;height:19px;min-width:19px;border:2px solid var(--muted);
@@ -338,7 +338,7 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 }
 
 /* Optional Noisy Theme effect — visual only, does not change app data. */
-body.noisy-theme::after{
+body.noisy-theme::after{pointer-events:none!important;
  content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.055;
  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
  animation:noiseMove .18s steps(2) infinite;
@@ -346,15 +346,51 @@ body.noisy-theme::after{
 @keyframes noiseMove{0%{transform:translate(0,0)}25%{transform:translate(-2%,1%)}50%{transform:translate(1%,-2%)}75%{transform:translate(2%,2%)}100%{transform:translate(0,0)}}
 
 
-.permission-item{
-  display:flex!important;align-items:center!important;gap:9px!important;
-  padding:6px 0!important;cursor:pointer!important;touch-action:manipulation!important;
+/* FINAL TOUCH FIX — cashier permissions */
+#permissionBox .permission-item{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-height:38px!important;
+  width:100%!important;
+  margin:0!important;
+  padding:5px 0!important;
+  cursor:pointer!important;
+  color:var(--text)!important;
+  touch-action:manipulation!important;
 }
-.permission-item input[type="checkbox"]{
-  width:19px!important;height:19px!important;min-width:19px!important;
-  margin:0!important;opacity:1!important;pointer-events:auto!important;
+#permissionBox .permission-item input[type="checkbox"]{
+  position:relative!important;
+  left:auto!important;
+  top:auto!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  display:inline-block!important;
+  width:20px!important;
+  height:20px!important;
+  min-width:20px!important;
+  min-height:20px!important;
+  margin:0!important;
+  padding:0!important;
+  appearance:auto!important;
+  -webkit-appearance:checkbox!important;
+  accent-color:var(--accent)!important;
+  cursor:pointer!important;
+}
+#permissionBox .permission-item span{
+  pointer-events:none!important;
+}
+
+.remember-real input[type="checkbox"]{
+  position:relative!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  display:inline-block!important;
+  width:20px!important;height:20px!important;
   appearance:auto!important;-webkit-appearance:checkbox!important;
-  accent-color:var(--accent)!important;cursor:pointer!important;
+  accent-color:var(--accent)!important;
 }
 </style>
 </head>
@@ -372,11 +408,14 @@ body.noisy-theme::after{
       <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password">
       <button class="eye" onclick="togglePass('loginPass',this)">👁</button>
     </div>
-    <label class="remember-real" for="rememberMe">
-  <input id="rememberMe" type="checkbox" autocomplete="off" onchange="rememberLoginChanged(this.checked)">
-  <span>Remember login</span>
-</label>
-<button class="btn primary" style="width:100%;padding:13px" onclick="login()">LOGIN</button>
+    <div class="remember" role="group" aria-label="Remember login">
+  <input id="rememberMe" type="checkbox" tabindex="-1" aria-hidden="true">
+  <button type="button" id="rememberToggle" class="remember-toggle" aria-checked="false" onclick="toggleRememberLogin(event)">
+    <span id="rememberBoxVisual" class="remember-box" aria-hidden="true"></span>
+    <span>Remember login</span>
+  </button>
+</div>
+    <button class="btn primary" style="width:100%;padding:13px" onclick="login()">LOGIN</button>
     <button class="btn" style="width:100%;padding:12px;margin-top:8px" onclick="openBusinessRegister()">🏪 REGISTER NEW BUSINESS</button>
     <div class="small" style="text-align:center;margin-top:12px">Register a business once, then use the business email/password to access the same cloud data on PC and phone.</div>
   </div>
@@ -880,24 +919,6 @@ function syncRememberVisual(){
 function rememberLoginChanged(checked){
   const box=document.getElementById('rememberMe');
   if(box) box.checked=!!checked;
-  try{
-    if(checked){
-      const u=(document.getElementById('loginUser')?.value||'').trim();
-      if(u) localStorage.setItem('DLIMANS_REMEMBER',u);
-    }else{
-      localStorage.removeItem('DLIMANS_REMEMBER');
-    }
-  }catch(e){}
-}
-function makePermissionCheckboxes(){
-  document.querySelectorAll('.permission-item input[type="checkbox"]').forEach(x=>{
-    x.style.pointerEvents='auto';
-    x.style.opacity='1';
-  });
-}
-
-  const box=document.getElementById('rememberMe');
-  if(box) box.checked=!!checked;
   syncRememberVisual();
   try{
     if(checked){
@@ -908,7 +929,13 @@ function makePermissionCheckboxes(){
     }
   }catch(e){console.warn('Remember login preference:',e)}
 }
-async function login(){
+function toggleRememberLogin(event){
+  if(event) event.preventDefault();
+  const box=document.getElementById('rememberMe');
+  if(!box)return;
+  box.checked=!box.checked;
+  rememberLoginChanged(box.checked);
+}async function login(){
  const loginBtn=document.querySelector('#loginScreen button[onclick="login()"]');
  try{
   const u=(document.getElementById('loginUser')?.value||'').trim();
@@ -1128,7 +1155,7 @@ function logout(){currentUser=null;cart=[];try{if(syncUnsub)syncUnsub()}catch(e)
   const rememberBox=document.getElementById('rememberMe');
   if(remembered){
     if(document.getElementById('loginUser'))document.getElementById('loginUser').value=remembered;
-    if(rememberBox){rememberBox.checked=true;}
+    if(rememberBox)rememberBox.checked=true;
   }else if(rememberBox){
     rememberBox.checked=false;
   }
@@ -1619,9 +1646,26 @@ function deleteUser(id){if(!adminConfirm('Delete this user?'))return;if(state.us
 
 function renderPermissions(){
  const keys=builtInNav.map(x=>x[0]).filter(x=>!['users','control'].includes(x));
- document.getElementById('permissionBox').innerHTML=keys.map(k=>`<label class="remember"><input type="checkbox" data-perm="${k}" ${state.permissions.cashier[k]?'checked':''}> ${k}</label>`).join('')
+ const box=document.getElementById('permissionBox');
+ if(!box)return;
+ box.innerHTML=keys.map(k=>`<div class="permission-item">
+   <input id="perm_${k}" type="checkbox" data-perm="${k}" ${state.permissions.cashier[k]?'checked':''} onchange="permissionChanged(this)">
+   <span>${k}</span>
+ </div>`).join('');
 }
-function savePermissions(){if(!isAdmin()){toast('Admin only');return}document.querySelectorAll('[data-perm]').forEach(x=>state.permissions.cashier[x.dataset.perm]=x.checked);save();buildSidebar();toast('Cashier permissions saved')}
+function permissionChanged(el){
+ if(!isAdmin()){el.checked=!el.checked;toast('Admin only');return}
+ state.permissions.cashier[el.dataset.perm]=!!el.checked;
+ save();
+}
+function savePermissions(){
+ if(!isAdmin()){toast('Admin only');return}
+ document.querySelectorAll('[data-perm]').forEach(x=>state.permissions.cashier[x.dataset.perm]=!!x.checked);
+ save();
+ buildSidebar();
+ renderPermissions();
+ toast('Cashier permissions saved');
+}
 
 function openCustomIcon(){
  if(!isAdmin()){toast('Admin only');return}
@@ -1813,7 +1857,43 @@ function receiptPrint(s){
  table{width:100%;border-collapse:collapse}th,td{padding:5px 2px;border-bottom:1px dashed #ccc;text-align:left}.qty{text-align:center;width:45px}.right{text-align:right}
  .total{font-size:16px;font-weight:bold;text-align:right;margin-top:8px}.thanks{text-align:center;margin-top:16px;font-weight:bold}
  @media print{body{margin:0 auto}}
- </style></head><body onload="setTimeout(function(){window.print()},350)">${logo}<h2>${escapeHTML(inv.title||'INVOICE')}</h2>
+ 
+/* =========================================================
+   DLIMANS SINGLE-TAP ENGINE
+   Mobile/PC controls respond to one deliberate tap.
+   Existing onclick functions are preserved.
+========================================================= */
+button,
+.btn,
+.side-item,
+.dash-action,
+.admin-tool,
+.purchase-tab,
+.product-tile{
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+}
+
+/* Keep inputs/selects/labels native so typing and checkbox behavior
+   are never hijacked by the tap engine. */
+input,select,textarea,label{
+  touch-action:manipulation;
+}
+
+/* Never let visual/decorative children steal the button hit target. */
+button *,
+.btn *,
+.side-item *,
+.dash-action *,
+.admin-tool *,
+.purchase-tab *,
+.product-tile *{
+  pointer-events:none;
+}
+
+</style></head><body onload="setTimeout(function(){window.print()},350)">${logo}<h2>${escapeHTML(inv.title||'INVOICE')}</h2>
  <div class="center"><b>${escapeHTML(state.settings.business)}</b><br>${escapeHTML(state.settings.address)}<br>${escapeHTML(state.settings.phone)}</div>
  <div class="line"></div><div>Invoice: <b>${escapeHTML(s.invoice)}</b><br>${fmtDate(s.date)}<br>Customer: ${escapeHTML(s.customer)}<br>Payment: ${escapeHTML(s.payment||'')}</div>
  <div class="line"></div><table><thead><tr><th>Item</th><th class="qty">Qty</th><th class="right">Amount</th></tr></thead><tbody>${items}</tbody></table>
@@ -2154,5 +2234,59 @@ window.addEventListener('load',async()=>{
  }catch(e){console.warn('Firebase startup:',e)}
 });
 </script>
+
+<script>
+/* One-tap accelerator:
+   - only touch/pen pointers
+   - fires the existing inline click handler immediately
+   - suppresses the browser's following synthetic click
+   - never interferes with text fields, selects, checkboxes, links,
+     disabled buttons, or buttons inside open modals */
+(function(){
+  var suppressClick = new WeakSet();
+
+  function isTapTarget(el){
+    return el && el.closest && el.closest(
+      'button,.btn,.side-item,.dash-action,.admin-tool,.purchase-tab,.product-tile'
+    );
+  }
+
+  document.addEventListener('pointerup', function(e){
+    if(e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+
+    var target = isTapTarget(e.target);
+    if(!target || target.disabled || target.getAttribute('aria-disabled') === 'true') return;
+
+    /* Do not accelerate submit-like controls while another handler is
+       already processing them. */
+    if(target.dataset.tapBusy === '1') return;
+
+    target.dataset.tapBusy = '1';
+    suppressClick.add(target);
+
+    try{
+      e.preventDefault();
+      target.click();
+    }catch(err){
+      console.warn('Dlimans tap accelerator:', err);
+    }
+
+    /* Allow the same control to be tapped again normally. */
+    setTimeout(function(){
+      try{ delete target.dataset.tapBusy; }catch(_){}
+    }, 180);
+  }, {capture:true, passive:false});
+
+  document.addEventListener('click', function(e){
+    var target = isTapTarget(e.target);
+    if(target && suppressClick.has(target)){
+      suppressClick.delete(target);
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+})();
+</script>
+
 </body>
 </html>

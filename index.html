@@ -307,6 +307,34 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
  .side-group{display:block!important}
 }
 
+
+/* =========================================================
+   DLIMANS VISUAL CUSTOMIZATION — PRESERVE MASTER FEATURES
+========================================================= */
+body.has-business-background{background-size:cover!important;background-position:center!important;background-attachment:fixed!important}
+body.has-business-background::before{content:"";position:fixed;inset:0;background:linear-gradient(#0003,#0005);pointer-events:none;z-index:0}
+#app,#loginScreen{position:relative;z-index:1}
+.business-logo-preview{width:76px;height:76px;border-radius:18px;object-fit:cover;background:#091321;border:1px solid var(--border);display:block}
+.logo-upload-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.side-icon{position:relative;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;transition:filter .2s,transform .2s}
+.side-icon.blink{animation:sideRainbow 2.8s ease-in-out infinite}
+.side-item:nth-of-type(2) .side-icon{animation-delay:.10s}.side-item:nth-of-type(3) .side-icon{animation-delay:.20s}
+.side-item:nth-of-type(4) .side-icon{animation-delay:.30s}.side-item:nth-of-type(5) .side-icon{animation-delay:.40s}
+.side-item:nth-of-type(6) .side-icon{animation-delay:.50s}.side-item:nth-of-type(7) .side-icon{animation-delay:.60s}
+.side-item:nth-of-type(8) .side-icon{animation-delay:.70s}.side-item:nth-of-type(9) .side-icon{animation-delay:.80s}
+.side-item:nth-of-type(10) .side-icon{animation-delay:.90s}.side-item:nth-of-type(11) .side-icon{animation-delay:1s}
+.side-item:nth-of-type(12) .side-icon{animation-delay:1.1s}.side-item:nth-of-type(13) .side-icon{animation-delay:1.2s}
+.side-item:nth-of-type(14) .side-icon{animation-delay:1.3s}.side-item:nth-of-type(15) .side-icon{animation-delay:1.4s}
+.side-item:nth-of-type(16) .side-icon{animation-delay:1.5s}.side-item:nth-of-type(17) .side-icon{animation-delay:1.6s}
+.side-item:nth-of-type(18) .side-icon{animation-delay:1.7s}.side-item:nth-of-type(19) .side-icon{animation-delay:1.8s}
+@keyframes sideRainbow{
+  0%,100%{filter:drop-shadow(0 0 0 transparent);transform:scale(1);opacity:1}
+  20%{filter:drop-shadow(0 0 7px #00e676);transform:scale(1.06);opacity:.9}
+  40%{filter:drop-shadow(0 0 8px #38bdf8);opacity:1}
+  60%{filter:drop-shadow(0 0 8px #c084fc);transform:scale(1.08)}
+  80%{filter:drop-shadow(0 0 8px #ffd166);opacity:.9}
+}
+
 /* Optional Noisy Theme effect — visual only, does not change app data. */
 body.noisy-theme::after{
  content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.055;
@@ -567,6 +595,19 @@ body.noisy-theme::after{
             <label class="small">Address</label><input id="setAddress">
             <label class="small">Currency</label><input id="setCurrency">
             <label class="small">Receipt thank-you</label><textarea id="setThanks"></textarea>
+            <div class="logo-upload-row">
+              <img id="businessLogoPreview" class="business-logo-preview" alt="Business logo preview">
+              <div class="grow">
+                <label class="small">Business / Invoice Logo</label>
+                <input id="businessLogoFile" type="file" accept="image/*" onchange="loadBusinessLogo(event)">
+                <div class="small">This logo is saved locally and can appear on invoices/receipts.</div>
+              </div>
+            </div>
+            <div class="row wrap" style="margin-top:10px">
+              <button class="btn" type="button" onclick="removeBusinessLogo()">🗑 Remove Logo</button>
+              <label class="btn">🖼️ Choose Background <input id="businessBgFile" type="file" accept="image/*" onchange="loadBusinessBackground(event)" hidden></label>
+              <button class="btn" type="button" onclick="removeBusinessBackground()">🗑 Remove Background</button>
+            </div>
             <button class="btn primary" onclick="saveBusiness()">Save Business Settings</button>
           </div>
           <div class="card">
@@ -728,7 +769,7 @@ let currentUser=null, cart=[], held=[], selectedSales=new Set(), voiceRec=null;
 const defaultState={
  settings:{
   business:'Dlimans Supermarket',phone:'08063756515',address:'Nigeria',currency:'₦',
-  thanks:'Thank you for shopping with Dlimans Supermarket!',theme:'darkblue',blink:true,noisy:false,
+  thanks:'Thank you for shopping with Dlimans Supermarket!',theme:'darkblue',blink:true,noisy:false,logoData:'',backgroundData:'',
   paper:'58mm',autoPrint:false,
   invoice:{prefix:'INV-',nextNumber:1,title:'INVOICE',footer:'Thank you for shopping with Dlimans Supermarket!',showCustomerNote:true,showDue:true,showPaid:true,showLogo:false}
  },
@@ -1358,6 +1399,36 @@ function saveBusiness(){
  state.settings.currency=document.getElementById('setCurrency').value.trim()||'₦';state.settings.thanks=document.getElementById('setThanks').value;
  save();document.getElementById('topBusiness').textContent=state.settings.business;document.getElementById('loginBusiness').textContent=state.settings.business;toast('Business settings saved')
 }
+function readImageAsDataURL(file,cb){
+ if(!file)return;
+ const r=new FileReader();r.onload=()=>cb(String(r.result||''));r.onerror=()=>toast('Could not read image');r.readAsDataURL(file)
+}
+function loadBusinessLogo(e){
+ if(!isAdmin()){toast('Admin only');e.target.value='';return}
+ const f=e.target.files?.[0];if(!f)return;
+ readImageAsDataURL(f,data=>{state.settings.logoData=data;save();applyBusinessVisuals();toast('Business logo saved')})
+}
+function removeBusinessLogo(){
+ if(!isAdmin()){toast('Admin only');return}
+ state.settings.logoData='';save();applyBusinessVisuals();toast('Business logo removed')
+}
+function loadBusinessBackground(e){
+ if(!isAdmin()){toast('Admin only');e.target.value='';return}
+ const f=e.target.files?.[0];if(!f)return;
+ readImageAsDataURL(f,data=>{state.settings.backgroundData=data;save();applyBusinessVisuals();toast('Business background saved')})
+}
+function removeBusinessBackground(){
+ if(!isAdmin()){toast('Admin only');return}
+ state.settings.backgroundData='';save();applyBusinessVisuals();toast('Business background removed')
+}
+function applyBusinessVisuals(){
+ const bg=state.settings.backgroundData||'';
+ document.body.classList.toggle('has-business-background',!!bg);
+ document.body.style.backgroundImage=bg?`linear-gradient(#0003,#0005),url("${bg.replace(/"/g,'%22')}")`:'';
+ const img=document.getElementById('businessLogoPreview');if(img)img.src=state.settings.logoData||'';
+ const login=document.getElementById('loginLogo');
+ if(login){if(state.settings.logoData){login.style.backgroundImage=`url("${state.settings.logoData.replace(/"/g,'%22')}")`;login.style.backgroundSize='cover';login.style.backgroundPosition='center';login.style.color='transparent';login.textContent=''}else{login.style.backgroundImage='';login.style.color='';login.textContent=(state.settings.business||'D').trim().charAt(0).toUpperCase()}}
+}
 const themes={
  darkblue:['#07111f','#0e1a2b','#142238','#00e676'],darkgreen:['#07140f','#0d2118','#123324','#39ff88'],
  maroon:['#18070c','#2a0d15','#3a1420','#ff6b8a'],purple:['#10071c','#1c0e2c','#28143e','#c084fc'],
@@ -1378,7 +1449,7 @@ function toggleNoisyTheme(on){
 function loadControl(){
  const set=(id,val)=>{const e=document.getElementById(id);if(e)e.value=val};
  const check=(id,val)=>{const e=document.getElementById(id);if(e)e.checked=!!val};
- set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);
+ set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);applyBusinessVisuals();
  check('noisyTheme',!!state.settings.noisy);
  document.body.classList.toggle('noisy-theme',!!state.settings.noisy);
  const inv=state.settings.invoice||defaultState.settings.invoice;
@@ -1444,7 +1515,7 @@ function receiptPrint(s){
  const win=window.open('','_blank','width=520,height=760');
  if(!win){toast('Allow popups to print invoice');return}
  const items=s.items.map(i=>{const p=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td class="qty">${i.qty}</td><td class="right">${money(i.qty*i.price)}</td></tr>`}).join('');
- const logo=inv.showLogo?`<div class="logo">${escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`:'';
+ const logo=inv.showLogo?(state.settings.logoData?`<img class="receipt-logo" src="${escapeHTML(state.settings.logoData)}">`:`<div class="logo">${escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`):'';
  const note=inv.showCustomerNote&&s.note?`<p><b>Note:</b> ${escapeHTML(s.note)}</p>`:'';
  const paid=inv.showPaid?`<br>Paid: ${money(s.paid)}`:'';
  const due=inv.showDue?`<br>Due: ${money(s.due)}`:'';
@@ -1452,7 +1523,7 @@ function receiptPrint(s){
  win.document.write(`<html><head><title>${escapeHTML(s.invoice)}</title><style>
  body{font-family:Arial,sans-serif;width:${paper};margin:20px auto;font-size:12px;color:#111}
  h2{text-align:center;margin:4px 0}.logo{width:48px;height:48px;border-radius:12px;background:#111;color:#fff;display:grid;place-items:center;margin:0 auto 6px;font-size:24px;font-weight:bold}
- .center{text-align:center}.line{border-top:1px dashed #777;margin:10px 0}
+ .center{text-align:center}.receipt-logo{width:58px;height:58px;object-fit:cover;border-radius:12px;display:block;margin:0 auto 6px}.line{border-top:1px dashed #777;margin:10px 0}
  table{width:100%;border-collapse:collapse}th,td{padding:5px 2px;border-bottom:1px dashed #ccc;text-align:left}.qty{text-align:center;width:45px}.right{text-align:right}
  .total{font-size:16px;font-weight:bold;text-align:right;margin-top:8px}.thanks{text-align:center;margin-top:16px;font-weight:bold}
  @media print{body{margin:0 auto}}
@@ -1579,6 +1650,7 @@ function loadSettings(){
  document.getElementById('loginLogo').textContent=(state.settings.business||'D').trim().charAt(0).toUpperCase();
  applyTheme(state.settings.theme,false);
  toggleBlink(!!state.settings.blink);
+ applyBusinessVisuals();
  loadControl()
  const dd=document.getElementById('dashDate');if(dd)dd.textContent=new Date().toLocaleString();
 }

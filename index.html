@@ -42,6 +42,14 @@ textarea{min-height:80px;resize:vertical}
 .btn.primary{background:var(--accent);color:#03140b;border-color:var(--accent)}
 .btn.danger{background:#5b1720;border-color:#7f1d1d;color:#fff}
 .btn.warn{background:#5b3a0b;border-color:#9a6700}
+.app-back-btn{min-width:78px;font-weight:800;border-color:#ffffff18;background:#ffffff08}
+.branding-preview-modal{display:grid;gap:14px}
+.branding-preview-stage{min-height:240px;border:1px solid var(--border);border-radius:16px;overflow:hidden;position:relative;background:linear-gradient(145deg,var(--panel2),var(--panel)) center/cover no-repeat;display:flex;flex-direction:column}
+.branding-preview-top{padding:12px 14px;background:#07101dcc;backdrop-filter:blur(8px);display:flex;align-items:center;gap:10px}
+.branding-preview-body{padding:24px;flex:1;display:grid;place-items:center;text-align:center}
+.branding-preview-logos{display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap}
+.branding-preview-logos img{max-width:150px;max-height:80px;object-fit:contain;border-radius:10px;background:#ffffff12;padding:6px}
+
 .btn.ghost{background:#ffffff08}
 .btn.sm{padding:7px 9px;font-size:12px}
 .badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;background:#ffffff12}
@@ -255,6 +263,7 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
  margin-top:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px
 }
 .admin-tool{padding:12px;border-radius:11px;background:#0d1e32;border:1px solid #203a56;color:#e7eef7;text-align:left}
+.brand-preview{margin-top:8px;min-height:70px;border:1px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#ffffff05}.brand-preview img{max-width:100%;max-height:90px;object-fit:contain}.wallpaper-preview{margin-top:8px;height:120px;border:1px dashed var(--border);border-radius:12px;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden}.brand-remove{font-size:12px;color:#ff9aa4}.business-brand-logo{height:34px;width:34px;border-radius:9px;object-fit:contain;background:#ffffff12;vertical-align:middle;margin-right:4px}
 .admin-tool strong{display:block;margin-bottom:4px}.admin-tool small{color:#778ca4}
 .voice-strip{
  margin-top:12px;padding:13px 16px;border:1px solid #25405c;border-radius:13px;
@@ -307,34 +316,6 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
  .side-group{display:block!important}
 }
 
-
-/* =========================================================
-   DLIMANS VISUAL CUSTOMIZATION — PRESERVE MASTER FEATURES
-========================================================= */
-body.has-business-background{background-size:cover!important;background-position:center!important;background-attachment:fixed!important}
-body.has-business-background::before{content:"";position:fixed;inset:0;background:linear-gradient(#0003,#0005);pointer-events:none;z-index:0}
-#app,#loginScreen{position:relative;z-index:1}
-.business-logo-preview{width:76px;height:76px;border-radius:18px;object-fit:cover;background:#091321;border:1px solid var(--border);display:block}
-.logo-upload-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px}
-.side-icon{position:relative;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;transition:filter .2s,transform .2s}
-.side-icon.blink{animation:sideRainbow 2.8s ease-in-out infinite}
-.side-item:nth-of-type(2) .side-icon{animation-delay:.10s}.side-item:nth-of-type(3) .side-icon{animation-delay:.20s}
-.side-item:nth-of-type(4) .side-icon{animation-delay:.30s}.side-item:nth-of-type(5) .side-icon{animation-delay:.40s}
-.side-item:nth-of-type(6) .side-icon{animation-delay:.50s}.side-item:nth-of-type(7) .side-icon{animation-delay:.60s}
-.side-item:nth-of-type(8) .side-icon{animation-delay:.70s}.side-item:nth-of-type(9) .side-icon{animation-delay:.80s}
-.side-item:nth-of-type(10) .side-icon{animation-delay:.90s}.side-item:nth-of-type(11) .side-icon{animation-delay:1s}
-.side-item:nth-of-type(12) .side-icon{animation-delay:1.1s}.side-item:nth-of-type(13) .side-icon{animation-delay:1.2s}
-.side-item:nth-of-type(14) .side-icon{animation-delay:1.3s}.side-item:nth-of-type(15) .side-icon{animation-delay:1.4s}
-.side-item:nth-of-type(16) .side-icon{animation-delay:1.5s}.side-item:nth-of-type(17) .side-icon{animation-delay:1.6s}
-.side-item:nth-of-type(18) .side-icon{animation-delay:1.7s}.side-item:nth-of-type(19) .side-icon{animation-delay:1.8s}
-@keyframes sideRainbow{
-  0%,100%{filter:drop-shadow(0 0 0 transparent);transform:scale(1);opacity:1}
-  20%{filter:drop-shadow(0 0 7px #00e676);transform:scale(1.06);opacity:.9}
-  40%{filter:drop-shadow(0 0 8px #38bdf8);opacity:1}
-  60%{filter:drop-shadow(0 0 8px #c084fc);transform:scale(1.08)}
-  80%{filter:drop-shadow(0 0 8px #ffd166);opacity:.9}
-}
-
 /* Optional Noisy Theme effect — visual only, does not change app data. */
 body.noisy-theme::after{
  content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.055;
@@ -361,13 +342,15 @@ body.noisy-theme::after{
     </div>
     <label class="remember"><input id="rememberMe" type="checkbox"> Remember login</label>
     <button class="btn primary" style="width:100%;padding:13px" onclick="login()">LOGIN</button>
-    <div class="small" style="text-align:center;margin-top:12px">Admin and Cashier permissions are controlled inside Settings.</div>
+    <button class="btn" style="width:100%;padding:12px;margin-top:8px" onclick="openBusinessRegister()">🏪 REGISTER NEW BUSINESS</button>
+    <div class="small" style="text-align:center;margin-top:12px">Register a business once, then use the business email/password to access the same cloud data on PC and phone.</div>
   </div>
 </section>
 
 <div id="app">
   <header class="topbar">
     <button class="btn ghost" onclick="toggleSidebar()">☰</button>
+    <button class="btn ghost app-back-btn" onclick="goBackInApp()">← Back</button>
     <div class="brand"><span id="topBusiness">Dlimans Supermarket</span> <span class="muted">•</span> <span id="topRole">Admin</span></div>
     <div class="right row">
       <button class="btn ghost" id="voiceBtn" onclick="startVoice()">🎙️ <span class="side-label">Voice</span></button>
@@ -595,20 +578,33 @@ body.noisy-theme::after{
             <label class="small">Address</label><input id="setAddress">
             <label class="small">Currency</label><input id="setCurrency">
             <label class="small">Receipt thank-you</label><textarea id="setThanks"></textarea>
-            <div class="logo-upload-row">
-              <img id="businessLogoPreview" class="business-logo-preview" alt="Business logo preview">
-              <div class="grow">
-                <label class="small">Business / Invoice Logo</label>
-                <input id="businessLogoFile" type="file" accept="image/*" onchange="loadBusinessLogo(event)">
-                <div class="small">This logo is saved locally and can appear on invoices/receipts.</div>
+            <button class="btn primary" onclick="saveBusiness()">Save Business Settings</button>
+          </div>
+          <div class="card">
+            <h3>🖼️ Business Branding & Wallpaper</h3>
+            <div class="small">Admin can change the app wallpaper, business logo and separate invoice logo without editing code.</div>
+            <div class="grid grid2" style="margin-top:10px">
+              <div>
+                <label class="small">Business Logo</label>
+                <input id="businessLogoFile" type="file" accept="image/*" onchange="handleBrandImage(event,'businessLogo')">
+                <div id="businessLogoPreview" class="brand-preview"></div>
+              </div>
+              <div>
+                <label class="small">Invoice Logo</label>
+                <input id="invoiceLogoFile" type="file" accept="image/*" onchange="handleBrandImage(event,'invoiceLogo')">
+                <div id="invoiceLogoPreview" class="brand-preview"></div>
+              </div>
+              <div style="grid-column:1/-1">
+                <label class="small">Wallpaper / Business Background</label>
+                <input id="wallpaperFile" type="file" accept="image/*" onchange="handleBrandImage(event,'wallpaper')">
+                <div id="wallpaperPreview" class="wallpaper-preview"></div>
               </div>
             </div>
             <div class="row wrap" style="margin-top:10px">
-              <button class="btn" type="button" onclick="removeBusinessLogo()">🗑 Remove Logo</button>
-              <label class="btn">🖼️ Choose Background <input id="businessBgFile" type="file" accept="image/*" onchange="loadBusinessBackground(event)" hidden></label>
-              <button class="btn" type="button" onclick="removeBusinessBackground()">🗑 Remove Background</button>
+              <button class="btn primary" onclick="saveBranding()">💾 Save Branding</button>
+              <button class="btn" onclick="previewBranding()">👁 Preview</button>
+              <button class="btn danger" onclick="clearBranding()">🗑 Clear Branding</button>
             </div>
-            <button class="btn primary" onclick="saveBusiness()">Save Business Settings</button>
           </div>
           <div class="card">
             <h3>Universal Theme</h3>
@@ -650,8 +646,7 @@ body.noisy-theme::after{
 <div><label>Storage Bucket</label><input id="syncStorageBucket"></div>
 <div><label>Messaging Sender ID</label><input id="syncSenderId"></div>
 <div><label>App ID</label><input id="syncAppId"></div>
-<div><label>Firebase Auth Email</label><input id="syncEmail" type="email" placeholder="admin@dlimans.com"></div>
-<div><label>Firebase Auth Password</label><input id="syncPassword" type="password" placeholder="Firebase account password"></div>
+<div style="grid-column:1/-1"><div class="small">🔐 Firebase Authentication uses the business account you already logged into. No Firebase password is stored or entered here.</div></div>
 </div>
 <div class="row wrap" style="margin-top:10px">
 <button class="btn primary" onclick="saveSyncConfig()">💾 Save Sync Config</button>
@@ -721,7 +716,7 @@ body.noisy-theme::after{
             <label class="remember"><input id="invShowNote" type="checkbox"> Show customer note</label>
             <label class="remember"><input id="invShowDue" type="checkbox"> Show due amount</label>
             <label class="remember"><input id="invShowPaid" type="checkbox"> Show paid amount</label>
-            <label class="remember"><input id="invShowLogo" type="checkbox"> Show business logo/initial</label>
+            <label class="remember"><input id="invShowLogo" type="checkbox"> Show invoice logo</label>
             <button class="btn primary" onclick="saveInvoiceSettings()">Save Invoice Settings</button>
           </div>
         </div>
@@ -769,7 +764,7 @@ let currentUser=null, cart=[], held=[], selectedSales=new Set(), voiceRec=null;
 const defaultState={
  settings:{
   business:'Dlimans Supermarket',phone:'08063756515',address:'Nigeria',currency:'₦',
-  thanks:'Thank you for shopping with Dlimans Supermarket!',theme:'darkblue',blink:true,noisy:false,logoData:'',backgroundData:'',
+  thanks:'Thank you for shopping with Dlimans Supermarket!',businessLogo:'',invoiceLogo:'',wallpaper:'',theme:'darkblue',blink:true,noisy:false,
   paper:'58mm',autoPrint:false,
   invoice:{prefix:'INV-',nextNumber:1,title:'INVOICE',footer:'Thank you for shopping with Dlimans Supermarket!',showCustomerNote:true,showDue:true,showPaid:true,showLogo:false}
  },
@@ -839,11 +834,39 @@ function toast(msg){
 function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function togglePass(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈'}
 
-function login(){
+async function login(){
  try{
   const u=(document.getElementById('loginUser')?.value||'').trim();
   const p=document.getElementById('loginPass')?.value||'';
   let found=state.users.find(x=>x.username===u&&x.password===p&&x.active!==false);
+
+  // Cloud business login: the same email/password works on every device.
+  if(!found && u.includes('@')){
+   try{
+    if(!navigator.onLine){toast('Internet is required for the first cloud login');return false}
+    const c=getSyncConfig();
+    await loadFirebaseSDK();
+    if(!syncFirebaseApp){syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth()}
+    await syncAuth.signInWithEmailAndPassword(u,p);
+    syncUser=syncAuth.currentUser;
+    if(!syncUser)throw Error('Firebase authentication failed');
+    const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
+    const snap=await ref.get();
+    if(!snap.exists)throw Error('Business cloud profile not found');
+    const remote=snap.data()?.state;
+    if(remote)state=normalizeState(remote);
+    localStorage.setItem(KEY,JSON.stringify(state));
+    window.__dlimansSyncRef=ref;
+    if(syncUnsub)syncUnsub();
+    syncUnsub=ref.onSnapshot(ds=>{const d=ds.data()?.state;if(!d)return;state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh()},e=>console.warn('Cloud listener',e));
+    localStorage.setItem('DLIMANS_CLOUD_EMAIL',u);
+    found={id:'cloud-'+syncUser.uid,username:u,password:'',role:'Admin',active:true,cloud:true,businessId:syncUser.uid};
+    state.users=state.users.filter(x=>x.username!==u);state.users.unshift(found);
+    save();
+    setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
+    await pushAutoSync();
+   }catch(cloudErr){console.error('Cloud login',cloudErr);toast('Cloud login failed: '+(cloudErr.message||cloudErr));return false}
+  }
   if(!found && u==='admin' && p==='admin123'){
    found={id:'u-admin',username:'admin',password:'admin123',role:'Admin',active:true};
    state.users=state.users.filter(x=>x.username!=='admin');state.users.unshift(found);save();
@@ -863,7 +886,60 @@ function login(){
   return true;
  }catch(e){console.error('Login error',e);toast('Login error — please try again');return false}
 }
-function logout(){currentUser=null;cart=[];document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex'}
+async function openBusinessRegister(){
+ openModal(`<h3>🏪 Register New Business</h3>
+ <div class="small" style="margin:8px 0 12px">Create one business account. Its POS data will be stored in Firebase Cloud and can be accessed from your phone and PC.</div>
+ <label>Business Name</label><input id="regBusiness" placeholder="My Supermarket">
+ <label>Owner Name</label><input id="regOwner" placeholder="Owner name">
+ <label>Email</label><input id="regEmail" type="email" placeholder="owner@example.com">
+ <label>Password</label><div class="password-wrap"><input id="regPassword" type="password" placeholder="At least 6 characters"><button class="eye" onclick="togglePass('regPassword',this)">👁</button></div>
+ <label>Confirm Password</label><input id="regConfirm" type="password" placeholder="Confirm password">
+ <label>Business Address</label><textarea id="regAddress" placeholder="Business address"></textarea>
+ <div class="row wrap" style="margin-top:12px"><button class="btn primary" onclick="registerBusiness()">Create Business Account</button><button class="btn" onclick="closeModal()">Cancel</button></div>`);
+}
+async function registerBusiness(){
+ const business=(document.getElementById('regBusiness')?.value||'').trim();
+ const owner=(document.getElementById('regOwner')?.value||'').trim();
+ const email=(document.getElementById('regEmail')?.value||'').trim().toLowerCase();
+ const password=document.getElementById('regPassword')?.value||'';
+ const confirm=document.getElementById('regConfirm')?.value||'';
+ const address=(document.getElementById('regAddress')?.value||'').trim();
+ if(!business||!owner||!email||!password){toast('Business, owner, email and password are required');return false}
+ if(password.length<6){toast('Password must be at least 6 characters');return false}
+ if(password!==confirm){toast('Passwords do not match');return false}
+ if(!navigator.onLine){toast('Internet is required to create the cloud business account');return false}
+ try{
+  const c=getSyncConfig();
+  await loadFirebaseSDK();
+  if(!syncFirebaseApp){syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth()}
+  setSyncStatus('☁️ Creating Firebase business account...');
+  const cred=await syncAuth.createUserWithEmailAndPassword(email,password);
+  syncUser=cred.user;
+  state.settings.business=business;state.settings.address=address;
+  const admin={id:'cloud-'+syncUser.uid,username:email,password:'',role:'Admin',active:true,cloud:true,businessId:syncUser.uid,ownerName:owner};
+  state.users=state.users.filter(u=>u.username!==email);state.users.unshift(admin);
+  const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
+  await ref.set({businessId:syncUser.uid,businessName:business,ownerName:owner,email,address,state,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  window.__dlimansSyncRef=ref;
+  if(syncUnsub)syncUnsub();
+  syncUnsub=ref.onSnapshot(ds=>{const d=ds.data()?.state;if(!d)return;state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh()},e=>console.warn('Cloud listener',e));
+  localStorage.setItem(KEY,JSON.stringify(state));
+  localStorage.setItem('DLIMANS_CLOUD_EMAIL',email);
+  currentUser=admin;
+  closeModal();
+  document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='block';
+  document.getElementById('topRole').textContent='Admin';
+  document.getElementById('topBusiness').textContent=business;document.getElementById('loginBusiness').textContent=business;document.getElementById('loginLogo').textContent=(business||'D').charAt(0).toUpperCase();
+  buildSidebar();showView('dashboard',true);
+  setSyncStatus('🟢 Firebase Cloud: Connected');toast('Business created and connected to Firebase Cloud');
+  return true;
+ }catch(e){
+  console.error('Business registration',e);
+  const msg=e.code==='auth/email-already-in-use'?'This email already has a Firebase account. Login with that email.':e.code==='auth/invalid-email'?'Enter a valid email address.':'Business registration failed: '+(e.message||e);
+  toast(msg);return false;
+ }
+}
+function logout(){currentUser=null;cart=[];try{if(syncUnsub)syncUnsub()}catch(e){};syncUnsub=null;window.__dlimansSyncRef=null;document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex'}
 (function initLogin(){
  try{
   const remembered=localStorage.getItem('DLIMANS_REMEMBER');if(remembered&&document.getElementById('loginUser'))document.getElementById('loginUser').value=remembered;
@@ -940,10 +1016,13 @@ function buildSidebar(){
   side.querySelectorAll('.side-icon').forEach(x=>x.classList.add('blink'));
  }
 }
+let appViewHistory=[];
 function showView(name,force=false){
  if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
  const v=document.getElementById('view-'+name);
  if(!v){toast('Feature not found: '+name);return false}
+ const current=document.querySelector('.view.active')?.id?.replace('view-','');
+ if(current && current!==name && !force){appViewHistory.push(current);if(appViewHistory.length>30)appViewHistory.shift()}
  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
  v.classList.add('active');
  document.querySelectorAll('.side-item').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
@@ -951,6 +1030,16 @@ function showView(name,force=false){
  safeRefresh();
  window.scrollTo(0,0);
  return true;
+}
+function goBackInApp(){
+ const current=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
+ while(appViewHistory.length){
+   const previous=appViewHistory.pop();
+   if(previous && previous!==current && document.getElementById('view-'+previous)){showView(previous,true);toast('Back: '+previous);return true}
+ }
+ if(current!=='dashboard'){showView('dashboard',true);toast('Back: Dashboard');return true}
+ toast('You are already on Dashboard');
+ return false;
 }
 function toggleSidebar(){
  const side=document.querySelector('.sidebar');if(!side)return;
@@ -1392,42 +1481,49 @@ function invoicePreviewLatest(){
  const sale=state.sales[state.sales.length-1];
  if(sale) receiptPrint(sale); else testPrint();
 }
+function compressImage(file,maxW=1200,quality=.78){
+ return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,maxW/img.width);const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));const ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',quality))};img.onerror=reject;img.src=r.result};r.onerror=reject;r.readAsDataURL(file)})
+}
+async function handleBrandImage(e,type){
+ if(!isAdmin()){toast('Admin only');e.target.value='';return}
+ const f=e.target.files?.[0];if(!f)return;
+ if(!f.type.startsWith('image/')){toast('Please choose an image file');e.target.value='';return}
+ try{const max=type==='wallpaper'?1600:700;const data=await compressImage(f,max,type==='wallpaper'?.72:.82);state.settings[type]=data;renderBrandingPreviews();applyBranding();save();toast((type==='wallpaper'?'Wallpaper':type==='invoiceLogo'?'Invoice logo':'Business logo')+' selected — tap Save Branding')}catch(err){console.error(err);toast('Could not load image')}
+}
+function renderBrandingPreviews(){
+ const show=(id,src,cls='')=>{const e=document.getElementById(id);if(!e)return;e.innerHTML=src?`<img class="${cls}" src="${src}" alt="branding">`:'<span class="small">No image selected</span>'};
+ show('businessLogoPreview',state.settings.businessLogo,'business-brand-logo');show('invoiceLogoPreview',state.settings.invoiceLogo);const w=document.getElementById('wallpaperPreview');if(w){w.style.backgroundImage=state.settings.wallpaper?`url("${state.settings.wallpaper}")`:'none';w.innerHTML=state.settings.wallpaper?'':'<span class="small">No wallpaper selected</span>'}
+}
+function applyBranding(){
+ const body=document.body; if(state.settings.wallpaper){body.classList.add('has-wallpaper');body.style.backgroundImage=`linear-gradient(#07111f99,#07111f99),url("${state.settings.wallpaper}")`;body.style.backgroundSize='cover';body.style.backgroundPosition='center';body.style.backgroundAttachment='fixed'}else{body.classList.remove('has-wallpaper');body.style.backgroundImage='';body.style.backgroundSize='';body.style.backgroundPosition='';body.style.backgroundAttachment=''}
+ const logo=state.settings.businessLogo;const login=document.getElementById('loginLogo');if(login){login.innerHTML=logo?`<img src="${logo}" alt="Business logo" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">`:(state.settings.business||'D').trim().charAt(0).toUpperCase()}
+ const top=document.getElementById('topBusiness');if(top){top.innerHTML=(logo?`<img class="business-brand-logo" src="${logo}" alt="">`:'')+escapeHTML(state.settings.business)}
+}
+function previewBranding(){
+ const logo=state.settings.businessLogo;
+ const invoice=state.settings.invoiceLogo;
+ const wall=state.settings.wallpaper;
+ openModal(`<div class="branding-preview-modal">
+   <div class="section-title"><div><h2>👁 Branding Preview</h2><div class="small">Preview how your business branding will appear in the app.</div></div></div>
+   <div class="branding-preview-stage" style="${wall?`background-image:linear-gradient(#07111f88,#07111f88),url("${wall}")`:''}">
+     <div class="branding-preview-top"><button class="btn sm ghost" onclick="closeModal();goBackInApp()">← Back</button><b>${escapeHTML(state.settings.business||'Dlimans Supermarket')}</b></div>
+     <div class="branding-preview-body">
+       <div><div class="branding-preview-logos">${logo?`<div><div class="small">Business Logo</div><img src="${logo}" alt="Business logo"></div>`:''}${invoice?`<div><div class="small">Invoice Logo</div><img src="${invoice}" alt="Invoice logo"></div>`:''}</div>
+       <h2 style="margin-top:16px">${escapeHTML(state.settings.business||'Dlimans Supermarket')}</h2><div class="small">Wallpaper & branding preview</div></div>
+     </div>
+   </div>
+   <div class="row wrap" style="justify-content:flex-end"><button class="btn" onclick="closeModal()">Close Preview</button><button class="btn primary" onclick="closeModal();saveBranding()">💾 Save Branding</button></div>
+ </div>`);
+}
+function saveBranding(){if(!isAdmin()){toast('Admin only');return}save();applyBranding();renderBrandingPreviews();toast('Business logo, invoice logo and wallpaper saved')}
+function clearBranding(){if(!isAdmin()){toast('Admin only');return}if(!confirm('Clear business logo, invoice logo and wallpaper?'))return;state.settings.businessLogo='';state.settings.invoiceLogo='';state.settings.wallpaper='';save();applyBranding();renderBrandingPreviews();toast('Branding cleared')}
+
 function saveBusiness(){
  if(!isAdmin()){toast('Admin only');return}
  state.settings.business=document.getElementById('setBusiness').value.trim()||state.settings.business;
  state.settings.phone=document.getElementById('setPhone').value.trim();state.settings.address=document.getElementById('setAddress').value.trim();
  state.settings.currency=document.getElementById('setCurrency').value.trim()||'₦';state.settings.thanks=document.getElementById('setThanks').value;
  save();document.getElementById('topBusiness').textContent=state.settings.business;document.getElementById('loginBusiness').textContent=state.settings.business;toast('Business settings saved')
-}
-function readImageAsDataURL(file,cb){
- if(!file)return;
- const r=new FileReader();r.onload=()=>cb(String(r.result||''));r.onerror=()=>toast('Could not read image');r.readAsDataURL(file)
-}
-function loadBusinessLogo(e){
- if(!isAdmin()){toast('Admin only');e.target.value='';return}
- const f=e.target.files?.[0];if(!f)return;
- readImageAsDataURL(f,data=>{state.settings.logoData=data;save();applyBusinessVisuals();toast('Business logo saved')})
-}
-function removeBusinessLogo(){
- if(!isAdmin()){toast('Admin only');return}
- state.settings.logoData='';save();applyBusinessVisuals();toast('Business logo removed')
-}
-function loadBusinessBackground(e){
- if(!isAdmin()){toast('Admin only');e.target.value='';return}
- const f=e.target.files?.[0];if(!f)return;
- readImageAsDataURL(f,data=>{state.settings.backgroundData=data;save();applyBusinessVisuals();toast('Business background saved')})
-}
-function removeBusinessBackground(){
- if(!isAdmin()){toast('Admin only');return}
- state.settings.backgroundData='';save();applyBusinessVisuals();toast('Business background removed')
-}
-function applyBusinessVisuals(){
- const bg=state.settings.backgroundData||'';
- document.body.classList.toggle('has-business-background',!!bg);
- document.body.style.backgroundImage=bg?`linear-gradient(#0003,#0005),url("${bg.replace(/"/g,'%22')}")`:'';
- const img=document.getElementById('businessLogoPreview');if(img)img.src=state.settings.logoData||'';
- const login=document.getElementById('loginLogo');
- if(login){if(state.settings.logoData){login.style.backgroundImage=`url("${state.settings.logoData.replace(/"/g,'%22')}")`;login.style.backgroundSize='cover';login.style.backgroundPosition='center';login.style.color='transparent';login.textContent=''}else{login.style.backgroundImage='';login.style.color='';login.textContent=(state.settings.business||'D').trim().charAt(0).toUpperCase()}}
 }
 const themes={
  darkblue:['#07111f','#0e1a2b','#142238','#00e676'],darkgreen:['#07140f','#0d2118','#123324','#39ff88'],
@@ -1449,7 +1545,7 @@ function toggleNoisyTheme(on){
 function loadControl(){
  const set=(id,val)=>{const e=document.getElementById(id);if(e)e.value=val};
  const check=(id,val)=>{const e=document.getElementById(id);if(e)e.checked=!!val};
- set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);applyBusinessVisuals();
+ set('setBusiness',state.settings.business);set('setPhone',state.settings.phone);set('setAddress',state.settings.address);set('setCurrency',state.settings.currency);set('setThanks',state.settings.thanks);set('themeSelect',state.settings.theme);
  check('noisyTheme',!!state.settings.noisy);
  document.body.classList.toggle('noisy-theme',!!state.settings.noisy);
  const inv=state.settings.invoice||defaultState.settings.invoice;
@@ -1515,7 +1611,7 @@ function receiptPrint(s){
  const win=window.open('','_blank','width=520,height=760');
  if(!win){toast('Allow popups to print invoice');return}
  const items=s.items.map(i=>{const p=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td class="qty">${i.qty}</td><td class="right">${money(i.qty*i.price)}</td></tr>`}).join('');
- const logo=inv.showLogo?(state.settings.logoData?`<img class="receipt-logo" src="${escapeHTML(state.settings.logoData)}">`:`<div class="logo">${escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`):'';
+ const receiptLogo=state.settings.invoiceLogo||state.settings.businessLogo; const logo=inv.showLogo?`<div class="logo">${receiptLogo?`<img src="${receiptLogo}" style="width:48px;height:48px;object-fit:contain;border-radius:10px">`:escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`:'';
  const note=inv.showCustomerNote&&s.note?`<p><b>Note:</b> ${escapeHTML(s.note)}</p>`:'';
  const paid=inv.showPaid?`<br>Paid: ${money(s.paid)}`:'';
  const due=inv.showDue?`<br>Due: ${money(s.due)}`:'';
@@ -1523,7 +1619,7 @@ function receiptPrint(s){
  win.document.write(`<html><head><title>${escapeHTML(s.invoice)}</title><style>
  body{font-family:Arial,sans-serif;width:${paper};margin:20px auto;font-size:12px;color:#111}
  h2{text-align:center;margin:4px 0}.logo{width:48px;height:48px;border-radius:12px;background:#111;color:#fff;display:grid;place-items:center;margin:0 auto 6px;font-size:24px;font-weight:bold}
- .center{text-align:center}.receipt-logo{width:58px;height:58px;object-fit:cover;border-radius:12px;display:block;margin:0 auto 6px}.line{border-top:1px dashed #777;margin:10px 0}
+ .center{text-align:center}.line{border-top:1px dashed #777;margin:10px 0}
  table{width:100%;border-collapse:collapse}th,td{padding:5px 2px;border-bottom:1px dashed #ccc;text-align:left}.qty{text-align:center;width:45px}.right{text-align:right}
  .total{font-size:16px;font-weight:bold;text-align:right;margin-top:8px}.thanks{text-align:center;margin-top:16px;font-weight:bold}
  @media print{body{margin:0 auto}}
@@ -1649,8 +1745,8 @@ function loadSettings(){
  document.getElementById('loginBusiness').textContent=state.settings.business;
  document.getElementById('loginLogo').textContent=(state.settings.business||'D').trim().charAt(0).toUpperCase();
  applyTheme(state.settings.theme,false);
+ applyBranding();
  toggleBlink(!!state.settings.blink);
- applyBusinessVisuals();
  loadControl()
  const dd=document.getElementById('dashDate');if(dd)dd.textContent=new Date().toLocaleString();
 }
@@ -1714,10 +1810,9 @@ function getSyncConfig(){
 function setSyncStatus(m){const e=document.getElementById('syncStatus');if(e)e.textContent=m}
 function fillSyncConfig(){
  const c=getSyncConfig();
- const map=[['syncApiKey','apiKey'],['syncAuthDomain','authDomain'],['syncProjectId','projectId'],['syncStorageBucket','storageBucket'],['syncSenderId','messagingSenderId'],['syncAppId','appId'],['syncEmail','email']];
+ const map=[['syncApiKey','apiKey'],['syncAuthDomain','authDomain'],['syncProjectId','projectId'],['syncStorageBucket','storageBucket'],['syncSenderId','messagingSenderId'],['syncAppId','appId']];
  map.forEach(([a,b])=>{const e=document.getElementById(a);if(e)e.value=c[b]||''});
- const pw=document.getElementById('syncPassword');if(pw)pw.value='';
- setSyncStatus(c.email?'☁️ Firebase configured — ready to connect':'☁️ Firebase configured — enter Auth email/password');
+ setSyncStatus('☁️ Firebase configured — ready to connect with your logged-in business account');
 }
 function saveSyncConfig(){
  const c={
@@ -1726,8 +1821,7 @@ function saveSyncConfig(){
   projectId:document.getElementById('syncProjectId')?.value.trim()||BUILTIN_FIREBASE_CONFIG.projectId,
   storageBucket:document.getElementById('syncStorageBucket')?.value.trim()||BUILTIN_FIREBASE_CONFIG.storageBucket,
   messagingSenderId:document.getElementById('syncSenderId')?.value.trim()||BUILTIN_FIREBASE_CONFIG.messagingSenderId,
-  appId:document.getElementById('syncAppId')?.value.trim()||BUILTIN_FIREBASE_CONFIG.appId,
-  email:document.getElementById('syncEmail')?.value.trim()||''
+  appId:document.getElementById('syncAppId')?.value.trim()||BUILTIN_FIREBASE_CONFIG.appId
  };
  localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify(c));
  setSyncStatus('☁️ Sync configuration saved');toast('Firebase Sync configuration saved');return true;
@@ -1750,46 +1844,50 @@ function loadFirebaseSDK(){
 }
 async function connectAutoSync(){
  const c=getSyncConfig();
- const email=(document.getElementById('syncEmail')?.value.trim()||c.email||'').trim();
- const password=document.getElementById('syncPassword')?.value||'';
- if(!email||!password){toast('Enter Firebase Auth email and password');return false}
- c.email=email;localStorage.setItem(SYNC_CONFIG_KEY,JSON.stringify(c));
  if(!navigator.onLine){setSyncStatus('📴 Offline — local storage active');toast('Internet is required for first cloud connection');return false}
  try{
-  setSyncStatus('☁️ Connecting to Firebase...');
+  setSyncStatus('☁️ Connecting to Firebase with your business login...');
   await loadFirebaseSDK();
   if(!syncFirebaseApp){
    syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
    syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth();
   }
+  // IMPORTANT: use the Firebase Authentication session created by Register/Login.
+  // Never ask the user to enter/store a separate Firebase password here.
+  syncUser=syncAuth.currentUser;
   if(!syncUser){
-   await syncAuth.signInWithEmailAndPassword(email,password);
-   syncUser=syncAuth.currentUser;
+   throw Object.assign(new Error('Please login to your business account first.'),{code:'auth/not-authenticated'});
   }
-  if(!syncUser)throw Error('Firebase authentication failed');
   const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
   const snap=await ref.get();
   if(snap.exists&&snap.data()?.state){
    const remote=snap.data().state;
    if(remote&&Array.isArray(remote.products)&&Array.isArray(remote.sales)){
-    state=normalizeState(remote);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();toast('☁️ Cloud data loaded');
+    state=normalizeState(remote);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
    }
   }else{
-   await ref.set({state:state,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   await ref.set({
+    businessId:syncUser.uid,
+    businessName:state.settings.business||'Business',
+    email:syncUser.email||'',
+    state:state,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+   },{merge:true});
   }
   if(syncUnsub)syncUnsub();
   syncUnsub=ref.onSnapshot(s=>{
    const d=s.data()?.state;
    if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))return;
    state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
+   setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
   },e=>{console.warn('Sync listener',e);setSyncStatus('⚠️ Cloud listener error — local data still active')});
   window.__dlimansSyncRef=ref;
-  setSyncStatus('🟢 Automatic Sync: Connected');
+  setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
   await pushAutoSync();
   return true;
  }catch(e){
   console.error('Auto sync:',e);
-  let msg=e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'?'Firebase email/password is incorrect.':e.code==='auth/user-not-found'?'Firebase user not found.':e.code==='permission-denied'?'Firestore permission denied — check Rules and Authentication.':'Cloud Sync failed: '+(e.message||e);
+  const msg=e.code==='auth/not-authenticated'?'Please login to your business account first.':e.code==='permission-denied'?'Firestore permission denied — check Firebase Authentication and Firestore Rules.':'Cloud Sync failed: '+(e.message||e);
   setSyncStatus('⚠️ Sync unavailable — local mode still works');toast(msg);return false;
  }
 }
@@ -1805,9 +1903,29 @@ function disconnectAutoSync(){
  syncUnsub=null;syncUser=null;syncDb=null;syncAuth=null;syncFirebaseApp=null;window.__dlimansSyncRef=null;
  setSyncStatus('☁️ Automatic Sync: Disconnected — local mode active');toast('Cloud Sync disconnected')
 }
-window.addEventListener('online',()=>{if(getSyncConfig().email){} });
+window.addEventListener('online',()=>{
+ try{if(syncAuth&&syncAuth.currentUser) connectAutoSync();}catch(e){}
+});
 window.addEventListener('offline',()=>setSyncStatus('📴 Offline — local storage active'));
-window.addEventListener('load',()=>{setTimeout(fillSyncConfig,300)});
+window.addEventListener('load',async()=>{
+ setTimeout(fillSyncConfig,300);
+ // Restore the Firebase business session automatically after reload.
+ try{
+  await loadFirebaseSDK();
+  const c=getSyncConfig();
+  if(!syncFirebaseApp){
+   syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
+   syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth();
+  }
+  syncAuth.onAuthStateChanged(user=>{
+   syncUser=user||null;
+   if(user){
+    setSyncStatus('🟢 Firebase account ready — Cloud can sync automatically');
+    if(currentUser&&currentUser.cloud) setTimeout(()=>connectAutoSync(),100);
+   }
+  });
+ }catch(e){console.warn('Firebase startup:',e)}
+});
 </script>
 </body>
 </html>

@@ -70,7 +70,13 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 .login-box h1{text-align:center}.login-box .subtitle{text-align:center;color:var(--muted);margin:7px 0 22px}
 .login-box label{display:block;margin:12px 0 6px;font-size:13px}
 .password-wrap{position:relative}.password-wrap input{padding-right:48px}.eye{position:absolute;right:5px;top:5px;border:0;background:transparent;color:#fff;padding:7px}
-.remember{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;margin:12px 0}.remember input{width:auto}
+.remember{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:12px 0;cursor:pointer}
+.remember input[type="checkbox"]{
+ width:18px!important;height:18px!important;min-width:18px;min-height:18px;
+ margin:0!important;padding:0!important;display:inline-block!important;
+ appearance:auto!important;-webkit-appearance:checkbox!important;
+ accent-color:var(--accent);cursor:pointer;flex:0 0 auto;
+}
 #app{display:none;min-height:100vh}
 .topbar{height:62px;position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;padding:0 12px;background:#07101df2;backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 .brand{font-weight:900;letter-spacing:.3px;white-space:nowrap}.brand span{color:var(--accent)}
@@ -340,7 +346,7 @@ body.noisy-theme::after{
       <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password">
       <button class="eye" onclick="togglePass('loginPass',this)">👁</button>
     </div>
-    <label class="remember"><input id="rememberMe" type="checkbox"> Remember login</label>
+    <label class="remember" for="rememberMe"><input id="rememberMe" type="checkbox" autocomplete="off" onchange="rememberLoginChanged(this.checked)"> <span>Remember login</span></label>
     <button class="btn primary" style="width:100%;padding:13px" onclick="login()">LOGIN</button>
     <button class="btn" style="width:100%;padding:12px;margin-top:8px" onclick="openBusinessRegister()">🏪 REGISTER NEW BUSINESS</button>
     <div class="small" style="text-align:center;margin-top:12px">Register a business once, then use the business email/password to access the same cloud data on PC and phone.</div>
@@ -834,6 +840,18 @@ function toast(msg){
 function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function togglePass(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈'}
 
+function rememberLoginChanged(checked){
+  const box=document.getElementById('rememberMe');
+  if(box) box.checked=!!checked;
+  try{
+    if(checked){
+      const u=(document.getElementById('loginUser')?.value||'').trim();
+      if(u) localStorage.setItem('DLIMANS_REMEMBER',u);
+    }else{
+      localStorage.removeItem('DLIMANS_REMEMBER');
+    }
+  }catch(e){console.warn('Remember login preference:',e)}
+}
 async function login(){
  const loginBtn=document.querySelector('#loginScreen button[onclick="login()"]');
  try{
@@ -887,7 +905,14 @@ async function login(){
   }
   if(!found){toast('Invalid username or password');return false}
   currentUser=found;
-  if(document.getElementById('rememberMe')?.checked)localStorage.setItem('DLIMANS_REMEMBER',u);else localStorage.removeItem('DLIMANS_REMEMBER');
+  const rememberBox=document.getElementById('rememberMe');
+  if(rememberBox?.checked){
+    localStorage.setItem('DLIMANS_REMEMBER',u);
+    rememberBox.checked=true;
+  }else{
+    localStorage.removeItem('DLIMANS_REMEMBER');
+    if(rememberBox)rememberBox.checked=false;
+  }
 
   // Link the normal POS Admin login to Firebase Cloud when possible.
   // Cloud credentials are never stored in localStorage. If this is an existing
@@ -1041,7 +1066,14 @@ async function registerBusiness(){
 function logout(){currentUser=null;cart=[];try{if(syncUnsub)syncUnsub()}catch(e){};syncUnsub=null;window.__dlimansSyncRef=null;document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex'}
 (function initLogin(){
  try{
-  const remembered=localStorage.getItem('DLIMANS_REMEMBER');if(remembered&&document.getElementById('loginUser'))document.getElementById('loginUser').value=remembered;
+  const remembered=localStorage.getItem('DLIMANS_REMEMBER');
+  const rememberBox=document.getElementById('rememberMe');
+  if(remembered){
+    if(document.getElementById('loginUser'))document.getElementById('loginUser').value=remembered;
+    if(rememberBox)rememberBox.checked=true;
+  }else if(rememberBox){
+    rememberBox.checked=false;
+  }
   applyTheme(state.settings.theme||'darkblue',false);
   const a=document.getElementById('loginBusiness'),b=document.getElementById('topBusiness');if(a)a.textContent=state.settings.business;if(b)b.textContent=state.settings.business;
  }catch(e){console.error('Login init error',e)}

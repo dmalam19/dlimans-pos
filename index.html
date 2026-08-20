@@ -70,19 +70,19 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 .login-box h1{text-align:center}.login-box .subtitle{text-align:center;color:var(--muted);margin:7px 0 22px}
 .login-box label{display:block;margin:12px 0 6px;font-size:13px}
 .password-wrap{position:relative}.password-wrap input{padding-right:48px}.eye{position:absolute;right:5px;top:5px;border:0;background:transparent;color:#fff;padding:7px}
- .remember{display:flex;align-items:center;margin:12px 0}
-.remember input[type="checkbox"]{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.remember-toggle{
- display:flex;align-items:center;gap:9px;width:auto;padding:2px 0;border:0;
- background:transparent;color:var(--muted);font-size:13px;cursor:pointer;
- text-align:left;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+ 
+.remember-real{
+  display:flex!important;align-items:center!important;gap:9px!important;
+  margin:12px 0!important;cursor:pointer!important;color:var(--muted)!important;
+  font-size:13px!important;touch-action:manipulation!important;
 }
-.remember-box{
- width:20px;height:20px;min-width:20px;border:2px solid #94a3b8;border-radius:5px;
- background:#091321;display:inline-flex;align-items:center;justify-content:center;
- color:transparent;font-weight:900;font-size:15px;line-height:1;
+.remember-real input[type="checkbox"]{
+  position:relative!important;opacity:1!important;pointer-events:auto!important;
+  width:20px!important;height:20px!important;min-width:20px!important;
+  margin:0!important;padding:0!important;display:inline-block!important;
+  appearance:auto!important;-webkit-appearance:checkbox!important;
+  accent-color:var(--accent)!important;cursor:pointer!important;
 }
-.remember-box.checked{background:var(--accent);border-color:var(--accent);color:#06130b}
 .remember-toggle:active .remember-box{transform:scale(.94)}
 .remember-box{
  width:19px;height:19px;min-width:19px;border:2px solid var(--muted);
@@ -345,6 +345,17 @@ body.noisy-theme::after{
 }
 @keyframes noiseMove{0%{transform:translate(0,0)}25%{transform:translate(-2%,1%)}50%{transform:translate(1%,-2%)}75%{transform:translate(2%,2%)}100%{transform:translate(0,0)}}
 
+
+.permission-item{
+  display:flex!important;align-items:center!important;gap:9px!important;
+  padding:6px 0!important;cursor:pointer!important;touch-action:manipulation!important;
+}
+.permission-item input[type="checkbox"]{
+  width:19px!important;height:19px!important;min-width:19px!important;
+  margin:0!important;opacity:1!important;pointer-events:auto!important;
+  appearance:auto!important;-webkit-appearance:checkbox!important;
+  accent-color:var(--accent)!important;cursor:pointer!important;
+}
 </style>
 </head>
 <body>
@@ -361,14 +372,11 @@ body.noisy-theme::after{
       <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password">
       <button class="eye" onclick="togglePass('loginPass',this)">👁</button>
     </div>
-    <div class="remember" role="group" aria-label="Remember login">
-  <input id="rememberMe" type="checkbox" tabindex="-1" aria-hidden="true">
-  <button type="button" id="rememberToggle" class="remember-toggle" aria-checked="false" onclick="toggleRememberLogin(event)">
-    <span id="rememberBoxVisual" class="remember-box" aria-hidden="true"></span>
-    <span>Remember login</span>
-  </button>
-</div>
-    <button class="btn primary" style="width:100%;padding:13px" onclick="login()">LOGIN</button>
+    <label class="remember-real" for="rememberMe">
+  <input id="rememberMe" type="checkbox" autocomplete="off" onchange="rememberLoginChanged(this.checked)">
+  <span>Remember login</span>
+</label>
+<button class="btn primary" style="width:100%;padding:13px" onclick="login()">LOGIN</button>
     <button class="btn" style="width:100%;padding:12px;margin-top:8px" onclick="openBusinessRegister()">🏪 REGISTER NEW BUSINESS</button>
     <div class="small" style="text-align:center;margin-top:12px">Register a business once, then use the business email/password to access the same cloud data on PC and phone.</div>
   </div>
@@ -872,6 +880,24 @@ function syncRememberVisual(){
 function rememberLoginChanged(checked){
   const box=document.getElementById('rememberMe');
   if(box) box.checked=!!checked;
+  try{
+    if(checked){
+      const u=(document.getElementById('loginUser')?.value||'').trim();
+      if(u) localStorage.setItem('DLIMANS_REMEMBER',u);
+    }else{
+      localStorage.removeItem('DLIMANS_REMEMBER');
+    }
+  }catch(e){}
+}
+function makePermissionCheckboxes(){
+  document.querySelectorAll('.permission-item input[type="checkbox"]').forEach(x=>{
+    x.style.pointerEvents='auto';
+    x.style.opacity='1';
+  });
+}
+
+  const box=document.getElementById('rememberMe');
+  if(box) box.checked=!!checked;
   syncRememberVisual();
   try{
     if(checked){
@@ -882,13 +908,7 @@ function rememberLoginChanged(checked){
     }
   }catch(e){console.warn('Remember login preference:',e)}
 }
-function toggleRememberLogin(event){
-  if(event) event.preventDefault();
-  const box=document.getElementById('rememberMe');
-  if(!box)return;
-  box.checked=!box.checked;
-  rememberLoginChanged(box.checked);
-}async function login(){
+async function login(){
  const loginBtn=document.querySelector('#loginScreen button[onclick="login()"]');
  try{
   const u=(document.getElementById('loginUser')?.value||'').trim();
@@ -1108,7 +1128,7 @@ function logout(){currentUser=null;cart=[];try{if(syncUnsub)syncUnsub()}catch(e)
   const rememberBox=document.getElementById('rememberMe');
   if(remembered){
     if(document.getElementById('loginUser'))document.getElementById('loginUser').value=remembered;
-    if(rememberBox)rememberBox.checked=true;
+    if(rememberBox){rememberBox.checked=true;}
   }else if(rememberBox){
     rememberBox.checked=false;
   }

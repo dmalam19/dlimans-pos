@@ -71,7 +71,30 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 .login-box label{display:block;margin:12px 0 6px;font-size:13px}
 .password-wrap{position:relative}.password-wrap input{padding-right:48px}.eye{position:absolute;right:5px;top:5px;border:0;background:transparent;color:#fff;padding:7px}
  .remember{display:flex;align-items:center;margin:12px 0}
-.remember input[type="checkbox"]{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.remember input[type="checkbox"]{
+  position:relative;
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  display:inline-block;
+  width:20px;
+  height:20px;
+  min-width:20px;
+  min-height:20px;
+  margin:0 8px 0 0;
+  padding:0;
+  appearance:auto;
+  -webkit-appearance:checkbox;
+  accent-color:var(--accent);
+  cursor:pointer;
+}
+#loginScreen .remember input[type="checkbox"]{
+  position:absolute;
+  opacity:0;
+  width:1px;
+  height:1px;
+  pointer-events:none;
+}
 .remember-toggle{
  display:flex;align-items:center;gap:9px;width:auto;padding:2px 0;border:0;
  background:transparent;color:var(--muted);font-size:13px;cursor:pointer;
@@ -391,6 +414,31 @@ body.noisy-theme::after{pointer-events:none!important;
   width:20px!important;height:20px!important;
   appearance:auto!important;-webkit-appearance:checkbox!important;
   accent-color:var(--accent)!important;
+}
+/* FINAL CHECKBOX VISIBILITY FIX */
+#loginScreen .remember input[type="checkbox"]{
+  position:absolute!important;
+  opacity:0!important;
+  width:1px!important;
+  height:1px!important;
+  pointer-events:none!important;
+}
+.view .remember input[type="checkbox"],
+.modal .remember input[type="checkbox"]{
+  position:relative!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  display:inline-block!important;
+  width:20px!important;
+  height:20px!important;
+  min-width:20px!important;
+  min-height:20px!important;
+  margin:0 8px 0 0!important;
+  appearance:auto!important;
+  -webkit-appearance:checkbox!important;
+  accent-color:var(--accent)!important;
+  cursor:pointer!important;
 }
 </style>
 </head>

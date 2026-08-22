@@ -981,14 +981,17 @@ body.noisy-theme::after{pointer-events:none!important;
         <div class="card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>From</th><th>To</th><th>Action</th></tr></thead><tbody id="stockTransfersTable"></tbody></table></div></div>
       </section>
       <section class="view" id="view-settings">
-        <div class="section-title"><h2>Settings</h2></div>
-        <div class="card"><div class="grid grid2">
-          <button class="btn" onclick="showView('control')">⚙️ Business / Theme / Control Center</button>
-          <button class="btn" onclick="showView('users')">👤 Users & Permissions</button>
-          <button class="btn" onclick="showView('printer')">🖨 Printer Settings</button>
-          <button class="btn" onclick="showView('invoice')">🧾 Invoice / Invoice Settings</button>
-          <button class="btn" onclick="showView('control')">🎨 Customize</button>
-        </div></div>
+        <div class="section-title">
+          <div><h2>⚙️ Settings / Customize</h2><div class="small">All main configuration areas are available here. Changes are saved locally and can be synced to cloud when configured.</div></div>
+        </div>
+        <div class="grid grid2">
+          <div class="card"><h3>🏪 Business & Theme</h3><p class="small">Business name, logo, wallpaper, themes, blinking/noisy effects and other appearance controls.</p><button class="btn primary" onclick="showView('control')">Open Business / Control Center</button></div>
+          <div class="card"><h3>👤 Users & Permissions</h3><p class="small">Manage Admin/Cashier accounts and feature permissions.</p><button class="btn primary" onclick="showView('users')">Open Users / Roles</button></div>
+          <div class="card"><h3>🖨 Printer / Receipt</h3><p class="small">Receipt paper size, auto-print and browser printing options.</p><button class="btn primary" onclick="showView('printer')">Open Printer Settings</button></div>
+          <div class="card"><h3>🧾 Invoice</h3><p class="small">Invoice numbering, title, footer, logo, paid/due and customer-note options.</p><button class="btn primary" onclick="showView('invoice')">Open Invoice Settings</button></div>
+          <div class="card"><h3>☁️ Cloud Communication</h3><p class="small">Supabase chat, presence, cloud POS state sync and audio/video signaling. A Supabase URL + publishable/anon key are required once.</p><button class="btn primary" onclick="showView('communication')">Open Communication</button></div>
+          <div class="card"><h3>💾 Backup & Restore</h3><p class="small">Use the Control Center to backup or restore the complete local POS database.</p><button class="btn" onclick="showView('control')">Open Backup / Restore</button></div>
+        </div>
       </section>
 
     </main>
@@ -1036,6 +1039,11 @@ const defaultState={
  sales:[],expenses:[],customers:[],purchases:[],held:[],drafts:[],quotations:[],shipments:[],discounts:[],stockTransfers:[],customIcons:[],branches:[{id:'br-main',name:'Main Branch',location:'Nigeria',active:true}],menuNames:{}
 };
 let state=load();
+/* Expose live state/session to the optional Supabase modules.
+   Top-level let variables are not window properties, so the cloud module
+   must use explicit accessors instead of receiving stale/undefined values. */
+Object.defineProperty(window,'state',{configurable:true,get:()=>state,set:v=>{state=normalizeState(v);}});
+Object.defineProperty(window,'currentUser',{configurable:true,get:()=>currentUser,set:v=>{currentUser=v;}});
 
 function cloneBase(){return JSON.parse(JSON.stringify(defaultState))}
 function normalizeState(saved){
@@ -1500,6 +1508,9 @@ window.addEventListener('load',()=>{
   if(state.settings.blink)toggleBlink(true);
  }catch(e){console.error('Dlimans initialization error',e)}
 });
+
+window.addEventListener('error',e=>{try{console.error('Dlimans runtime error:',e.error||e.message)}catch(_){} });
+window.addEventListener('unhandledrejection',e=>{try{console.error('Dlimans promise error:',e.reason)}catch(_){} });
 
 function showView(name,force=false){
  if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
@@ -2963,10 +2974,10 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
     const c=cfg();
     if(!window.supabase){setStatus('⚠️ Supabase client unavailable',false);return}
     if(c.url&&c.key)setStatus('☁️ Supabase configuration saved — connecting…',false);
-    else setStatus('⚙️ Supabase setup required',false);
+    else setStatus('⚙️ Setup required: enter Project URL + publishable/anon key',false);
   }
   async function connect(){
-    if(!isConfigured()){setStatus('Not configured',false);return false}
+    if(!isConfigured()){setStatus('⚙️ Setup required: enter Project URL + publishable/anon key',false);if(typeof toast==='function')toast('Enter your Supabase Project URL and publishable/anon key first');return false}
     try{
       const c=cfg();
       sbClient=window.supabase.createClient(c.url,c.key,{auth:{persistSession:false}});
@@ -3100,7 +3111,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
   async function sbSyncState(){
     if(!sbClient)return;
     const me=currentIdentity();
-    const payload={business_id:me.business_id,state_json:window.state||{},updated_by:me.id,updated_at:new Date().toISOString()};
+    const payload={business_id:me.business_id,state_json:JSON.parse(JSON.stringify(window.state||{})),updated_by:me.id,updated_at:new Date().toISOString()};
     const {error}=await sbClient.from('pos_state').upsert(payload,{onConflict:'business_id'});
     if(error)throw error;
   }
@@ -3117,7 +3128,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
         if(confirm('Cloud data is newer than this device. Load the latest cloud POS data now?')){
           window.state=remote;
           if(typeof save==='function')save();
-          if(typeof refresh==='function')refresh();
+          if(typeof safeRefresh==='function')safeRefresh();
         }
       }
     }
@@ -3139,7 +3150,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
       if(useRemote){
         window.state=data.state_json;
         if(typeof save==='function')save();
-        if(typeof refresh==='function')refresh();
+        if(typeof safeRefresh==='function')safeRefresh();
         localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(remoteTime));
         return;
       }
@@ -3282,7 +3293,7 @@ window.dlimansSelfCheck=function(){
  const views=[...document.querySelectorAll('.view')].map(v=>v.id.replace('view-',''));
  const nav=builtInNav.map(x=>x[3]);
  const missingViews=nav.filter(v=>!views.includes(v));
- const requiredIds=['sidebar','modal','loginScreen','app','paperSize','invoiceTable','reportSales','accRevenue','supabaseCloudPanel'];
+ const requiredIds=['sidebar','modal','loginScreen','app','paperSize','invoiceTable','reportSales','accRevenue','supabaseCloudPanel','view-settings','view-control','view-printer','view-invoice'];
  const missingIds=requiredIds.filter(id=>!document.getElementById(id));
  return {ok:!missingViews.length&&!missingIds.length,missingViews,missingIds,supabaseConfigured:isConfigured(),firebaseConfigured:!!window.firebase};
 };

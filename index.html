@@ -2744,6 +2744,72 @@ async function voiceCommStop(){
 
 // Start automatically when a Firebase session already exists.
 window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voiceCommStart().catch(()=>{})},900));
+
+/* ================================================================
+   DLIMANS DEFINITIVE REFRESH/SESSION RECOVERY
+   - Runs after the whole POS code has loaded.
+   - Does NOT depend on Remember Login.
+   - Refresh keeps the logged-in user and the exact active page.
+   - Logout clears the recovery record through clearAppSession().
+   ================================================================ */
+(function(){
+  const SESSION_KEY='DLIMANS_APP_SESSION_PERSISTENT';
+  let restoring=false;
+  function readSession(){
+    try{
+      const x=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+      return x&&x.userId&&x.role?x:null;
+    }catch(e){return null}
+  }
+  function restoreNow(){
+    if(restoring)return;
+    const sess=readSession();
+    if(!sess)return;
+    const app=document.getElementById('app'), login=document.getElementById('loginScreen');
+    if(!app||!login)return;
+    // If the user is already active, only restore the page/modal.
+    if(window.currentUser && window.currentUser.id){
+      const target=(sess.view&&document.getElementById('view-'+sess.view))?sess.view:'dashboard';
+      try{showView(target,true);restoreSavedModal(sess)}catch(e){console.warn('refresh restore active:',e)}
+      return;
+    }
+    const users=(window.state&&Array.isArray(state.users))?state.users:[];
+    const user=users.find(u=>u&&u.id===sess.userId&&u.active!==false)
+      ||users.find(u=>u&&u.username===sess.username&&u.role===sess.role&&u.active!==false);
+    if(!user)return;
+    restoring=true;
+    try{
+      window.currentUser=user;
+      login.style.display='none';
+      app.style.display='block';
+      const role=document.getElementById('topRole');
+      if(role)role.textContent=user.role||sess.role||'';
+      const biz=document.getElementById('topBusiness');
+      if(biz)biz.textContent=state.settings.business||'Dlimans Supermarket';
+      try{buildSidebar()}catch(e){}
+      const target=(sess.view&&document.getElementById('view-'+sess.view))?sess.view:'dashboard';
+      // Let browser finish layout before selecting the saved view.
+      setTimeout(()=>{
+        try{
+          buildSidebar();
+          showView(target,true);
+          if(sess.modal)restoreSavedModal(sess);
+          // Rewrite the record after restore so the timestamp stays current.
+          saveAppSession({modal:sess.modal||null});
+        }catch(e){console.warn('definitive refresh restore:',e)}
+        restoring=false;
+      },50);
+    }catch(e){
+      console.warn('definitive session restore failed:',e);
+      restoring=false;
+    }
+  }
+  // DOMContentLoaded + load covers both normal navigation and hard reloads.
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restoreNow,{once:false});
+  else restoreNow();
+  window.addEventListener('load',()=>setTimeout(restoreNow,120));
+  window.addEventListener('pageshow',()=>setTimeout(restoreNow,80));
+})();
 </script>
 </body>
 </html>

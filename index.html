@@ -446,13 +446,47 @@ body.noisy-theme::after{pointer-events:none!important;
 .voice-person.online .presence-dot{background:#00e676;box-shadow:0 0 10px #00e67688}
 .voice-person .voice-person-name{font-weight:700}
 #voiceRemoteAudio{display:none}
-.voice-video-wrap{display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.voice-video-wrap.active{display:grid}
-.voice-video-wrap video{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:14px;background:#050b12;border:1px solid var(--border)}
-.voice-video-label{font-size:11px;font-weight:700;margin:0 0 5px 2px;color:var(--muted)}
-@media(max-width:700px){.voice-video-wrap{grid-template-columns:1fr}.voice-video-wrap video{aspect-ratio:16/9}}
-
 .voice-ringing{animation:pulse 1s infinite}
+
+/* =========================================================
+   Dlimans MOBILE RESPONSIVE DRAWER — FINAL LAYER
+   Mobile-only layout improvement; desktop behavior unchanged.
+   ========================================================= */
+.mobile-sidebar-backdrop{display:none}
+@media(max-width:800px){
+  .sidebar{
+    position:fixed!important;left:0!important;top:70px!important;bottom:0!important;
+    width:min(270px,82vw)!important;max-width:82vw!important;flex:0 0 auto!important;
+    height:calc(100dvh - 70px)!important;
+    transform:translate3d(-105%,0,0)!important;
+    transition:transform .22s ease,box-shadow .22s ease!important;
+    overflow-y:auto!important;overflow-x:hidden!important;
+    z-index:1001!important;-webkit-overflow-scrolling:touch!important;
+  }
+  .sidebar.open{transform:translate3d(0,0,0)!important;box-shadow:22px 0 55px #000c!important}
+  .mobile-sidebar-backdrop{
+    position:fixed;inset:70px 0 0 0;display:none;background:#0009;
+    backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
+    z-index:1000;touch-action:none
+  }
+  body.sidebar-open .mobile-sidebar-backdrop{display:block}
+  .layout{display:block!important;min-height:calc(100dvh - 70px)!important}
+  .content{width:100%!important;min-width:0!important;padding:10px!important;overflow-x:hidden!important}
+  .topbar{position:sticky!important;top:0!important;z-index:1002!important}
+  .topbar .brand{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .topbar .right{gap:5px!important}
+  .topbar .right .btn{padding:8px 9px!important}
+  .side-item{min-height:44px!important;padding:10px 12px!important}
+}
+@media(max-width:520px){
+  .sidebar{top:58px!important;height:calc(100dvh - 58px)!important;max-width:84vw!important}
+  .mobile-sidebar-backdrop{inset:58px 0 0 0}
+  .layout{min-height:calc(100dvh - 58px)!important}
+  .content{padding:8px!important}
+  .brand{max-width:34vw!important;font-size:12px!important}
+  .app-back-btn{min-width:62px!important;padding:8px 7px!important}
+}
+
 </style>
 </head>
 <body>
@@ -721,16 +755,11 @@ body.noisy-theme::after{pointer-events:none!important;
             <h3>📞 Current Call</h3>
             <div id="voiceCallInfo" class="small">No active call.</div>
             <audio id="voiceRemoteAudio" autoplay playsinline></audio>
-            <div class="voice-video-wrap" id="voiceVideoWrap">
-              <div><div class="voice-video-label">YOU</div><video id="voiceLocalVideo" autoplay muted playsinline></video></div>
-              <div><div class="voice-video-label">REMOTE</div><video id="voiceRemoteVideo" autoplay playsinline></video></div>
-            </div>
             <div class="row wrap" style="margin-top:14px">
               <button class="btn primary" id="voiceMuteBtn" onclick="voiceCommToggleMute()" disabled>🎙 Mute</button>
-              <button class="btn" id="voiceCameraBtn" onclick="voiceCommToggleCamera()" disabled>📷 Camera</button>
               <button class="btn danger" id="voiceHangupBtn" onclick="voiceCommHangup()" disabled>☎ End Call</button>
             </div>
-            <div class="small" style="margin-top:12px">Tip: allow microphone/camera permission in Chrome when asked. Voice and video calls require an internet connection and Firebase authentication.</div>
+            <div class="small" style="margin-top:12px">Tip: allow microphone permission in Chrome when asked. Voice calls require an internet connection and Firebase authentication.</div>
           </div>
         </div>
       </section>
@@ -938,6 +967,7 @@ body.noisy-theme::after{pointer-events:none!important;
   </div>
 </div>
 
+<div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop" aria-hidden="true" onclick="closeMobileSidebar()"></div>
 <div class="modal" id="modal"><div class="modal-box" id="modalBox"></div></div>
 <div class="toast" id="toast"></div>
 
@@ -1439,7 +1469,7 @@ function showView(name,force=false){
  savedModalState=null;
  saveAppSession();
  document.querySelectorAll('.side-item').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
- document.querySelector('.sidebar')?.classList.remove('open');
+ closeMobileSidebar();
  safeRefresh();
  window.scrollTo(0,0);
  return true;
@@ -1454,9 +1484,35 @@ function goBackInApp(){
  toast('You are already on Dashboard');
  return false;
 }
+function ensureMobileSidebarBackdrop(){
+  let b=document.getElementById('mobileSidebarBackdrop');
+  if(!b){
+    b=document.createElement('div');
+    b.id='mobileSidebarBackdrop';
+    b.className='mobile-sidebar-backdrop';
+    b.setAttribute('aria-hidden','true');
+    b.onclick=closeMobileSidebar;
+    document.body.appendChild(b);
+  }
+  return b;
+}
+function closeMobileSidebar(){
+  const side=document.querySelector('.sidebar');
+  side?.classList.remove('open');
+  document.body.classList.remove('sidebar-open');
+  document.documentElement.classList.remove('sidebar-open');
+}
 function toggleSidebar(){
- const side=document.querySelector('.sidebar');if(!side)return;
- if(window.innerWidth<=800)side.classList.toggle('open');else side.classList.toggle('collapsed');
+  const side=document.querySelector('.sidebar');if(!side)return;
+  if(window.innerWidth<=800){
+    ensureMobileSidebarBackdrop();
+    const open=!side.classList.contains('open');
+    side.classList.toggle('open',open);
+    document.body.classList.toggle('sidebar-open',open);
+    document.documentElement.classList.toggle('sidebar-open',open);
+  }else{
+    side.classList.toggle('collapsed');
+  }
 }
 function renderPOS(){
  const q=(document.getElementById('posSearch').value||'').toLowerCase();
@@ -2557,7 +2613,7 @@ window.addEventListener('load',async()=>{
 let voiceCommSession='vc-'+uid();
 let voiceCommRef=null, voiceCommUnsub=null, voiceCommHeartbeat=null;
 let voiceCommPeer=null, voiceCommLocalStream=null, voiceCommCallId=null;
-let voiceCommCurrentCall=null, voiceCommCallMode='audio', voiceCommSnapshotData={voicePresence:{},voiceCalls:{}};
+let voiceCommCurrentCall=null, voiceCommSnapshotData={voicePresence:{},voiceCalls:{}};
 let voiceCommSeenCandidates=new Set(), voiceCommIncomingShown=new Set();
 
 function voiceCommSetStatus(text,ok=false){
@@ -2566,9 +2622,8 @@ function voiceCommSetStatus(text,ok=false){
 }
 function voiceCommSetCallInfo(text){const e=document.getElementById('voiceCallInfo');if(e)e.textContent=text}
 function voiceCommButtons(active){
- const m=document.getElementById('voiceMuteBtn'),h=document.getElementById('voiceHangupBtn'),c=document.getElementById('voiceCameraBtn');
- if(m)m.disabled=!active;if(h)h.disabled=!active;if(c)c.disabled=!active||voiceCommCallMode!=='video';
- const wrap=document.getElementById('voiceVideoWrap');if(wrap)wrap.classList.toggle('active',!!active&&voiceCommCallMode==='video');
+ const m=document.getElementById('voiceMuteBtn'),h=document.getElementById('voiceHangupBtn');
+ if(m)m.disabled=!active;if(h)h.disabled=!active;
 }
 function voiceCommName(){return currentUser?.username||currentUser?.role||'User'}
 function voiceCommRole(){return currentUser?.role||'User'}
@@ -2634,10 +2689,7 @@ function voiceCommRenderPeople(){
  const list=Object.values(presence).filter(p=>p&&p.role&&['Admin','Cashier'].includes(p.role)&&p.sessionId!==voiceCommSession&&now-(Number(p.updatedAt)||0)<40000);
  if(!syncUser){box.innerHTML='<div class="small">Connect Voice to see Admin/Cashier availability.</div>';return}
  if(!list.length){box.innerHTML='<div class="small">No other Admin/Cashier is currently online.</div>';return}
- box.innerHTML=list.map(p=>`<div class="voice-person online"><div><span class="presence-dot"></span><span class="voice-person-name">${escapeHTML(p.name||p.role)}</span><div class="small">${escapeHTML(p.role)} • Online</div></div><div class="row wrap">
-<button class="btn primary sm" onclick="voiceCommCall('${escapeHTML(p.sessionId)}','${escapeHTML(p.name||p.role)}','${escapeHTML(p.role)}','audio')">📞 Voice</button>
-<button class="btn sm" onclick="voiceCommCall('${escapeHTML(p.sessionId)}','${escapeHTML(p.name||p.role)}','${escapeHTML(p.role)}','video')">📹 Video</button>
-</div></div>`).join('');
+ box.innerHTML=list.map(p=>`<div class="voice-person online"><div><span class="presence-dot"></span><span class="voice-person-name">${escapeHTML(p.name||p.role)}</span><div class="small">${escapeHTML(p.role)} • Online</div></div><button class="btn primary sm" onclick="voiceCommCall('${escapeHTML(p.sessionId)}','${escapeHTML(p.name||p.role)}','${escapeHTML(p.role)}')">📞 Call</button></div>`).join('');
 }
 
 function voiceCommProcessCalls(){
@@ -2653,17 +2705,12 @@ function voiceCommProcessCalls(){
 }
 
 function voiceCommShowIncoming(id,call){
- const video=call.media==='video';
- openModal(`<h3>${video?'📹 Incoming Video Call':'📞 Incoming Voice Call'}</h3><p><b>${escapeHTML(call.callerName||'Admin/Cashier')}</b> (${escapeHTML(call.callerRole||'User')}) is calling you.</p><div class="row wrap"><button class="btn primary voice-ringing" onclick="closeModal();voiceCommAccept('${id}')">${video?'📹 Accept Video':'📞 Accept'}</button><button class="btn danger" onclick="closeModal();voiceCommReject('${id}')">✕ Reject</button></div>`);
+ openModal(`<h3>📞 Incoming Voice Call</h3><p><b>${escapeHTML(call.callerName||'Admin/Cashier')}</b> (${escapeHTML(call.callerRole||'User')}) is calling you.</p><div class="row wrap"><button class="btn primary voice-ringing" onclick="closeModal();voiceCommAccept('${id}')">📞 Accept</button><button class="btn danger" onclick="closeModal();voiceCommReject('${id}')">✕ Reject</button></div>`);
 }
 
 async function voiceCommCreatePeer(isCaller){
  const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
- pc.ontrack=e=>{
-  const stream=e.streams[0];
-  const a=document.getElementById('voiceRemoteAudio');if(a){a.srcObject=stream;a.play?.().catch(()=>{})}
-  const v=document.getElementById('voiceRemoteVideo');if(v){v.srcObject=stream;v.play?.().catch(()=>{})}
-};
+ pc.ontrack=e=>{const a=document.getElementById('voiceRemoteAudio');if(a){a.srcObject=e.streams[0];a.play?.().catch(()=>{})}};
  pc.onconnectionstatechange=()=>{if(['failed','disconnected','closed'].includes(pc.connectionState)){voiceCommSetStatus('Call disconnected');voiceCommCleanup(false)}};
  pc.onicecandidate=async e=>{
   if(!e.candidate||!voiceCommRef||!voiceCommCallId)return;
@@ -2675,40 +2722,38 @@ async function voiceCommCreatePeer(isCaller){
  return pc;
 }
 
-async function voiceCommCall(targetSession,targetName,targetRole,mode='audio'){
+async function voiceCommCall(targetSession,targetName,targetRole){
  try{
   if(!syncUser||!voiceCommRef){const ok=await voiceCommConnect();if(!ok)return}
-  if(voiceCommCallId){toast('A call is already active');return}
-  voiceCommCallMode=mode==='video'?'video':'audio';
-  voiceCommLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:voiceCommCallMode==='video'});
+  if(voiceCommCallId){toast('A voice call is already active');return}
+  voiceCommLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
   voiceCommCallId=uid();voiceCommSeenCandidates=new Set();
   const pc=await voiceCommCreatePeer(true);
   voiceCommLocalStream.getTracks().forEach(t=>pc.addTrack(t,voiceCommLocalStream));
-  const lv=document.getElementById('voiceLocalVideo');if(lv&&voiceCommCallMode==='video'){lv.srcObject=voiceCommLocalStream;lv.play?.().catch(()=>{})}
   const offer=await pc.createOffer();await pc.setLocalDescription(offer);
-  const call={callerSession:voiceCommSession,callerUserId:currentUser?.id||'',callerName:voiceCommName(),callerRole:voiceCommRole(),calleeSession:targetSession,calleeName:targetName,calleeRole:targetRole,status:'ringing',media:voiceCommCallMode,offer:{type:offer.type,sdp:offer.sdp},answer:null,callerCandidates:[],calleeCandidates:[],createdAt:Date.now()};
+  const call={callerSession:voiceCommSession,callerUserId:currentUser?.id||'',callerName:voiceCommName(),callerRole:voiceCommRole(),calleeSession:targetSession,calleeName:targetName,calleeRole:targetRole,status:'ringing',offer:{type:offer.type,sdp:offer.sdp},answer:null,callerCandidates:[],calleeCandidates:[],createdAt:Date.now()};
   await voiceCommRef.update({['voiceCalls.'+voiceCommCallId]:call});
-  voiceCommCurrentCall=call;voiceCommSetStatus(voiceCommCallMode==='video'?'🔔 Calling video '+targetName:'🔔 Calling '+targetName,true);voiceCommSetCallInfo((voiceCommCallMode==='video'?'📹 Video calling ':'Calling ')+targetName+'…');voiceCommButtons(true);
- }catch(e){console.error('Voice/video call:',e);toast('Could not start call: '+(e.message||e));voiceCommCleanup(true)}
+  voiceCommCurrentCall=call;voiceCommSetStatus('🔔 Calling '+targetName,true);voiceCommSetCallInfo('Calling '+targetName+'…');voiceCommButtons(true);
+ }catch(e){console.error('Voice call:',e);toast('Could not start voice call: '+(e.message||e));voiceCommCleanup(true)}
 }
+
 async function voiceCommAccept(id){
  try{
   if(!syncUser||!voiceCommRef){const ok=await voiceCommConnect();if(!ok)return}
   const call=voiceCommSnapshotData.voiceCalls?.[id];if(!call||!call.offer){toast('Call is no longer available');return}
   if(voiceCommCallId)await voiceCommHangup();
-  voiceCommCallMode=call.media==='video'?'video':'audio';
   voiceCommCallId=id;voiceCommSeenCandidates=new Set();voiceCommCurrentCall=call;
-  voiceCommLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:voiceCommCallMode==='video'});
+  voiceCommLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
   const pc=await voiceCommCreatePeer(false);
   voiceCommLocalStream.getTracks().forEach(t=>pc.addTrack(t,voiceCommLocalStream));
-  const lv=document.getElementById('voiceLocalVideo');if(lv&&voiceCommCallMode==='video'){lv.srcObject=voiceCommLocalStream;lv.play?.().catch(()=>{})}
   await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
   const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
   await voiceCommRef.update({['voiceCalls.'+id+'.answer']:{type:answer.type,sdp:answer.sdp},['voiceCalls.'+id+'.status']:'accepted'});
-  voiceCommSetStatus('🟢 Connected to '+(call.callerName||'Caller'),true);voiceCommSetCallInfo((voiceCommCallMode==='video'?'📹 Video call with ':'In call with ')+(call.callerName||'Caller'));voiceCommButtons(true);
+  voiceCommSetStatus('🟢 Connected to '+(call.callerName||'Caller'),true);voiceCommSetCallInfo('In call with '+(call.callerName||'Caller'));voiceCommButtons(true);
   await voiceCommAddRemoteCandidates(call,'callerCandidates');
- }catch(e){console.error('Accept call:',e);toast('Could not accept call: '+(e.message||e));voiceCommCleanup(true)}
+ }catch(e){console.error('Accept voice call:',e);toast('Could not accept call: '+(e.message||e));voiceCommCleanup(true)}
 }
+
 async function voiceCommReject(id){
  if(!voiceCommRef)return;
  try{await voiceCommRef.update({['voiceCalls.'+id+'.status']:'rejected'})}catch(e){console.warn(e)}
@@ -2742,12 +2787,6 @@ async function voiceCommToggleMute(){
  const b=document.getElementById('voiceMuteBtn');if(b)b.textContent=enabled?'🎙 Mute':'🔇 Unmute';
 }
 
-async function voiceCommToggleCamera(){
- const tracks=voiceCommLocalStream?.getVideoTracks?.()||[];if(!tracks.length)return;
- const enabled=!tracks[0].enabled;tracks.forEach(t=>t.enabled=enabled);
- const b=document.getElementById('voiceCameraBtn');if(b)b.textContent=enabled?'📷 Camera':'🚫 Camera';
-}
-
 async function voiceCommHangup(){
  if(voiceCommRef&&voiceCommCallId){try{await voiceCommRef.update({['voiceCalls.'+voiceCommCallId+'.status']:'ended',['voiceCalls.'+voiceCommCallId+'.endedAt']:Date.now()})}catch(e){console.warn(e)}}
  voiceCommCleanup(false);
@@ -2756,11 +2795,8 @@ function voiceCommCleanup(showToast){
  try{voiceCommPeer?.close()}catch(e){}
  voiceCommPeer=null;
  try{voiceCommLocalStream?.getTracks?.().forEach(t=>t.stop())}catch(e){}
- voiceCommLocalStream=null;voiceCommCallId=null;voiceCommCurrentCall=null;voiceCommSeenCandidates=new Set();voiceCommCallMode='audio';
+ voiceCommLocalStream=null;voiceCommCallId=null;voiceCommCurrentCall=null;voiceCommSeenCandidates=new Set();
  const a=document.getElementById('voiceRemoteAudio');if(a)a.srcObject=null;
- const lv=document.getElementById('voiceLocalVideo');if(lv)lv.srcObject=null;
- const rv=document.getElementById('voiceRemoteVideo');if(rv)rv.srcObject=null;
- const cb=document.getElementById('voiceCameraBtn');if(cb)cb.textContent='📷 Camera';
  voiceCommButtons(false);voiceCommSetCallInfo('No active call.');voiceCommSetStatus(syncUser?'🟢 Connected':'Offline',!!syncUser);
  if(showToast)toast('Voice call stopped');
 }
@@ -2839,6 +2875,9 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
   window.addEventListener('load',()=>setTimeout(restoreNow,120));
   window.addEventListener('pageshow',()=>setTimeout(restoreNow,80));
 })();
+window.addEventListener('resize',()=>{
+  if(window.innerWidth>800) closeMobileSidebar();
+});
 </script>
 </body>
 </html>

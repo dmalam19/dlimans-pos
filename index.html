@@ -214,7 +214,7 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 }
 @media print{
  body{background:#fff;color:#000}.no-print,#app>.topbar,#app .sidebar{display:none!important}
- .content{padding:0}.view{display:none!important}.view.printable{display:block!important}
+ .content{padding:0}.view{display:none!important}.view.active{display:block!important}.view.printable{display:block!important}
 }
 
 /* ===== Dlimans Dashboard v3 — visual/layout upgrade ===== */
@@ -1528,6 +1528,15 @@ function showView(name,force=false){
  window.scrollTo(0,0);
  return true;
 }
+/* ===== VIEW DISPLAY SAFETY FIX =====
+   A later print rule uses !important; keep the active app view visible. */
+(function(){
+  const style=document.createElement('style');
+  style.id='dlimans-view-display-safety';
+  style.textContent='.view{display:none!important}.view.active{display:block!important}';
+  document.head.appendChild(style);
+})();
+
 function goBackInApp(){
  const current=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
  while(appViewHistory.length){

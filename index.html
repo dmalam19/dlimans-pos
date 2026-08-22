@@ -2168,28 +2168,7 @@ function receiptPrint(s){
  <div class="total">Total: ${money(s.total)}</div><div style="text-align:right">${paid}${due}</div>${note}
  <div class="line"></div><div class="thanks">${escapeHTML(inv.footer||state.settings.thanks)}</div>
  
-<script id="dlimans-final-boot-guard">
-(function(){
-  function repairView(){
-    try{
-      const app=document.getElementById('app');
-      const content=app&&app.querySelector('.content');
-      if(!app||!content||getComputedStyle(app).display==='none') return;
-      let active=content.querySelector('.view.active');
-      if(!active) active=content.querySelector('#view-dashboard')||content.querySelector('.view');
-      if(active){
-        active.classList.add('active');
-        active.style.display='block';
-        active.style.visibility='visible';
-        active.style.opacity='1';
-      }
-    }catch(e){}
-  }
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(repairView,120),{once:true});
-  window.addEventListener('load',()=>setTimeout(repairView,250));
-  window.addEventListener('pageshow',()=>setTimeout(repairView,150));
-})();
-<\/script>
+
 
 </body></html>`;
 
@@ -2621,6 +2600,24 @@ window.addEventListener('load',async()=>{
   });
  }catch(e){console.warn('Firebase startup:',e)}
 });
+</script>
+
+<script id="dlimans-final-boot-guard">
+(function(){
+  function repairView(){
+    try{
+      const app=document.getElementById('app');
+      const content=app&&app.querySelector('.content');
+      if(!app||!content||getComputedStyle(app).display==='none') return;
+      let active=content.querySelector('.view.active');
+      if(!active) active=content.querySelector('#view-dashboard')||content.querySelector('.view');
+      if(active){active.classList.add('active');active.style.display='block';active.style.visibility='visible';active.style.opacity='1';}
+    }catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(repairView,120),{once:true});
+  window.addEventListener('load',()=>setTimeout(repairView,250));
+  window.addEventListener('pageshow',()=>setTimeout(repairView,150));
+})();
 </script>
 
 <script>

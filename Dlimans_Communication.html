@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#07111f">
+<title>Dlimans Communication Center</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07111f;--panel:#0e1a2b;--panel2:#142238;--card:#102033;--text:#f7fafc;--muted:#94a3b8;--border:#26364e;--accent:#00e676;--accent2:#00bfa5;--danger:#ef4444;--warn:#f59e0b}
+html,body{min-height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+body{background:radial-gradient(circle at 15% 0%,#12352d 0,#07111f 42%),var(--bg)}
+.app{min-height:100vh;display:grid;grid-template-rows:64px 1fr}
+.top{display:flex;align-items:center;gap:12px;padding:0 16px;background:#07101df5;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.brand{font-weight:900;font-size:18px}.brand span{color:var(--accent)}
+.status{margin-left:auto;font-size:12px;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#64748b;margin-right:5px}.dot.ok{background:var(--accent)}
+.main{display:grid;grid-template-columns:260px minmax(0,1fr) 330px;min-height:0}
+.contacts{border-right:1px solid var(--border);background:#091523;padding:12px;overflow:auto}
+.search{width:100%;padding:11px;border:1px solid var(--border);border-radius:10px;background:#091321;color:var(--text);outline:none;margin-bottom:10px}
+.person{width:100%;border:1px solid transparent;background:transparent;color:var(--text);border-radius:12px;padding:11px;display:flex;gap:10px;align-items:center;text-align:left;margin-bottom:5px}
+.person:hover,.person.active{background:#ffffff09;border-color:#ffffff12}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#03140b;font-weight:900;flex:none}
+.pmeta{min-width:0}.pname{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.role{font-size:11px;color:var(--muted);margin-top:3px}
+.chat{min-width:0;display:grid;grid-template-rows:auto 1fr auto;background:linear-gradient(145deg,#0a1728,#07111f)}
+.chathead{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.chathead .info{flex:1}.chatname{font-weight:900}.chatrole{font-size:11px;color:var(--muted);margin-top:3px}
+.actions{display:flex;gap:7px}
+.btn{border:1px solid var(--border);background:var(--panel2);color:var(--text);padding:9px 12px;border-radius:10px;font-weight:700}
+.btn.primary{background:var(--accent);color:#03140b;border-color:var(--accent)}
+.btn.danger{background:#5b1720;border-color:#7f1d1d}
+.btn.ghost{background:#ffffff08}
+.messages{overflow:auto;padding:18px;display:flex;flex-direction:column;gap:9px}
+.empty{text-align:center;color:var(--muted);margin:auto;max-width:420px}
+.msg{max-width:min(75%,600px);padding:10px 12px;border-radius:14px;background:#ffffff08;border:1px solid var(--border);align-self:flex-start}
+.msg.mine{align-self:flex-end;background:#00e67618;border-color:#00e67635}
+.msg .sender{font-size:10px;color:var(--muted);margin-bottom:4px}.msg .time{font-size:9px;color:var(--muted);margin-top:5px;text-align:right}
+.composer{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px}
+.composer textarea{flex:1;min-height:46px;max-height:120px;resize:vertical;padding:11px;border:1px solid var(--border);border-radius:12px;background:#091321;color:var(--text);outline:none}
+.right{border-left:1px solid var(--border);background:#091523;padding:12px;overflow:auto}
+.card{background:linear-gradient(145deg,var(--card),var(--panel));border:1px solid var(--border);border-radius:15px;padding:14px;margin-bottom:12px}
+.card h3{font-size:14px;margin-bottom:10px}
+.video{width:100%;aspect-ratio:16/10;background:#02060b;border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative}
+video{width:100%;height:100%;object-fit:cover;background:#02060b}
+.local{position:absolute;width:105px;aspect-ratio:16/10;right:8px;bottom:8px;border:1px solid #fff4;border-radius:9px;overflow:hidden;background:#000}
+.controls{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.control{flex:1;min-width:80px}
+label{display:block;font-size:11px;color:var(--muted);margin:8px 0 5px}
+input,select{width:100%;padding:9px;border:1px solid var(--border);border-radius:9px;background:#091321;color:var(--text);outline:none}
+.note{font-size:11px;color:var(--muted);line-height:1.5}
+.toast{position:fixed;right:15px;bottom:15px;background:#101c2c;border:1px solid var(--border);padding:11px 14px;border-radius:11px;display:none;z-index:100}
+.toast.show{display:block}
+.calling{box-shadow:0 0 0 3px #00e67635}
+@media(max-width:1050px){.main{grid-template-columns:220px minmax(0,1fr)}.right{display:none}}
+@media(max-width:700px){.main{grid-template-columns:1fr}.contacts{display:none}.contacts.mobile-open{display:block;position:fixed;inset:64px 0 0;z-index:30}.chat{min-height:calc(100vh - 64px)}.actions .optional{display:none}.msg{max-width:88%}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand">Dlimans <span>Communication Center</span></div>
+  <button class="btn ghost" onclick="toggleContacts()">☰</button>
+  <div class="status"><span id="statusDot" class="dot"></span><span id="connectionStatus">Local mode</span></div>
+</header>
+
+<main class="main">
+  <aside id="contacts" class="contacts">
+    <input id="contactSearch" class="search" placeholder="Search Admin/Cashier..." oninput="renderContacts()">
+    <div id="contactList"></div>
+  </aside>
+
+  <section class="chat">
+    <div class="chathead">
+      <div id="chatAvatar" class="avatar">?</div>
+      <div class="info"><div id="chatName" class="chatname">Select a user</div><div id="chatRole" class="chatrole">Admin / Cashier communication</div></div>
+      <div class="actions">
+        <button class="btn primary optional" onclick="startCall(false)">📹 Video</button>
+        <button class="btn ghost" onclick="startCall(true)">📞 Audio</button>
+      </div>
+    </div>
+    <div id="messages" class="messages"><div class="empty">Select an Admin or Cashier to start a conversation.</div></div>
+    <div class="composer">
+      <textarea id="messageInput" placeholder="Write a message..." onkeydown="handleKey(event)"></textarea>
+      <button class="btn ghost" onclick="pickAttachment()">📎</button>
+      <button class="btn primary" onclick="sendMessage()">Send</button>
+    </div>
+  </section>
+
+  <aside class="right">
+    <div class="card">
+      <h3>📹 Video / Audio Call</h3>
+      <div id="videoBox" class="video">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="local"><video id="localVideo" autoplay muted playsinline></video></div>
+      </div>
+      <div class="controls">
+        <button class="btn control" onclick="toggleMic()">🎙️ Mic</button>
+        <button class="btn control" onclick="toggleCamera()">📷 Camera</button>
+        <button class="btn danger control" onclick="endCall()">End</button>
+      </div>
+      <div id="callStatus" class="note" style="margin-top:8px">No active call.</div>
+    </div>
+
+    <div class="card">
+      <h3>👤 Current User</h3>
+      <label>Name</label><input id="myName" value="Admin">
+      <label>Role</label>
+      <select id="myRole"><option>Admin</option><option>Cashier</option></select>
+      <button class="btn primary" style="width:100%;margin-top:10px" onclick="saveIdentity()">Save Identity</button>
+    </div>
+
+    <div class="card">
+      <h3>☁️ Realtime Connection</h3>
+      <label>Supabase URL</label><input id="sbUrl" placeholder="https://xxxx.supabase.co">
+      <label>Supabase Anon Key</label><input id="sbKey" placeholder="eyJ...">
+      <button class="btn primary" style="width:100%;margin-top:10px" onclick="connectRealtime()">Connect Realtime</button>
+      <p class="note" style="margin-top:9px">Credentials are stored only in this browser. Do not put a service-role key here. The database policies must restrict Admin/Cashier access.</p>
+    </div>
+
+    <div class="card">
+      <h3>🛡️ Safe Integration</h3>
+      <p class="note">This file is intentionally separate from the main Dlimans POS. It does not modify products, sales, inventory, invoices, reports, themes, printing, login, or existing POS storage.</p>
+    </div>
+  </aside>
+</main>
+</div>
+<div id="toast" class="toast"></div>
+<input id="filePicker" type="file" hidden onchange="attachmentSelected(this)">
+
+<script>
+/*
+ Dlimans Communication Center
+ Standalone module — designed to be integrated with the existing POS later.
+
+ IMPORTANT:
+ 1. This file never edits the main POS.
+ 2. For real cross-device chat/calls, configure Supabase and use a secure
+    Realtime/WebRTC signaling backend.
+ 3. WebRTC media itself is peer-to-peer; signaling is required to exchange
+    offer/answer/ICE candidates.
+*/
+
+const USERS_KEY='dlimans_comm_users_v1';
+const MSG_KEY='dlimans_comm_messages_v1';
+const ID_KEY='dlimans_comm_identity_v1';
+let users=[
+ {id:'admin-1',name:'Admin',role:'Admin',online:true},
+ {id:'cashier-1',name:'Cashier 1',role:'Cashier',online:false},
+ {id:'cashier-2',name:'Cashier 2',role:'Cashier',online:false}
+];
+let selectedUser=null, messages=JSON.parse(localStorage.getItem(MSG_KEY)||'[]');
+let myIdentity=JSON.parse(localStorage.getItem(ID_KEY)||'{"name":"Admin","role":"Admin","id":"local-user"}');
+let localStream=null, peer=null, micOn=true, cameraOn=true, sb=null, channel=null;
+
+const $=id=>document.getElementById(id);
+function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2800)}
+function saveIdentity(){
+ myIdentity.name=$('myName').value.trim()||'User';myIdentity.role=$('myRole').value;myIdentity.id='local-'+myIdentity.name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+ localStorage.setItem(ID_KEY,JSON.stringify(myIdentity));toast('Identity saved');renderContacts();
+}
+function renderContacts(){
+ const q=($('contactSearch').value||'').toLowerCase();
+ const list=users.filter(u=>u.name.toLowerCase().includes(q)||u.role.toLowerCase().includes(q));
+ $('contactList').innerHTML=list.map(u=>`<button class="person ${selectedUser?.id===u.id?'active':''}" onclick="selectUser('${u.id}')"><span class="avatar">${escapeHtml(u.name[0]||'?')}</span><span class="pmeta"><span class="pname">${escapeHtml(u.name)}</span><span class="role">${escapeHtml(u.role)} · ${u.online?'Online':'Offline'}</span></span></button>`).join('');
+}
+function selectUser(id){selectedUser=users.find(u=>u.id===id);$('chatName').textContent=selectedUser?.name||'Select a user';$('chatRole').textContent=selectedUser?selectedUser.role+' · '+(selectedUser.online?'Online':'Offline'):'Admin / Cashier communication';$('chatAvatar').textContent=selectedUser?.name?.[0]||'?';renderMessages();renderContacts();if(window.innerWidth<=700)$('contacts').classList.remove('mobile-open')}
+function conversationId(a,b){return [a,b].sort().join('__')}
+function renderMessages(){
+ if(!selectedUser){$('messages').innerHTML='<div class="empty">Select an Admin or Cashier to start a conversation.</div>';return}
+ const cid=conversationId(myIdentity.id,selectedUser.id), arr=messages.filter(m=>m.cid===cid);
+ $('messages').innerHTML=arr.length?arr.map(m=>`<div class="msg ${m.from===myIdentity.id?'mine':''}"><div class="sender">${escapeHtml(m.fromName)} · ${escapeHtml(m.role)}</div><div>${escapeHtml(m.text)}</div><div class="time">${new Date(m.ts).toLocaleString()}</div></div>`).join(''):'<div class="empty">No messages yet. Start the conversation.</div>';
+ $('messages').scrollTop=$('messages').scrollHeight;
+}
+function sendMessage(){
+ if(!selectedUser){toast('Select a user first');return}
+ const text=$('messageInput').value.trim();if(!text)return;
+ const m={id:crypto.randomUUID(),cid:conversationId(myIdentity.id,selectedUser.id),from:myIdentity.id,fromName:myIdentity.name,role:myIdentity.role,to:selectedUser.id,text,ts:Date.now()};
+ messages.push(m);localStorage.setItem(MSG_KEY,JSON.stringify(messages));$('messageInput').value='';renderMessages();publish('message',m);
+}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}}
+function pickAttachment(){$('filePicker').click()}
+function attachmentSelected(input){const f=input.files[0];if(f)toast('Attachment selected: '+f.name+' — upload storage can be connected in Supabase.');input.value=''}
+function toggleContacts(){$('contacts').classList.toggle('mobile-open')}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+
+async function connectRealtime(){
+ const url=$('sbUrl').value.trim(), key=$('sbKey').value.trim();
+ if(!url||!key){toast('Enter Supabase URL and anon key');return}
+ try{
+   if(!window.supabase){toast('Supabase library not loaded');return}
+   sb=window.supabase.createClient(url,key);
+   channel=sb.channel('dlimans-communication',{config:{broadcast:{self:true},presence:{key:myIdentity.id}}});
+   channel.on('broadcast',{event:'comm'},payload=>handleRealtime(payload.payload));
+   channel.on('presence',{event:'sync'},()=>updatePresence());
+   channel.on('presence',{event:'join'},()=>updatePresence());
+   channel.on('presence',{event:'leave'},()=>updatePresence());
+   await channel.subscribe(async status=>{
+     if(status==='SUBSCRIBED'){
+       $('statusDot').classList.add('ok');$('connectionStatus').textContent='Realtime connected';
+       await channel.track({user_id:myIdentity.id,name:myIdentity.name,role:myIdentity.role});
+       toast('Realtime connected');
+     }
+   });
+ }catch(e){console.error(e);toast('Realtime connection failed')}
+}
+async function updatePresence(){
+ if(!channel)return;
+ const state=channel.presenceState();
+ const online=new Set(Object.values(state).flat().map(x=>x.user_id));
+ users.forEach(u=>u.online=online.has(u.id));
+ renderContacts();if(selectedUser)selectUser(selectedUser.id);
+}
+async function publish(type,data){
+ if(channel)await channel.send({type:'broadcast',event:'comm',payload:{type,data}});
+}
+function handleRealtime(p){
+ if(!p)return;
+ if(p.type==='message'){
+   if(!messages.some(x=>x.id===p.data.id)){messages.push(p.data);localStorage.setItem(MSG_KEY,JSON.stringify(messages));renderMessages()}
+ }
+ if(p.type==='offer'||p.type==='answer'||p.type==='ice'||p.type==='hangup')handleSignal(p);
+}
+
+async function startCall(audioOnly){
+ if(!selectedUser){toast('Select a user first');return}
+ try{
+  localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:!audioOnly});
+  $('localVideo').srcObject=localStream;
+  peer=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+  localStream.getTracks().forEach(t=>peer.addTrack(t,localStream));
+  peer.ontrack=e=>$('remoteVideo').srcObject=e.streams[0];
+  peer.onicecandidate=e=>{if(e.candidate)publish('ice',{from:myIdentity.id,to:selectedUser.id,candidate:e.candidate})};
+  const offer=await peer.createOffer();await peer.setLocalDescription(offer);
+  await publish('offer',{from:myIdentity.id,to:selectedUser.id,offer});
+  $('callStatus').textContent='Calling '+selectedUser.name+'...';$('videoBox').classList.add('calling');
+ }catch(e){console.error(e);toast('Camera/microphone permission or browser support issue')}
+}
+async function handleSignal(p){
+ const d=p.data;if(!d||d.to!==myIdentity.id)return;
+ if(d.from!==selectedUser?.id){
+   const u=users.find(x=>x.id===d.from);if(u)selectUser(u.id);else return;
+ }
+ try{
+  if(d.offer){
+   if(!peer)peer=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+   if(!localStream)localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:true});
+   $('localVideo').srcObject=localStream;localStream.getTracks().forEach(t=>peer.addTrack(t,localStream));
+   peer.ontrack=e=>$('remoteVideo').srcObject=e.streams[0];
+   peer.onicecandidate=e=>{if(e.candidate)publish('ice',{from:myIdentity.id,to:d.from,candidate:e.candidate})};
+   await peer.setRemoteDescription(d.offer);const ans=await peer.createAnswer();await peer.setLocalDescription(ans);
+   publish('answer',{from:myIdentity.id,to:d.from,answer:ans});$('callStatus').textContent='Incoming call connected';
+  }else if(d.answer&&peer){await peer.setRemoteDescription(d.answer);$('callStatus').textContent='Call connected'}
+  else if(d.ice&&peer){try{await peer.addIceCandidate(d.candidate)}catch(e){}}
+  else if(d.hangup){endCall(false)}
+ }catch(e){console.error(e);toast('Call setup failed')}
+}
+function toggleMic(){if(!localStream)return toast('No active call');micOn=!micOn;localStream.getAudioTracks().forEach(t=>t.enabled=micOn);toast(micOn?'Microphone on':'Microphone muted')}
+function toggleCamera(){if(!localStream)return toast('No active call');cameraOn=!cameraOn;localStream.getVideoTracks().forEach(t=>t.enabled=cameraOn);toast(cameraOn?'Camera on':'Camera off')}
+function endCall(send=true){
+ if(send&&selectedUser)publish('hangup',{from:myIdentity.id,to:selectedUser.id});
+ if(localStream)localStream.getTracks().forEach(t=>t.stop());
+ if(peer)peer.close();localStream=null;peer=null;$('localVideo').srcObject=null;$('remoteVideo').srcObject=null;$('callStatus').textContent='No active call.';$('videoBox').classList.remove('calling');
+}
+function saveLocal(){
+ localStorage.setItem(USERS_KEY,JSON.stringify(users));localStorage.setItem(MSG_KEY,JSON.stringify(messages));
+}
+$('myName').value=myIdentity.name;$('myRole').value=myIdentity.role;renderContacts();saveLocal();
+</script>
+<!-- Supabase browser client. Replace with a pinned production version when deploying. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</body>
+</html>

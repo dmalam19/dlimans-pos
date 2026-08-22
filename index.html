@@ -744,12 +744,12 @@ body.noisy-theme::after{pointer-events:none!important;
         <div id="supabaseCloudPanel" class="card">
           <div class="section-title">
             <div><h3>☁️ Dlimans Cloud Communication</h3><div class="small">Admin ↔ Cashier real-time chat, presence and video-call signaling.</div></div>
-            <span id="sbStatus" class="badge">Not configured</span>
+            <span id="sbStatus" class="badge">⚙️ Supabase setup required</span>
           </div>
           <div class="sb-grid">
             <div>
               <label class="small">Supabase Project URL</label>
-              <input id="sbUrl" placeholder="https://YOUR-PROJECT.supabase.co">
+              <input id="sbUrl" placeholder="https://YOUR-PROJECT.supabase.co" autocomplete="off">
             </div>
             <div>
               <label class="small">Supabase Publishable / anon key</label>
@@ -1024,7 +1024,7 @@ const defaultState={
   {id:'u-cashier',username:'cashier',password:'1234',role:'Cashier',active:true}
  ],
  permissions:{
-  cashier:{dashboard:true,pos:true,held:true,products:true,inventory:true,sales:true,customers:true,contacts:true,expenses:false,reports:false,purchases:false,accounting:false,printer:true,returns:true,branches:false,settings:false,users:false,control:false,communication:true}
+  cashier:{dashboard:true,pos:true,held:true,drafts:true,quotations:true,shipments:true,discounts:true,importSales:true,products:true,inventory:true,stockTransfer:false,sales:true,returns:true,purchases:true,customers:true,contacts:true,communication:true,expenses:true,reports:true,accounting:true,branches:false,printer:true,invoice:true,users:false,control:false,settings:false}
  },
  products:[
   {id:'p1',name:'Rice 50kg',sku:'RICE50',barcode:'100001',cost:65000,price:78000,stock:20,min:3,image:''},
@@ -1061,6 +1061,9 @@ function normalizeState(saved){
  out.discounts=Array.isArray(saved.discounts)?saved.discounts:[];
  out.stockTransfers=Array.isArray(saved.stockTransfers)?saved.stockTransfers:[];
  out.settings.blinkSidebar=saved.settings?.blinkSidebar!==false;
+ /* Upgrade old permission records without removing any existing choices. */
+ out.permissions={...base.permissions,...(saved.permissions||{})};
+ out.permissions.cashier={...base.permissions.cashier,...(saved.permissions?.cashier||{})};
  out.customIcons=Array.isArray(saved.customIcons)?saved.customIcons:[];
  out.branches=Array.isArray(saved.branches)&&saved.branches.length?saved.branches:base.branches;
  out.permissions={...base.permissions,...(saved.permissions||{})};
@@ -1444,6 +1447,19 @@ function buildSidebar(){
   side.querySelectorAll('.side-icon').forEach(x=>x.classList.add('blink'));
  }
 }
+/* Universal sidebar click fallback. Inline handlers remain the primary path; this
+   delegated handler makes every generated sidebar button work even in stricter browsers. */
+(function(){
+  if(window.__dlimansSidebarDelegate)return;
+  window.__dlimansSidebarDelegate=true;
+  document.addEventListener('click',function(e){
+    const item=e.target.closest?.('.side-item[data-view]');
+    if(!item || e.defaultPrevented)return;
+    const view=item.dataset.view;
+    if(view && typeof showView==='function')showView(view);
+  },true);
+})();
+
 (function initLogin(){
  try{
   const remembered=localStorage.getItem('DLIMANS_REMEMBER');
@@ -2289,9 +2305,27 @@ function loadSettings(){
 }
 function safeRun(fn){try{fn()}catch(e){console.error('Dlimans render error:',e)}}
 function safeRefresh(){
- safeRun(()=>buildSidebar());safeRun(()=>loadSettings());
- [renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,renderCustomers,renderContacts,renderExpenses,renderPurchases,renderUsers,renderPermissions,renderCustomIcons,renderDashboard,refreshReports,renderInvoiceList,renderShipments,renderDiscounts,renderStockTransfers]
-  .forEach(fn=>safeRun(fn));
+ /* Render every data-backed section. Each renderer is isolated so one broken/empty
+    section can never prevent the other sidebar pages from displaying. */
+ safeRun(()=>buildSidebar());
+ safeRun(()=>loadSettings());
+ [
+  renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,
+  renderCustomers,renderContacts,renderExpenses,renderPurchases,renderUsers,
+  renderPermissions,renderCustomIcons,renderDashboard,refreshReports,renderInvoiceList,
+  renderShipments,renderDiscounts,renderStockTransfers,renderDrafts,renderQuotations
+ ].forEach(fn=>safeRun(fn));
+
+ /* Keep controls/results in sync even when a page has no dedicated renderer. */
+ safeRun(()=>{
+   const inv=state.settings.invoice||defaultState.settings.invoice;
+   const set=(id,v)=>{const e=document.getElementById(id);if(e&&document.activeElement!==e)e.value=v??''};
+   const check=(id,v)=>{const e=document.getElementById(id);if(e&&document.activeElement!==e)e.checked=!!v};
+   set('paperSize',state.settings.paper||'58mm');
+   check('autoPrint',state.settings.autoPrint);
+   set('invPrefix',inv.prefix);set('invNext',inv.nextNumber);set('invTitle',inv.title);set('invFooter',inv.footer);
+   check('invShowNote',inv.showCustomerNote);check('invShowDue',inv.showDue);check('invShowPaid',inv.showPaid);check('invShowLogo',inv.showLogo);
+ });
 }
 
 function draftTotal(items){return (items||[]).reduce((a,i)=>a+(Number(i.qty)||0)*(Number(i.price)||0),0)}
@@ -2922,8 +2956,15 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
     const c=cfg();
     if(el('sbUrl'))el('sbUrl').value=c.url||'';
     if(el('sbKey'))el('sbKey').value=c.key||'';
+    setSupabaseReadyState();
   }
   function isConfigured(){const c=cfg();return !!(c.url&&c.key&&window.supabase)}
+  function setSupabaseReadyState(){
+    const c=cfg();
+    if(!window.supabase){setStatus('⚠️ Supabase client unavailable',false);return}
+    if(c.url&&c.key)setStatus('☁️ Supabase configuration saved — connecting…',false);
+    else setStatus('⚙️ Supabase setup required',false);
+  }
   async function connect(){
     if(!isConfigured()){setStatus('Not configured',false);return false}
     try{
@@ -2954,6 +2995,7 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
     }
     if(!key){toast('Enter the Supabase Publishable/anon key');return}
     localStorage.setItem(SB_CFG_KEY,JSON.stringify({url,key}));
+    setStatus('☁️ Supabase configuration saved — connecting…',false);
     await connect();
   };
   window.sbDisconnect=function(){
@@ -3234,6 +3276,16 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
     loadConfigUI();
     if(cfg().url&&cfg().key) setTimeout(()=>connect().catch(()=>{}),1200);
   });
+
+/* Dlimans functional self-check — read-only diagnostics. */
+window.dlimansSelfCheck=function(){
+ const views=[...document.querySelectorAll('.view')].map(v=>v.id.replace('view-',''));
+ const nav=builtInNav.map(x=>x[3]);
+ const missingViews=nav.filter(v=>!views.includes(v));
+ const requiredIds=['sidebar','modal','loginScreen','app','paperSize','invoiceTable','reportSales','accRevenue','supabaseCloudPanel'];
+ const missingIds=requiredIds.filter(id=>!document.getElementById(id));
+ return {ok:!missingViews.length&&!missingIds.length,missingViews,missingIds,supabaseConfigured:isConfigured(),firebaseConfigured:!!window.firebase};
+};
 })();
 </script>
 </body>

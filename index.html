@@ -467,6 +467,29 @@ body.noisy-theme::after{pointer-events:none!important;
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+
+/* ===== FINAL CONTENT VISIBILITY SAFETY PATCH =====
+   Fixes the case where the sidebar appears but the main page area is blank.
+   Existing features are preserved. */
+#app .content{
+  display:block !important;
+  visibility:visible !important;
+  min-height:calc(100vh - 62px);
+}
+#app .content .view.active{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  min-height:200px;
+}
+@media(max-width:520px){
+  #app .content{
+    min-height:calc(100vh - 58px);
+  }
+}
+
+</style>
 </head>
 <body>
 
@@ -2192,6 +2215,60 @@ button *,
  <div class="total">Total: ${money(s.total)}</div><div style="text-align:right">${paid}${due}</div>${note}
  <div class="line"></div><div class="thanks">${escapeHTML(inv.footer||state.settings.thanks)}</div>
  
+
+
+<script id="dlimans-final-content-guard">
+/* FINAL CONTENT GUARD
+   If a refresh/session restore ever leaves the sidebar visible while no
+   content view is active, restore Dashboard without touching user data. */
+(function(){
+  function ensureContentView(){
+    try{
+      const app=document.getElementById('app');
+      if(!app || getComputedStyle(app).display==='none') return;
+
+      const content=app.querySelector('.content');
+      if(!content) return;
+
+      let active=content.querySelector('.view.active');
+      if(!active){
+        active=content.querySelector('#view-dashboard') || content.querySelector('.view');
+        if(active) active.classList.add('active');
+      }
+
+      if(active){
+        active.style.display='block';
+        active.style.visibility='visible';
+        active.style.opacity='1';
+      }
+    }catch(e){
+      console.warn('Final content guard:',e);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureContentView,80));
+  window.addEventListener('load',()=>setTimeout(ensureContentView,180));
+  window.addEventListener('pageshow',()=>setTimeout(ensureContentView,120));
+  window.addEventListener('resize',()=>setTimeout(ensureContentView,50));
+
+  // Keep the guard lightweight: only react when the app/content structure changes.
+  const startObserver=()=>{
+    try{
+      const content=document.querySelector('#app .content');
+      if(!content)return;
+      const observer=new MutationObserver(()=>{
+        if(!content.querySelector('.view.active')) ensureContentView();
+      });
+      observer.observe(content,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+    }catch(e){}
+  };
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',startObserver,{once:true});
+  }else{
+    startObserver();
+  }
+})();
+</script>
 
 </body></html>`);
  win.document.close()

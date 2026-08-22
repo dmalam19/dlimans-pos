@@ -1457,16 +1457,10 @@ function buildSidebar(){
 }
 /* Universal sidebar click fallback. Inline handlers remain the primary path; this
    delegated handler makes every generated sidebar button work even in stricter browsers. */
-(function(){
-  if(window.__dlimansSidebarDelegate)return;
-  window.__dlimansSidebarDelegate=true;
-  document.addEventListener('click',function(e){
-    const item=e.target.closest?.('.side-item[data-view]');
-    if(!item || e.defaultPrevented)return;
-    const view=item.dataset.view;
-    if(view && typeof showView==='function')showView(view);
-  },true);
-})();
+/* Sidebar buttons already use their own onclick handlers.
+   Do not add a second delegated click handler: double navigation can cause
+   mobile browsers to restore a blank cached view. */
+window.__dlimansSidebarDelegate=true;
 
 (function initLogin(){
  try{
@@ -1513,19 +1507,58 @@ window.addEventListener('error',e=>{try{console.error('Dlimans runtime error:',e
 window.addEventListener('unhandledrejection',e=>{try{console.error('Dlimans promise error:',e.reason)}catch(_){} });
 
 function showView(name,force=false){
- if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
  const v=document.getElementById('view-'+name);
  if(!v){toast('Feature not found: '+name);return false}
- const current=document.querySelector('.view.active')?.id?.replace('view-','');
- if(current && current!==name && !force){appViewHistory.push(current);if(appViewHistory.length>30)appViewHistory.shift()}
- document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+ if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
+
+ const active=document.querySelector('.view.active');
+ const current=active?.id?.replace('view-','');
+ if(current && current!==name && !force){
+   appViewHistory.push(current);
+   if(appViewHistory.length>30)appViewHistory.shift();
+ }
+
+ /* HARD VIEW SWITCH: do not depend on stylesheet state or cached CSS. */
+ document.querySelectorAll('.view').forEach(x=>{
+   x.classList.remove('active');
+   x.setAttribute('aria-hidden','true');
+   x.hidden=true;
+   x.style.setProperty('display','none','important');
+ });
+ v.hidden=false;
+ v.removeAttribute('aria-hidden');
  v.classList.add('active');
+ v.style.setProperty('display','block','important');
+ v.style.setProperty('visibility','visible','important');
+ v.style.setProperty('opacity','1','important');
+
  savedModalState=null;
  saveAppSession();
  document.querySelectorAll('.side-item').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
  document.querySelector('.sidebar')?.classList.remove('open');
- safeRefresh();
+
+ /* Refresh safely after the target is already visible. */
+ const refreshers={
+   dashboard:renderDashboard,pos:renderPOS,held:renderHeld,products:renderProducts,
+   inventory:renderInventory,purchases:renderPurchases,sales:renderSales,
+   customers:renderCustomers,contacts:renderContacts,expenses:renderExpenses,
+   reports:refreshReports,accounting:()=>{},communication:()=>{},control:loadControl,
+   branches:renderBranches,returns:()=>{},users:renderUsers,printer:()=>{},
+   invoice:renderInvoiceList,drafts:renderDrafts,quotations:renderQuotations,
+   shipments:renderShipments,discounts:renderDiscounts,importSales:()=>{},
+   stockTransfer:renderStockTransfers,settings:()=>{}
+ };
+ safeRun(()=>{ if(refreshers[name]) refreshers[name](); });
  window.scrollTo(0,0);
+
+ /* Re-assert visibility once more for mobile browsers that restore cached styles. */
+ requestAnimationFrame(()=>{
+   v.hidden=false;
+   v.classList.add('active');
+   v.style.setProperty('display','block','important');
+   v.style.setProperty('visibility','visible','important');
+   v.style.setProperty('opacity','1','important');
+ });
  return true;
 }
 /* ===== VIEW DISPLAY SAFETY FIX =====
@@ -2194,6 +2227,23 @@ button *,
   pointer-events:none;
 }
 
+/* ===== FINAL MOBILE VIEW SAFETY ===== */
+html,body{min-height:100%;background:#07111f}
+#app{min-height:100vh}
+.layout{min-height:calc(100vh - 70px)}
+.content{min-width:0;min-height:calc(100vh - 70px);overflow:auto!important}
+.view[hidden]{display:none!important}
+.view.active{
+ display:block!important;
+ visibility:visible!important;
+ opacity:1!important;
+ min-height:100px;
+}
+@media(max-width:800px){
+ .layout{min-height:calc(100vh - 58px)}
+ .content{min-height:calc(100vh - 58px);overflow:auto!important}
+ .view.active{width:100%;max-width:100%}
+}
 </style></head><body onload="setTimeout(function(){window.print()},350)">${logo}<h2>${escapeHTML(inv.title||'INVOICE')}</h2>
  <div class="center"><b>${escapeHTML(state.settings.business)}</b><br>${escapeHTML(state.settings.address)}<br>${escapeHTML(state.settings.phone)}</div>
  <div class="line"></div><div>Invoice: <b>${escapeHTML(s.invoice)}</b><br>${fmtDate(s.date)}<br>Customer: ${escapeHTML(s.customer)}<br>Payment: ${escapeHTML(s.payment||'')}</div>
@@ -3307,6 +3357,24 @@ window.dlimansSelfCheck=function(){
  return {ok:!missingViews.length&&!missingIds.length,missingViews,missingIds,supabaseConfigured:isConfigured(),firebaseConfigured:!!window.firebase};
 };
 })();
+/* ===== FINAL RUNTIME GUARD ===== */
+window.addEventListener('error',function(e){
+ console.error('Dlimans runtime error:',e.error||e.message);
+});
+window.addEventListener('unhandledrejection',function(e){
+ console.error('Dlimans promise error:',e.reason);
+});
+document.addEventListener('visibilitychange',function(){
+ if(document.visibilityState==='visible'){
+   const v=document.querySelector('.view.active');
+   if(v){
+     v.hidden=false;
+     v.style.setProperty('display','block','important');
+     v.style.setProperty('visibility','visible','important');
+     v.style.setProperty('opacity','1','important');
+   }
+ }
+});
 </script>
 </body>
 </html>

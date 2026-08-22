@@ -1293,7 +1293,8 @@ async function logout(){try{await voiceCommStop()}catch(e){};clearAppSession();c
     try{buildSidebar()}catch(e){console.warn('Session sidebar restore:',e)}
     const target=(sess.view&&document.getElementById('view-'+sess.view))?sess.view:'dashboard';
     showView(target,true);
-    setTimeout(()=>{try{buildSidebar();safeRefresh()}catch(e){}},0);
+    saveAppSession();
+    setTimeout(()=>{try{buildSidebar();safeRefresh();saveAppSession()}catch(e){}},0);
    }else clearAppSession();
   }
  }catch(e){console.error('Login init error',e)}
@@ -1304,6 +1305,7 @@ window.addEventListener('load',()=>{
   if(state.settings.blink)toggleBlink(true);
  }catch(e){console.error('Dlimans initialization error',e)}
 });
+window.addEventListener('beforeunload',()=>{try{if(currentUser)saveAppSession()}catch(e){}});
 
 const builtInNav=[
  ['dashboard','🏠','Dashboard','dashboard'],
@@ -1376,16 +1378,34 @@ function buildSidebar(){
 }
 let appViewHistory=[];
 const DLIMANS_SESSION_KEY='DLIMANS_APP_SESSION';
+const DLIMANS_PERSIST_SESSION_KEY='DLIMANS_APP_SESSION_PERSISTENT';
 function saveAppSession(){
  try{
   if(!currentUser)return;
   const active=document.querySelector('.view.active');
   const view=active?.id?.replace('view-','')||'dashboard';
-  sessionStorage.setItem(DLIMANS_SESSION_KEY,JSON.stringify({userId:currentUser.id||'',username:currentUser.username||'',role:currentUser.role||'',view,updatedAt:Date.now()}));
+  const payload={userId:currentUser.id||'',username:currentUser.username||'',role:currentUser.role||'',view,updatedAt:Date.now()};
+  // Keep the active POS session through browser/Android refresh and tab recreation.
+  // No password is stored here; Logout explicitly clears both session records.
+  sessionStorage.setItem(DLIMANS_SESSION_KEY,JSON.stringify(payload));
+  localStorage.setItem(DLIMANS_PERSIST_SESSION_KEY,JSON.stringify(payload));
  }catch(e){console.warn('Session save:',e)}
 }
-function clearAppSession(){try{sessionStorage.removeItem(DLIMANS_SESSION_KEY)}catch(e){}}
-function getSavedAppSession(){try{return JSON.parse(sessionStorage.getItem(DLIMANS_SESSION_KEY)||'null')}catch(e){return null}}
+function clearAppSession(){
+ try{sessionStorage.removeItem(DLIMANS_SESSION_KEY)}catch(e){}
+ try{localStorage.removeItem(DLIMANS_PERSIST_SESSION_KEY)}catch(e){}
+}
+function getSavedAppSession(){
+ try{
+  const a=JSON.parse(sessionStorage.getItem(DLIMANS_SESSION_KEY)||'null');
+  if(a&&a.userId)return a;
+ }catch(e){}
+ try{
+  const b=JSON.parse(localStorage.getItem(DLIMANS_PERSIST_SESSION_KEY)||'null');
+  if(b&&b.userId)return b;
+ }catch(e){}
+ return null;
+}
 function showView(name,force=false){
  if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
  const v=document.getElementById('view-'+name);

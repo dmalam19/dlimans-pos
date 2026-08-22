@@ -487,6 +487,14 @@ body.noisy-theme::after{pointer-events:none!important;
   .app-back-btn{min-width:62px!important;padding:8px 7px!important}
 }
 
+/* Dlimans CHAT MOBILE */
+
+@media(max-width:520px){
+  #dlimansChatCard{padding:12px!important}
+  #chatMessages{height:210px!important}
+  #chatSendBtn{min-width:78px!important;padding:9px 10px!important}
+}
+
 </style>
 </head>
 <body>
@@ -750,6 +758,22 @@ body.noisy-theme::after{pointer-events:none!important;
             <h3>👥 Admin / Cashier</h3>
             <div class="small">Only logged-in Admin/Cashier sessions that are connected to the business cloud are shown as available.</div>
             <div id="voicePeople" style="margin-top:12px"></div>
+          </div>
+          <div class="card" id="dlimansChatCard" style="grid-column:1/-1">
+            <div class="section-title" style="margin-bottom:8px">
+              <div>
+                <h3 style="margin-bottom:3px">💬 Admin / Cashier Chat</h3>
+                <div class="small">Private business chat using the same Firebase connection as Voice Communication.</div>
+              </div>
+              <span id="chatStatus" class="badge">Offline</span>
+            </div>
+            <div id="chatMessages" style="height:230px;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:10px;background:#06101c;margin-bottom:10px">
+              <div class="small muted">Connect Voice/Cloud to load chat messages.</div>
+            </div>
+            <div class="row" style="align-items:stretch">
+              <input id="chatInput" type="text" maxlength="500" placeholder="Type a message..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendDlimansChat()}">
+              <button class="btn primary" id="chatSendBtn" onclick="sendDlimansChat()">💬 Send</button>
+            </div>
           </div>
           <div class="card">
             <h3>📞 Current Call</h3>
@@ -1366,6 +1390,7 @@ const builtInNav=[
  ['customers','👥','Customers','customers'],
  ['contacts','📇','Contacts','contacts'],
  ['communication','🎙️','Voice Communication','communication'],
+ ['chat','💬','Chat','communication'],
  ['expenses','💸','Expenses','expenses'],
  ['reports','📊','Reports','reports'],
  ['accounting','📒','Accounting','accounting'],
@@ -1377,6 +1402,7 @@ const builtInNav=[
  ['settings','⚙️','Settings / Customize','settings']
 ];
 function allowed(key){
+ if(key==='chat')key='communication';
  if(currentUser?.role==='Admin')return true;
  return !!state.permissions.cashier[key];
 }
@@ -1468,7 +1494,7 @@ function showView(name,force=false){
  v.classList.add('active');
  savedModalState=null;
  saveAppSession();
- document.querySelectorAll('.side-item').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
+ document.querySelectorAll('.side-item').forEach(x=>x.classList.toggle('active',x.dataset.view===name || (name==='communication' && x.dataset.view==='communication')));
  closeMobileSidebar();
  safeRefresh();
  window.scrollTo(0,0);
@@ -2529,24 +2555,35 @@ window.addEventListener('online',()=>{
  try{if(syncAuth&&syncAuth.currentUser) connectAutoSync();}catch(e){}
 });
 window.addEventListener('offline',()=>setSyncStatus('📴 Offline — local storage active'));
-window.addEventListener('load',async()=>{
- setTimeout(fillSyncConfig,300);
- // Restore the Firebase business session automatically after reload.
- try{
-  await loadFirebaseSDK();
-  const c=getSyncConfig();
-  if(!syncFirebaseApp){
-   syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
-   syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth();
-  }
-  syncAuth.onAuthStateChanged(user=>{
-   syncUser=user||null;
-   if(user){
-    setSyncStatus('🟢 Firebase account ready — Cloud can sync automatically');
-    if(currentUser&&currentUser.cloud) setTimeout(()=>connectAutoSync(),100);
+window.addEventListener('load',()=>{
+ setTimeout(async()=>{
+  fillSyncConfig();
+  /*
+   * Performance fix:
+   * Do not download/initialize Firebase for ordinary local/offline sessions.
+   * Only restore a cloud session when the current POS user is already marked
+   * as a cloud user. This removes an unnecessary network wait on every reload.
+   */
+  if(!currentUser?.cloud || !navigator.onLine)return;
+  try{
+   await loadFirebaseSDK();
+   const c=getSyncConfig();
+   if(!syncFirebaseApp){
+    syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
+    syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth();
    }
-  });
- }catch(e){console.warn('Firebase startup:',e)}
+   syncAuth.onAuthStateChanged(user=>{
+    syncUser=user||null;
+    if(user){
+     setSyncStatus('🟢 Firebase account ready — Cloud can sync automatically');
+     setTimeout(()=>connectAutoSync(),100);
+    }
+   });
+  }catch(e){
+   console.warn('Firebase startup (background):',e);
+   setSyncStatus('🟡 Local POS active — cloud reconnect available');
+  }
+ },300);
 });
 </script>
 
@@ -2662,7 +2699,7 @@ async function voiceCommStart(){
  if(voiceCommUnsub)try{voiceCommUnsub()}catch(e){}
  voiceCommUnsub=voiceCommRef.onSnapshot(ds=>{
   const d=ds.data()||{};
-  voiceCommSnapshotData={voicePresence:d.voicePresence||{},voiceCalls:d.voiceCalls||{}};
+  voiceCommSnapshotData={voicePresence:d.voicePresence||{},voiceCalls:d.voiceCalls||{},chatMessages:d.chatMessages||{}}; renderDlimansChat();
   voiceCommRenderPeople();
   voiceCommProcessCalls();
  },e=>{console.warn('Voice listener:',e);voiceCommSetStatus('Voice listener error')});
@@ -2670,7 +2707,9 @@ async function voiceCommStart(){
  clearInterval(voiceCommHeartbeat);
  voiceCommHeartbeat=setInterval(()=>voiceCommPublishPresence().catch(()=>{}),15000);
  voiceCommSetStatus('🟢 Connected',true);
+ chatSetStatus('🟢 Connected',true);
  voiceCommRenderPeople();
+ renderDlimansChat();
 }
 
 async function voiceCommPublishPresence(){
@@ -2778,6 +2817,70 @@ async function voiceCommAddRemoteCandidates(call,field){
   if(voiceCommSeenCandidates.has(key))continue;
   voiceCommSeenCandidates.add(key);
   try{await voiceCommPeer.addIceCandidate(new RTCIceCandidate(c))}catch(e){console.warn('Remote ICE:',e)}
+ }
+}
+
+
+/* =========================================================
+   DLIMANS ADMIN/CASHIER CHAT
+   Uses the same dlimansStores/{businessUid} Firestore document
+   already used by Voice Communication. No second Firebase
+   connection is opened.
+========================================================= */
+function chatSetStatus(text,ok=false){
+ const e=document.getElementById('chatStatus');
+ if(e){e.textContent=text;e.classList.toggle('green',!!ok);e.classList.toggle('red',!ok)}
+}
+function renderDlimansChat(){
+ const box=document.getElementById('chatMessages');
+ if(!box)return;
+ const msgs=Object.values(voiceCommSnapshotData?.chatMessages||{})
+   .filter(x=>x&&x.id)
+   .sort((a,b)=>(Number(a.createdAt)||0)-(Number(b.createdAt)||0))
+   .slice(-100);
+ if(!msgs.length){
+   box.innerHTML='<div class="small muted">No messages yet. Start the conversation.</div>';
+   chatSetStatus(voiceCommRef?'🟢 Connected':'Offline',!!voiceCommRef);
+   return;
+ }
+ box.innerHTML=msgs.map(m=>{
+   const mine=String(m.sessionId||'')===String(voiceCommSession||'');
+   const name=escapeHTML(m.name||m.role||'User');
+   const text=escapeHTML(m.text||'');
+   const time=m.createdAt?new Date(m.createdAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';
+   return `<div style="display:flex;justify-content:${mine?'flex-end':'flex-start'};margin:6px 0">
+     <div style="max-width:82%;padding:8px 10px;border-radius:12px;background:${mine?'#00e67622':'#ffffff0a'};border:1px solid var(--border)">
+       <div class="small"><b>${name}</b> · ${escapeHTML(time)}</div>
+       <div style="margin-top:3px;white-space:pre-wrap;word-break:break-word">${text}</div>
+     </div>
+   </div>`;
+ }).join('');
+ box.scrollTop=box.scrollHeight;
+ chatSetStatus(voiceCommRef?'🟢 Connected':'Offline',!!voiceCommRef);
+}
+async function sendDlimansChat(){
+ const input=document.getElementById('chatInput');
+ const btn=document.getElementById('chatSendBtn');
+ const text=String(input?.value||'').trim();
+ if(!text)return;
+ if(!voiceCommRef||!syncUser){
+   toast('Connect Voice/Cloud first to use Chat');
+   return;
+ }
+ if(btn){btn.disabled=true;btn.dataset.oldText=btn.textContent;btn.textContent='Sending...'}
+ try{
+   const id='cm-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+   const msg={id,sessionId:voiceCommSession,userId:currentUser?.id||'',name:voiceCommName(),role:voiceCommRole(),text,createdAt:Date.now()};
+   const update={['chatMessages.'+id]:msg};
+   await voiceCommRef.update(update);
+   if(input)input.value='';
+   chatSetStatus('🟢 Sent',true);
+ }catch(e){
+   console.warn('Dlimans Chat:',e);
+   toast('Chat message failed: '+(e.message||'connection error'));
+   chatSetStatus('⚠️ Send failed');
+ }finally{
+   if(btn){btn.disabled=false;btn.textContent=btn.dataset.oldText||'💬 Send'}
  }
 }
 

@@ -1263,7 +1263,7 @@ async function registerBusiness(){
   toast(msg);return false;
  }
 }
-async function logout(){try{await voiceCommStop()}catch(e){};currentUser=null;cart=[];try{if(syncUnsub)syncUnsub()}catch(e){};syncUnsub=null;window.__dlimansSyncRef=null;document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex'}
+async function logout(){try{await voiceCommStop()}catch(e){};clearAppSession();currentUser=null;cart=[];try{if(syncUnsub)syncUnsub()}catch(e){};syncUnsub=null;window.__dlimansSyncRef=null;document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex'}
 (function initLogin(){
  try{
   const remembered=localStorage.getItem('DLIMANS_REMEMBER');
@@ -1277,6 +1277,25 @@ async function logout(){try{await voiceCommStop()}catch(e){};currentUser=null;ca
   syncRememberVisual();
   applyTheme(state.settings.theme||'darkblue',false);
   const a=document.getElementById('loginBusiness'),b=document.getElementById('topBusiness');if(a)a.textContent=state.settings.business;if(b)b.textContent=state.settings.business;
+
+  // Restore the current POS page after a normal browser/Android refresh.
+  // sessionStorage survives refresh, but is cleared when the browser session ends.
+  const sess=getSavedAppSession();
+  if(sess && sess.userId){
+   const restored=state.users.find(u=>u&&u.id===sess.userId&&u.active!==false)
+    ||state.users.find(u=>u&&u.username===sess.username&&u.role===sess.role&&u.active!==false);
+   if(restored){
+    currentUser=restored;
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    const role=document.getElementById('topRole');if(role)role.textContent=restored.role||'';
+    const biz=document.getElementById('topBusiness');if(biz)biz.textContent=state.settings.business||'Dlimans Supermarket';
+    try{buildSidebar()}catch(e){console.warn('Session sidebar restore:',e)}
+    const target=(sess.view&&document.getElementById('view-'+sess.view))?sess.view:'dashboard';
+    showView(target,true);
+    setTimeout(()=>{try{buildSidebar();safeRefresh()}catch(e){}},0);
+   }else clearAppSession();
+  }
  }catch(e){console.error('Login init error',e)}
 })();
 window.addEventListener('load',()=>{
@@ -1356,6 +1375,17 @@ function buildSidebar(){
  }
 }
 let appViewHistory=[];
+const DLIMANS_SESSION_KEY='DLIMANS_APP_SESSION';
+function saveAppSession(){
+ try{
+  if(!currentUser)return;
+  const active=document.querySelector('.view.active');
+  const view=active?.id?.replace('view-','')||'dashboard';
+  sessionStorage.setItem(DLIMANS_SESSION_KEY,JSON.stringify({userId:currentUser.id||'',username:currentUser.username||'',role:currentUser.role||'',view,updatedAt:Date.now()}));
+ }catch(e){console.warn('Session save:',e)}
+}
+function clearAppSession(){try{sessionStorage.removeItem(DLIMANS_SESSION_KEY)}catch(e){}}
+function getSavedAppSession(){try{return JSON.parse(sessionStorage.getItem(DLIMANS_SESSION_KEY)||'null')}catch(e){return null}}
 function showView(name,force=false){
  if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
  const v=document.getElementById('view-'+name);
@@ -1364,6 +1394,7 @@ function showView(name,force=false){
  if(current && current!==name && !force){appViewHistory.push(current);if(appViewHistory.length>30)appViewHistory.shift()}
  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
  v.classList.add('active');
+ saveAppSession();
  document.querySelectorAll('.side-item').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
  document.querySelector('.sidebar')?.classList.remove('open');
  safeRefresh();

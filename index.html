@@ -214,7 +214,7 @@ th{color:#b9c6d8;background:#ffffff05;position:sticky;top:0}
 }
 @media print{
  body{background:#fff;color:#000}.no-print,#app>.topbar,#app .sidebar{display:none!important}
- .content{padding:0}.view{display:none!important}.view.printable{display:block!important}
+ .content{padding:0}.view{display:none!important}.view.active{display:block!important}.view.printable{display:block!important}
 }
 
 /* ===== Dlimans Dashboard v3 — visual/layout upgrade ===== */
@@ -1428,7 +1428,7 @@ function buildSidebar(){
  builtInNav.forEach(([key,icon,label,view])=>{
   if(allowed(key)){
    const displayLabel=(state.settings.menuNames&&state.settings.menuNames[key])||label;
-   html+=`<button type="button" class="side-item" data-view="${view}" onclick="showView('${view}')">
+   html+=`<button type="button" class="side-item" data-view="${view}">
      <span class="side-icon">${icon}</span><span class="side-label">${escapeHTML(displayLabel)}</span>
    </button>`;
   }
@@ -1438,7 +1438,7 @@ function buildSidebar(){
   html+='<div class="side-group">CUSTOM</div>';
   custom.forEach(x=>{
    const target=builtInNav.some(n=>n[3]===x.target)?x.target:'dashboard';
-   html+=`<button type="button" class="side-item" onclick="customNav('${target}')">
+   html+=`<button type="button" class="side-item" data-custom-target="${target}">
      <span class="side-icon">${escapeHTML(x.icon||'⭐')}</span>
      <span class="side-label">${escapeHTML(x.name||'Custom')}</span>
    </button>`;
@@ -1451,22 +1451,35 @@ function buildSidebar(){
  side.style.display='block';
  side.style.visibility='visible';
 
+ /* One stable click handler for the whole sidebar.  The sidebar HTML is rebuilt
+    during refreshes, so delegation avoids stale inline handlers and mobile
+    double-tap/touch conflicts. */
+ side.onclick=function(e){
+   const item=e.target.closest?.('.side-item');
+   if(!item || !side.contains(item))return;
+   e.preventDefault();
+   e.stopPropagation();
+   const target=item.dataset.view || item.dataset.customTarget;
+   if(!target)return;
+   if(item.dataset.clickBusy==='1')return;
+   item.dataset.clickBusy='1';
+   try{
+     if(item.dataset.customTarget) customNav(target);
+     else showView(target);
+   }catch(err){ console.warn('Dlimans sidebar click:',err); }
+   setTimeout(()=>{try{delete item.dataset.clickBusy}catch(_){ }},120);
+ };
+
  if(state.settings.blinkSidebar){
   side.querySelectorAll('.side-icon').forEach(x=>x.classList.add('blink'));
  }
 }
 /* Universal sidebar click fallback. Inline handlers remain the primary path; this
    delegated handler makes every generated sidebar button work even in stricter browsers. */
-(function(){
-  if(window.__dlimansSidebarDelegate)return;
-  window.__dlimansSidebarDelegate=true;
-  document.addEventListener('click',function(e){
-    const item=e.target.closest?.('.side-item[data-view]');
-    if(!item || e.defaultPrevented)return;
-    const view=item.dataset.view;
-    if(view && typeof showView==='function')showView(view);
-  },true);
-})();
+/* Sidebar buttons already use their own onclick handlers.
+   Do not add a second delegated click handler: double navigation can cause
+   mobile browsers to restore a blank cached view. */
+window.__dlimansSidebarDelegate=true;
 
 (function initLogin(){
  try{
@@ -1513,21 +1526,69 @@ window.addEventListener('error',e=>{try{console.error('Dlimans runtime error:',e
 window.addEventListener('unhandledrejection',e=>{try{console.error('Dlimans promise error:',e.reason)}catch(_){} });
 
 function showView(name,force=false){
- if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
  const v=document.getElementById('view-'+name);
  if(!v){toast('Feature not found: '+name);return false}
- const current=document.querySelector('.view.active')?.id?.replace('view-','');
- if(current && current!==name && !force){appViewHistory.push(current);if(appViewHistory.length>30)appViewHistory.shift()}
- document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+ if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
+
+ const active=document.querySelector('.view.active');
+ const current=active?.id?.replace('view-','');
+ if(current && current!==name && !force){
+   appViewHistory.push(current);
+   if(appViewHistory.length>30)appViewHistory.shift();
+ }
+
+ /* HARD VIEW SWITCH: do not depend on stylesheet state or cached CSS. */
+ document.querySelectorAll('.view').forEach(x=>{
+   x.classList.remove('active');
+   x.setAttribute('aria-hidden','true');
+   x.hidden=true;
+   x.style.setProperty('display','none','important');
+ });
+ v.hidden=false;
+ v.removeAttribute('aria-hidden');
  v.classList.add('active');
+ v.style.setProperty('display','block','important');
+ v.style.setProperty('visibility','visible','important');
+ v.style.setProperty('opacity','1','important');
+
  savedModalState=null;
  saveAppSession();
  document.querySelectorAll('.side-item').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
  document.querySelector('.sidebar')?.classList.remove('open');
- safeRefresh();
+
+ /* Refresh safely after the target is already visible. */
+ const refreshers={
+   dashboard:renderDashboard,pos:renderPOS,held:renderHeld,products:renderProducts,
+   inventory:renderInventory,purchases:renderPurchases,sales:renderSales,
+   customers:renderCustomers,contacts:renderContacts,expenses:renderExpenses,
+   reports:refreshReports,accounting:()=>{},communication:()=>{},control:loadControl,
+   branches:renderBranches,returns:()=>{},users:renderUsers,printer:()=>{},
+   invoice:renderInvoiceList,drafts:renderDrafts,quotations:renderQuotations,
+   shipments:renderShipments,discounts:renderDiscounts,importSales:()=>{},
+   stockTransfer:renderStockTransfers,settings:()=>{}
+ };
+ safeRun(()=>{ if(refreshers[name]) refreshers[name](); });
  window.scrollTo(0,0);
+
+ /* Re-assert visibility once more for mobile browsers that restore cached styles. */
+ requestAnimationFrame(()=>{
+   v.hidden=false;
+   v.classList.add('active');
+   v.style.setProperty('display','block','important');
+   v.style.setProperty('visibility','visible','important');
+   v.style.setProperty('opacity','1','important');
+ });
  return true;
 }
+/* ===== VIEW DISPLAY SAFETY FIX =====
+   A later print rule uses !important; keep the active app view visible. */
+(function(){
+  const style=document.createElement('style');
+  style.id='dlimans-view-display-safety';
+  style.textContent='.view{display:none!important}.view.active{display:block!important}';
+  document.head.appendChild(style);
+})();
+
 function goBackInApp(){
  const current=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
  while(appViewHistory.length){
@@ -2134,34 +2195,75 @@ function printSale(id){
 function receiptPrint(s){
  if(!s){toast('Invoice not found');return}
  const inv=state.settings.invoice||defaultState.settings.invoice;
- const items=s.items.map(i=>{
-   const p=state.products.find(x=>x.id===i.productId);
-   return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td class="qty">${i.qty}</td><td class="right">${money(i.qty*i.price)}</td></tr>`;
- }).join('');
- const receiptLogo=state.settings.invoiceLogo||state.settings.businessLogo;
- const logo=inv.showLogo
-   ? `<div class="logo">${receiptLogo?`<img src="${receiptLogo}" style="width:48px;height:48px;object-fit:contain;border-radius:10px">`:escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`
-   : '';
+ const win=window.open('','_blank','width=520,height=760');
+ if(!win){toast('Allow popups to print invoice');return}
+ const items=s.items.map(i=>{const p=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td class="qty">${i.qty}</td><td class="right">${money(i.qty*i.price)}</td></tr>`}).join('');
+ const receiptLogo=state.settings.invoiceLogo||state.settings.businessLogo; const logo=inv.showLogo?`<div class="logo">${receiptLogo?`<img src="${receiptLogo}" style="width:48px;height:48px;object-fit:contain;border-radius:10px">`:escapeHTML((state.settings.business||'D').trim().charAt(0).toUpperCase())}</div>`:'';
  const note=inv.showCustomerNote&&s.note?`<p><b>Note:</b> ${escapeHTML(s.note)}</p>`:'';
  const paid=inv.showPaid?`<br>Paid: ${money(s.paid)}`:'';
  const due=inv.showDue?`<br>Due: ${money(s.due)}`:'';
- const paperMap={'58mm':'58mm','80mm':'80mm','A4':'210mm'};
- const paper=paperMap[state.settings.paper]||'58mm';
-
- const printHTML=`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHTML(s.invoice)}</title><style>
- @page{size:${paper} auto;margin:0}
- body{font-family:Arial,sans-serif;width:${paper};max-width:${paper};margin:0 auto;font-size:12px;color:#111;padding:6mm 3mm;box-sizing:border-box}
- h2{text-align:center;margin:4px 0}
- .logo{width:48px;height:48px;border-radius:12px;background:#111;color:#fff;display:grid;place-items:center;margin:0 auto 6px;font-size:24px;font-weight:bold}
+ const paperMap={'58mm':'58mm','80mm':'80mm','A4':'210mm'};const paper=paperMap[state.settings.paper]||'58mm';
+ win.document.write(`<html><head><title>${escapeHTML(s.invoice)}</title><style>
+ @page{size:${paper} auto;margin:0}body{font-family:Arial,sans-serif;width:${paper};max-width:${paper};margin:0 auto;font-size:12px;color:#111;padding:6mm 3mm;box-sizing:border-box}
+ h2{text-align:center;margin:4px 0}.logo{width:48px;height:48px;border-radius:12px;background:#111;color:#fff;display:grid;place-items:center;margin:0 auto 6px;font-size:24px;font-weight:bold}
  .center{text-align:center}.line{border-top:1px dashed #777;margin:10px 0}
- table{width:100%;border-collapse:collapse}
- th,td{padding:5px 2px;border-bottom:1px dashed #ccc;text-align:left}
- .qty{text-align:center;width:45px}.right{text-align:right}
- .total{font-size:16px;font-weight:bold;text-align:right;margin-top:8px}
- .thanks{text-align:center;margin-top:16px;font-weight:bold}
+ table{width:100%;border-collapse:collapse}th,td{padding:5px 2px;border-bottom:1px dashed #ccc;text-align:left}.qty{text-align:center;width:45px}.right{text-align:right}
+ .total{font-size:16px;font-weight:bold;text-align:right;margin-top:8px}.thanks{text-align:center;margin-top:16px;font-weight:bold}
  @media print{body{margin:0 auto}}
- </style></head><body>
- ${logo}<h2>${escapeHTML(inv.title||'INVOICE')}</h2>
+ 
+/* =========================================================
+   DLIMANS SINGLE-TAP ENGINE
+   Mobile/PC controls respond to one deliberate tap.
+   Existing onclick functions are preserved.
+========================================================= */
+button,
+.btn,
+.side-item,
+.dash-action,
+.admin-tool,
+.purchase-tab,
+.product-tile{
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+}
+
+/* Keep inputs/selects/labels native so typing and checkbox behavior
+   are never hijacked by the tap engine. */
+input,select,textarea,label{
+  touch-action:manipulation;
+}
+
+/* Never let visual/decorative children steal the button hit target. */
+button *,
+.btn *,
+.side-item *,
+.dash-action *,
+.admin-tool *,
+.purchase-tab *,
+.product-tile *{
+  pointer-events:none;
+}
+
+/* ===== FINAL MOBILE VIEW SAFETY ===== */
+html,body{min-height:100%;background:#07111f}
+#app{min-height:100vh}
+.layout{min-height:calc(100vh - 70px)}
+.content{min-width:0;min-height:calc(100vh - 70px);overflow:auto!important}
+.view[hidden]{display:none!important}
+.view.active{
+ display:block!important;
+ visibility:visible!important;
+ opacity:1!important;
+ min-height:100px;
+}
+@media(max-width:800px){
+ .layout{min-height:calc(100vh - 58px)}
+ .content{min-height:calc(100vh - 58px);overflow:auto!important}
+ .view.active{width:100%;max-width:100%}
+}
+</style></head><body onload="setTimeout(function(){window.print()},350)">${logo}<h2>${escapeHTML(inv.title||'INVOICE')}</h2>
  <div class="center"><b>${escapeHTML(state.settings.business)}</b><br>${escapeHTML(state.settings.address)}<br>${escapeHTML(state.settings.phone)}</div>
  <div class="line"></div><div>Invoice: <b>${escapeHTML(s.invoice)}</b><br>${fmtDate(s.date)}<br>Customer: ${escapeHTML(s.customer)}<br>Payment: ${escapeHTML(s.payment||'')}</div>
  <div class="line"></div><table><thead><tr><th>Item</th><th class="qty">Qty</th><th class="right">Amount</th></tr></thead><tbody>${items}</tbody></table>
@@ -2169,22 +2271,8 @@ function receiptPrint(s){
  <div class="line"></div><div class="thanks">${escapeHTML(inv.footer||state.settings.thanks)}</div>
  
 
-
-</body></html>`;
-
- try{
-   const url=URL.createObjectURL(new Blob([printHTML],{type:'text/html;charset=utf-8'}));
-   const w=window.open(url,'_blank');
-   if(!w){
-     URL.revokeObjectURL(url);
-     toast('Please allow popups to print invoice');
-     return;
-   }
-   setTimeout(()=>{try{URL.revokeObjectURL(url)}catch(e){}},60000);
- }catch(e){
-   console.error('Print preview:',e);
-   toast('Could not open invoice preview');
- }
+</body></html>`);
+ win.document.close()
 }
 function testPrint(){receiptPrint({invoice:'TEST-0001',date:today(),customer:'Test Customer',items:[{productId:state.products[0]?.id,qty:1,price:state.products[0]?.price||0}],total:state.products[0]?.price||0,paid:state.products[0]?.price||0,due:0})}
 async function connectBluetooth(){
@@ -2362,22 +2450,8 @@ function loadQuotation(id){
 }
 function printQuotation(id){
  const q=state.quotations.find(x=>x.id===id);if(!q)return;
- const rows=q.items.map(i=>`<tr><td>${escapeHTML(i.name||'Item')}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(i.qty*i.price)}</td></tr>`).join('');
- const html=`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHTML(q.number)}</title><style>
- body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}
- th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
- </style></head><body><h2>${escapeHTML(state.settings.business)}</h2>
- <h3>Quotation: ${escapeHTML(q.number)}</h3><p>${escapeHTML(q.customer||'Walk-in')}</p>
- <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
- <h3>Total: ${money(q.total)}</h3><p>${escapeHTML(q.note||'')}</p>
- </body></html>`;
- try{
-   const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
-   const w=window.open(url,'_blank');
-   if(!w){URL.revokeObjectURL(url);toast('Please allow popups to print');return}
-   setTimeout(()=>{try{w.print()}catch(e){}},700);
-   setTimeout(()=>{try{URL.revokeObjectURL(url)}catch(e){}},60000);
- }catch(e){console.error(e);toast('Could not open quotation preview')}
+ const rows=(q.items||[]).map(i=>`<tr><td>${escapeHTML(i.name||'')}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money((i.qty||0)*(i.price||0))}</td></tr>`).join('');
+ const w=window.open('','_blank');if(!w){toast('Please allow popups to print');return}w.document.write(`<html><head><title>${escapeHTML(q.number)}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}</style></head><body><h2>${escapeHTML(state.settings.business)}</h2><h3>QUOTATION ${escapeHTML(q.number)}</h3><p>Customer: ${escapeHTML(q.customer||'Walk-in')}<br>Date: ${escapeHTML(fmtDate(q.date))}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><h3>Total: ${money(q.total)}</h3><p>${escapeHTML(q.note||'')}</p></body></html>`);w.document.close();w.onload=()=>w.print();
 }
 function deleteQuotation(id){if(!isAdmin()){toast('Admin only');return}if(!confirm('Delete this quotation?'))return;state.quotations=state.quotations.filter(x=>x.id!==id);save();renderQuotations();}
 
@@ -2602,24 +2676,6 @@ window.addEventListener('load',async()=>{
 });
 </script>
 
-<script id="dlimans-final-boot-guard">
-(function(){
-  function repairView(){
-    try{
-      const app=document.getElementById('app');
-      const content=app&&app.querySelector('.content');
-      if(!app||!content||getComputedStyle(app).display==='none') return;
-      let active=content.querySelector('.view.active');
-      if(!active) active=content.querySelector('#view-dashboard')||content.querySelector('.view');
-      if(active){active.classList.add('active');active.style.display='block';active.style.visibility='visible';active.style.opacity='1';}
-    }catch(e){}
-  }
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(repairView,120),{once:true});
-  window.addEventListener('load',()=>setTimeout(repairView,250));
-  window.addEventListener('pageshow',()=>setTimeout(repairView,150));
-})();
-</script>
-
 <script>
 /* One-tap accelerator:
    - only touch/pen pointers
@@ -2632,7 +2688,7 @@ window.addEventListener('load',async()=>{
 
   function isTapTarget(el){
     return el && el.closest && el.closest(
-      'button,.btn,.side-item,.dash-action,.admin-tool,.purchase-tab,.product-tile'
+      'button,.btn,.dash-action,.admin-tool,.purchase-tab,.product-tile'
     );
   }
 
@@ -3320,6 +3376,24 @@ window.dlimansSelfCheck=function(){
  return {ok:!missingViews.length&&!missingIds.length,missingViews,missingIds,supabaseConfigured:isConfigured(),firebaseConfigured:!!window.firebase};
 };
 })();
+/* ===== FINAL RUNTIME GUARD ===== */
+window.addEventListener('error',function(e){
+ console.error('Dlimans runtime error:',e.error||e.message);
+});
+window.addEventListener('unhandledrejection',function(e){
+ console.error('Dlimans promise error:',e.reason);
+});
+document.addEventListener('visibilitychange',function(){
+ if(document.visibilityState==='visible'){
+   const v=document.querySelector('.view.active');
+   if(v){
+     v.hidden=false;
+     v.style.setProperty('display','block','important');
+     v.style.setProperty('visibility','visible','important');
+     v.style.setProperty('opacity','1','important');
+   }
+ }
+});
 </script>
 </body>
 </html>

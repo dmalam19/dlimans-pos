@@ -497,6 +497,32 @@ body.noisy-theme::after{pointer-events:none!important;
   .app-back-btn{min-width:62px!important;padding:8px 7px!important}
 }
 
+
+/* ===== DESKTOP MAIN MENU COLLAPSE FIX ===== */
+@media (min-width:801px){
+  .sidebar.collapsed{
+    width:78px!important;
+    flex-basis:78px!important;
+    padding:10px 6px 20px!important;
+    overflow-x:hidden!important;
+  }
+  .sidebar.collapsed .side-label,
+  .sidebar.collapsed .side-group,
+  .sidebar.collapsed:after{display:none!important}
+  .sidebar.collapsed .side-item{
+    justify-content:center!important;
+    padding:10px 5px!important;
+  }
+  .sidebar.collapsed .side-icon{
+    margin:0!important;
+  }
+  .sidebar.collapsed + .content{
+    min-width:0;
+  }
+  #mainMenuBtn[aria-expanded="false"]{
+    outline:1px solid #00e67655;
+  }
+}
 </style>
 </head>
 <body>
@@ -528,7 +554,7 @@ body.noisy-theme::after{pointer-events:none!important;
 
 <div id="app">
   <header class="topbar">
-    <button class="btn ghost" onclick="toggleSidebar()">☰</button>
+    <button id="mainMenuBtn" class="btn ghost" title="Collapse / Expand Main Menu" aria-label="Collapse / Expand Main Menu" aria-expanded="true" onclick="toggleSidebar()">☰</button>
     <button class="btn ghost app-back-btn" onclick="goBackInApp()">← Back</button>
     <div class="brand"><span id="topBusiness">Dlimans Supermarket</span> <span class="muted">•</span> <span id="topRole">Admin</span></div>
     <div class="right row">
@@ -1531,8 +1557,17 @@ function toggleSidebar(){
     side.classList.toggle('open',open);
     document.body.classList.toggle('sidebar-open',open);
     document.documentElement.classList.toggle('sidebar-open',open);
+    const btn=document.getElementById('mainMenuBtn');
+    if(btn)btn.setAttribute('aria-expanded',open?'true':'false');
   }else{
-    side.classList.toggle('collapsed');
+    const collapsed=!side.classList.contains('collapsed');
+    side.classList.toggle('collapsed',collapsed);
+    const btn=document.getElementById('mainMenuBtn');
+    if(btn){
+      btn.setAttribute('aria-expanded',collapsed?'false':'true');
+      btn.title=collapsed?'Expand Main Menu':'Collapse Main Menu';
+      btn.setAttribute('aria-label',btn.title);
+    }
   }
 }
 function renderPOS(){

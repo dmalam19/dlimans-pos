@@ -2165,361 +2165,7 @@ button *,
  <div class="total">Total: ${money(s.total)}</div><div style="text-align:right">${paid}${due}</div>${note}
  <div class="line"></div><div class="thanks">${escapeHTML(inv.footer||state.settings.thanks)}</div>
  
-<script id="dlimans-supabase-enhancement">
-/* ================================================================
-   DLIMANS SUPABASE ENHANCEMENT
-   - Keeps the existing POS/localStorage/Firebase features intact.
-   - Adds optional Supabase cloud state sync.
-   - Adds real-time Admin/Cashier chat, presence and WebRTC signaling.
-   - Requires the companion Supabase SQL tables supplied with this file.
-   ================================================================ */
-(function(){
-  const SB_CFG_KEY='DLIMANS_SUPABASE_CONFIG_V1';
-  const SB_BUSINESS_KEY='DLIMANS_BUSINESS_KEY_V1';
-  let sbClient=null, sbChannel=null, sbPresenceChannel=null;
-  let sbSelectedUser=null, sbMessages=[], sbLocalStream=null, sbPeer=null, sbCallId=null;
-  let sbRemoteCandidates=[], sbSeenCandidates=new Set();
 
-  function el(id){return document.getElementById(id)}
-  function cfg(){
-    try{return JSON.parse(localStorage.getItem(SB_CFG_KEY)||'null')||{}}catch(e){return {}}
-  }
-  function businessKey(){
-    let x=localStorage.getItem(SB_BUSINESS_KEY);
-    if(!x){x='dlimans-main-business';localStorage.setItem(SB_BUSINESS_KEY,x)}
-    return x;
-  }
-  function currentIdentity(){
-    const u=window.currentUser||{};
-    return {
-      id:String(u.id||u.username||'local-user'),
-      username:String(u.username||u.name||'staff'),
-      name:String(u.name||u.username||'Staff'),
-      role:String(u.role||'Cashier'),
-      business_id:businessKey()
-    };
-  }
-  function setStatus(t,good){
-    const x=el('sbStatus'); if(x){x.textContent=t;x.className='badge '+(good?'green':'')}
-  }
-  function loadConfigUI(){
-    const c=cfg();
-    if(el('sbUrl'))el('sbUrl').value=c.url||'';
-    if(el('sbKey'))el('sbKey').value=c.key||'';
-  }
-  function isConfigured(){const c=cfg();return !!(c.url&&c.key&&window.supabase)}
-  async function connect(){
-    if(!isConfigured()){setStatus('Not configured',false);return false}
-    try{
-      const c=cfg();
-      sbClient=window.supabase.createClient(c.url,c.key,{auth:{persistSession:false}});
-      await sbEnsureStateTable();
-      await sbStartRealtime();
-      setStatus('🟢 Supabase connected',true);
-      await sbInitialSync();
-      await sbRenderPeople();
-      await sbRenderMessages();
-      return true;
-    }catch(e){
-      console.error('Supabase connection:',e);
-      setStatus('🔴 Connection failed',false);
-      if(typeof toast==='function')toast('Supabase connection failed: '+(e.message||e));
-      return false;
-    }
-  }
-  window.sbSaveConfig=async function(){
-    if(!window.currentUser || window.currentUser.role!=='Admin'){
-      if(typeof toast==='function')toast('Admin only'); return;
-    }
-    const url=(el('sbUrl')?.value||'').trim().replace(/\/$/,'');
-    const key=(el('sbKey')?.value||'').trim();
-    if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)){
-      toast('Enter the Supabase Project URL'); return;
-    }
-    if(!key){toast('Enter the Supabase Publishable/anon key');return}
-    localStorage.setItem(SB_CFG_KEY,JSON.stringify({url,key}));
-    await connect();
-  };
-  window.sbDisconnect=function(){
-    try{sbChannel?.unsubscribe()}catch(e){}
-    try{sbPresenceChannel?.unsubscribe()}catch(e){}
-    sbChannel=null;sbPresenceChannel=null;sbClient=null;
-    setStatus('Disconnected',false);
-    if(typeof toast==='function')toast('Supabase disconnected');
-  };
-
-  async function sbEnsureStateTable(){
-    /* No SQL is executed from the browser. The companion SQL file creates the table. */
-    return true;
-  }
-
-  async function sbStartRealtime(){
-    if(!sbClient)return;
-    const me=currentIdentity();
-    try{sbPresenceChannel?.unsubscribe()}catch(e){}
-    sbPresenceChannel=sbClient.channel('dlimans-presence-'+me.business_id,{
-      config:{presence:{key:me.id}}
-    });
-    sbPresenceChannel.on('presence',{event:'sync'},()=>sbRenderPeople()).on('presence',{event:'join'},()=>sbRenderPeople()).on('presence',{event:'leave'},()=>sbRenderPeople());
-    await sbPresenceChannel.subscribe(async status=>{
-      if(status==='SUBSCRIBED'){
-        await sbPresenceChannel.track({...me,online_at:new Date().toISOString()});
-        sbRenderPeople();
-      }
-    });
-
-    try{sbChannel?.unsubscribe()}catch(e){}
-    sbChannel=sbClient.channel('dlimans-realtime-'+me.business_id);
-    sbChannel.on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_messages',filter:'business_id=eq.'+me.business_id},payload=>{
-      const m=payload.new;
-      if(m&&m.to_user_id===me.id || m&&m.from_user_id===me.id)sbRenderMessages();
-      if(m&&m.to_user_id===me.id && typeof toast==='function')toast('💬 New message from '+(m.from_name||'Staff'));
-    });
-    sbChannel.on('postgres_changes',{event:'*',schema:'public',table:'communication_calls',filter:'business_id=eq.'+me.business_id},payload=>{
-      sbHandleCallRow(payload.new||payload.old||{});
-    });
-    await sbChannel.subscribe();
-  }
-
-  async function sbRenderPeople(){
-    const box=el('sbPeople'); if(!box)return;
-    const me=currentIdentity();
-    let people=[];
-    try{
-      if(sbPresenceChannel){
-        const state=sbPresenceChannel.presenceState();
-        Object.values(state||{}).flat().forEach(p=>{
-          if(p&&p.id!==me.id)people.push(p)
-        });
-      }
-    }catch(e){}
-    if(!people.length && Array.isArray(window.state?.users)){
-      people=state.users.filter(u=>u&&u.active!==false&&String(u.id)!==me.id).map(u=>({
-        id:String(u.id),name:u.name||u.username,username:u.username||'',role:u.role||'Cashier',online_at:null
-      }));
-    }
-    box.innerHTML=people.map(p=>{
-      const pid=encodeURIComponent(String(p.id||''));
-      const pname=encodeURIComponent(String(p.name||p.username||'Staff'));
-      return `<div class="sb-person">
-        <b>${escapeHTML(p.name||p.username||'Staff')}</b>
-        <div class="small">${escapeHTML(p.role||'Staff')} • ${p.online_at?'🟢 Online':'⚪ Available'}</div>
-        <button class="btn sm" onclick="sbSelectUser(decodeURIComponent('${pid}'),decodeURIComponent('${pname}'))">Chat</button>
-        <button class="btn sm primary" onclick="sbSelectUser(decodeURIComponent('${pid}'),decodeURIComponent('${pname}'));sbStartVideoCall()">🎥</button>
-      </div>`;
-    }).join('') || '<div class="small">No other Admin/Cashier is currently connected.</div>';
-  }
-  window.sbSelectUser=function(id,name){
-    sbSelectedUser={id,name}; sbRenderMessages();
-    if(typeof toast==='function')toast('Chatting with '+name);
-  };
-  async function sbRenderMessages(){
-    const box=el('sbMessages'); if(!box)return;
-    if(!sbClient||!sbSelectedUser){box.innerHTML='<div class="small">Select a staff member to start chat.</div>';return}
-    const me=currentIdentity();
-    try{
-      const {data,error}=await sbClient.from('communication_messages').select('*').eq('business_id',me.business_id).or(`and(from_user_id.eq.${me.id},to_user_id.eq.${sbSelectedUser.id}),and(from_user_id.eq.${sbSelectedUser.id},to_user_id.eq.${me.id})`).order('created_at',{ascending:true}).limit(200);
-      if(error)throw error;
-      sbMessages=data||[];
-      box.innerHTML=sbMessages.map(m=>`<div class="sb-msg ${m.from_user_id===me.id?'me':''}"><b>${escapeHTML(m.from_name||'Staff')}</b><div>${escapeHTML(m.message||'')}</div><div class="small">${new Date(m.created_at).toLocaleString()}</div></div>`).join('')||'<div class="small">No messages yet.</div>';
-      box.scrollTop=box.scrollHeight;
-    }catch(e){console.warn('Chat load:',e);box.innerHTML='<div class="small">Chat unavailable. Check the Supabase SQL/RLS setup.</div>'}
-  }
-  window.sbSendMessage=async function(){
-    if(!sbClient||!sbSelectedUser){toast('Select a staff member first');return}
-    const input=el('sbMessage'), message=(input?.value||'').trim(); if(!message)return;
-    const me=currentIdentity();
-    try{
-      const {error}=await sbClient.from('communication_messages').insert({
-        business_id:me.business_id,from_user_id:me.id,from_name:me.name,from_role:me.role,
-        to_user_id:sbSelectedUser.id,to_name:sbSelectedUser.name,message
-      });
-      if(error)throw error;
-      input.value=''; await sbRenderMessages();
-    }catch(e){toast('Message failed: '+(e.message||e))}
-  };
-
-  async function sbSyncState(){
-    if(!sbClient)return;
-    const me=currentIdentity();
-    const payload={business_id:me.business_id,state_json:window.state||{},updated_by:me.id,updated_at:new Date().toISOString()};
-    const {error}=await sbClient.from('pos_state').upsert(payload,{onConflict:'business_id'});
-    if(error)throw error;
-  }
-  async function sbPullState(){
-    if(!sbClient)return;
-    const me=currentIdentity();
-    const {data,error}=await sbClient.from('pos_state').select('state_json,updated_at').eq('business_id',me.business_id).maybeSingle();
-    if(error)throw error;
-    if(data?.state_json && typeof data.state_json==='object'){
-      const localUpdated=Number(localStorage.getItem('DLIMANS_STATE_LAST_PUSH')||0);
-      const remoteTime=Date.parse(data.updated_at||0)||0;
-      if(remoteTime>localUpdated && window.state){
-        const remote=data.state_json;
-        if(confirm('Cloud data is newer than this device. Load the latest cloud POS data now?')){
-          window.state=remote;
-          if(typeof save==='function')save();
-          if(typeof refresh==='function')refresh();
-        }
-      }
-    }
-  }
-  async function sbInitialSync(){
-    if(!sbClient)return;
-    const me=currentIdentity();
-    const {data,error}=await sbClient.from('pos_state').select('state_json,updated_at').eq('business_id',me.business_id).maybeSingle();
-    if(error)throw error;
-    if(!data){
-      await sbSyncState();
-      localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(Date.now()));
-      return;
-    }
-    const remoteTime=Date.parse(data.updated_at||0)||0;
-    const localTime=Number(localStorage.getItem('DLIMANS_STATE_LAST_PUSH')||0);
-    if(remoteTime>localTime && data.state_json && typeof data.state_json==='object'){
-      const useRemote=confirm('A newer Dlimans POS database is available in the cloud. Load it on this device?');
-      if(useRemote){
-        window.state=data.state_json;
-        if(typeof save==='function')save();
-        if(typeof refresh==='function')refresh();
-        localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(remoteTime));
-        return;
-      }
-    }
-    await sbSyncState();
-    localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(Date.now()));
-  }
-  window.sbSyncNow=async function(){
-    if(!sbClient){if(!await connect())return}
-    try{
-      await sbSyncState();
-      localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(Date.now()));
-      if(typeof toast==='function')toast('☁️ POS cloud sync completed');
-    }catch(e){console.error('Supabase sync:',e);if(typeof toast==='function')toast('Cloud sync failed: '+(e.message||e))}
-  };
-
-  function pc(){
-    return window.RTCPeerConnection?new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]}):null;
-  }
-  function waitIceComplete(peer,timeout=7000){
-    return new Promise(resolve=>{
-      if(!peer || peer.iceGatheringState==='complete'){resolve();return}
-      let done=false;
-      const finish=()=>{if(done)return;done=true;peer.removeEventListener('icegatheringstatechange',check);resolve()};
-      const check=()=>{if(peer.iceGatheringState==='complete')finish()};
-      peer.addEventListener('icegatheringstatechange',check);
-      setTimeout(finish,timeout);
-    });
-  }
-  function peerCandidates(peer){
-    try{
-      return (peer.localDescription?.sdp||'').split('\n').filter(x=>x.startsWith('a=candidate:')).map(x=>({candidate:x.trim()}));
-    }catch(e){return []}
-  }
-  async function sbStartCall(kind){
-    if(!sbClient||!sbSelectedUser){toast('Select a staff member first');return}
-    if(!navigator.mediaDevices?.getUserMedia){toast('Camera/microphone is not supported here');return}
-    const me=currentIdentity();
-    sbCallId=crypto.randomUUID();
-    sbPeer=pc();
-    if(!sbPeer){toast('WebRTC is not supported');return}
-    try{
-      sbLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:kind==='video'});
-      const lv=el('sbLocalVideo'); if(lv)lv.srcObject=sbLocalStream;
-      sbLocalStream.getTracks().forEach(t=>sbPeer.addTrack(t,sbLocalStream));
-      sbPeer.ontrack=e=>{const v=el('sbRemoteVideo');if(v)v.srcObject=e.streams[0]; const a=el('voiceRemoteAudio');if(a)a.srcObject=e.streams[0]};
-      const offer=await sbPeer.createOffer(); await sbPeer.setLocalDescription(offer);
-      await waitIceComplete(sbPeer);
-      const candidates=peerCandidates(sbPeer);
-      const {error}=await sbClient.from('communication_calls').insert({
-        id:sbCallId,business_id:me.business_id,from_user_id:me.id,from_name:me.name,to_user_id:sbSelectedUser.id,to_name:sbSelectedUser.name,
-        kind,status:'ringing',offer:sbPeer.localDescription,offer_candidates:candidates
-      });
-      if(error)throw error;
-      el('sbCallInfo').textContent='Calling '+sbSelectedUser.name+'…';
-      setTimeout(async()=>{try{await sbWaitForAnswer()}catch(e){console.warn(e)}},500);
-    }catch(e){console.error(e);toast('Call could not start: '+(e.message||e));sbEndCall()}
-  }
-  window.sbStartVideoCall=()=>sbStartCall('video');
-  window.sbStartAudioCall=()=>sbStartCall('audio');
-
-  async function sbWaitForAnswer(){
-    if(!sbClient||!sbCallId)return;
-    const me=currentIdentity();
-    const started=Date.now();
-    const timer=setInterval(async()=>{
-      if(!sbCallId||Date.now()-started>30000){clearInterval(timer);return}
-      const {data}=await sbClient.from('communication_calls').select('*').eq('id',sbCallId).maybeSingle();
-      if(!data)return;
-      if(data.answer && sbPeer?.signalingState==='have-local-offer'){
-        try{await sbPeer.setRemoteDescription(new RTCSessionDescription(data.answer));el('sbCallInfo').textContent='🟢 Call connected';}catch(e){}
-      }
-      await sbAddRemoteCandidates(data.answer_candidates||[]);
-      if(data.status==='ended'){clearInterval(timer);sbEndCall(false)}
-    },700);
-  }
-  async function sbHandleCallRow(row){
-    if(!row||!sbClient)return;
-    const me=currentIdentity();
-    if(row.to_user_id!==me.id)return;
-    if(row.status==='ringing'&&row.offer&&!sbCallId){
-      const who=row.from_name||'Staff';
-      if(!confirm('Incoming '+row.kind+' call from '+who+'. Accept?')){await sbUpdateCall(row.id,{status:'ended'});return}
-      sbSelectedUser={id:row.from_user_id,name:who};sbCallId=row.id;
-      try{
-        sbPeer=pc(); sbLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:row.kind==='video'});
-        const lv=el('sbLocalVideo');if(lv)lv.srcObject=sbLocalStream;
-        sbLocalStream.getTracks().forEach(t=>sbPeer.addTrack(t,sbLocalStream));
-        sbPeer.ontrack=e=>{const v=el('sbRemoteVideo');if(v)v.srcObject=e.streams[0];const a=el('voiceRemoteAudio');if(a)a.srcObject=e.streams[0]};
-        await sbPeer.setRemoteDescription(row.offer);
-        await sbAddRemoteCandidates(row.offer_candidates||[]);
-        const answer=await sbPeer.createAnswer();await sbPeer.setLocalDescription(answer);
-        await waitIceComplete(sbPeer);
-        await sbUpdateCall(row.id,{answer:sbPeer.localDescription,answer_candidates:peerCandidates(sbPeer),status:'connected'});
-        el('sbCallInfo').textContent='🟢 Connected to '+who;
-      }catch(e){toast('Could not accept call: '+(e.message||e));sbEndCall()}
-    }
-  }
-  async function sbAddRemoteCandidates(arr){
-    if(!sbPeer)return;
-    for(const c of (arr||[])){
-      const key=JSON.stringify(c);if(sbSeenCandidates.has(key))continue;sbSeenCandidates.add(key);
-      try{await sbPeer.addIceCandidate(c)}catch(e){}
-    }
-  }
-  async function sbUpdateCall(id,patch){
-    if(!sbClient||!id)return;
-    try{await sbClient.from('communication_calls').update(patch).eq('id',id)}catch(e){console.warn('call update',e)}
-  }
-  window.sbEndCall=async function(doUpdate=true){
-    if(doUpdate&&sbCallId)await sbUpdateCall(sbCallId,{status:'ended',ended_at:new Date().toISOString()});
-    try{sbPeer?.close()}catch(e){}
-    try{sbLocalStream?.getTracks?.().forEach(t=>t.stop())}catch(e){}
-    sbPeer=null;sbLocalStream=null;sbCallId=null;sbSeenCandidates=new Set();
-    if(el('sbLocalVideo'))el('sbLocalVideo').srcObject=null;
-    if(el('sbRemoteVideo'))el('sbRemoteVideo').srcObject=null;
-    if(el('sbCallInfo'))el('sbCallInfo').textContent='No Supabase call active.';
-  };
-
-  // Hook existing save() without replacing it: local save remains authoritative.
-  const originalSave=window.save;
-  if(typeof originalSave==='function'){
-    window.save=function(){
-      const r=originalSave.apply(this,arguments);
-      if(sbClient && navigator.onLine && window.currentUser){
-        clearTimeout(window.__sbSaveTimer);
-        window.__sbSaveTimer=setTimeout(()=>sbSyncNow().catch(()=>{}),1200);
-      }
-      return r;
-    };
-  }
-
-  window.addEventListener('load',()=>{
-    loadConfigUI();
-    if(cfg().url&&cfg().key) setTimeout(()=>connect().catch(()=>{}),1200);
-  });
-})();
-</script>
 </body></html>`);
  win.document.close()
 }
@@ -3233,6 +2879,361 @@ window.addEventListener('load',()=>setTimeout(()=>{if(currentUser&&syncUser)voic
   else restoreNow();
   window.addEventListener('load',()=>setTimeout(restoreNow,120));
   window.addEventListener('pageshow',()=>setTimeout(restoreNow,80));
+})();
+</script>
+<script id="dlimans-supabase-enhancement">
+/* ================================================================
+   DLIMANS SUPABASE ENHANCEMENT
+   - Keeps the existing POS/localStorage/Firebase features intact.
+   - Adds optional Supabase cloud state sync.
+   - Adds real-time Admin/Cashier chat, presence and WebRTC signaling.
+   - Requires the companion Supabase SQL tables supplied with this file.
+   ================================================================ */
+(function(){
+  const SB_CFG_KEY='DLIMANS_SUPABASE_CONFIG_V1';
+  const SB_BUSINESS_KEY='DLIMANS_BUSINESS_KEY_V1';
+  let sbClient=null, sbChannel=null, sbPresenceChannel=null;
+  let sbSelectedUser=null, sbMessages=[], sbLocalStream=null, sbPeer=null, sbCallId=null;
+  let sbRemoteCandidates=[], sbSeenCandidates=new Set();
+
+  function el(id){return document.getElementById(id)}
+  function cfg(){
+    try{return JSON.parse(localStorage.getItem(SB_CFG_KEY)||'null')||{}}catch(e){return {}}
+  }
+  function businessKey(){
+    let x=localStorage.getItem(SB_BUSINESS_KEY);
+    if(!x){x='dlimans-main-business';localStorage.setItem(SB_BUSINESS_KEY,x)}
+    return x;
+  }
+  function currentIdentity(){
+    const u=window.currentUser||{};
+    return {
+      id:String(u.id||u.username||'local-user'),
+      username:String(u.username||u.name||'staff'),
+      name:String(u.name||u.username||'Staff'),
+      role:String(u.role||'Cashier'),
+      business_id:businessKey()
+    };
+  }
+  function setStatus(t,good){
+    const x=el('sbStatus'); if(x){x.textContent=t;x.className='badge '+(good?'green':'')}
+  }
+  function loadConfigUI(){
+    const c=cfg();
+    if(el('sbUrl'))el('sbUrl').value=c.url||'';
+    if(el('sbKey'))el('sbKey').value=c.key||'';
+  }
+  function isConfigured(){const c=cfg();return !!(c.url&&c.key&&window.supabase)}
+  async function connect(){
+    if(!isConfigured()){setStatus('Not configured',false);return false}
+    try{
+      const c=cfg();
+      sbClient=window.supabase.createClient(c.url,c.key,{auth:{persistSession:false}});
+      await sbEnsureStateTable();
+      await sbStartRealtime();
+      setStatus('🟢 Supabase connected',true);
+      await sbInitialSync();
+      await sbRenderPeople();
+      await sbRenderMessages();
+      return true;
+    }catch(e){
+      console.error('Supabase connection:',e);
+      setStatus('🔴 Connection failed',false);
+      if(typeof toast==='function')toast('Supabase connection failed: '+(e.message||e));
+      return false;
+    }
+  }
+  window.sbSaveConfig=async function(){
+    if(!window.currentUser || window.currentUser.role!=='Admin'){
+      if(typeof toast==='function')toast('Admin only'); return;
+    }
+    const url=(el('sbUrl')?.value||'').trim().replace(/\/$/,'');
+    const key=(el('sbKey')?.value||'').trim();
+    if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)){
+      toast('Enter the Supabase Project URL'); return;
+    }
+    if(!key){toast('Enter the Supabase Publishable/anon key');return}
+    localStorage.setItem(SB_CFG_KEY,JSON.stringify({url,key}));
+    await connect();
+  };
+  window.sbDisconnect=function(){
+    try{sbChannel?.unsubscribe()}catch(e){}
+    try{sbPresenceChannel?.unsubscribe()}catch(e){}
+    sbChannel=null;sbPresenceChannel=null;sbClient=null;
+    setStatus('Disconnected',false);
+    if(typeof toast==='function')toast('Supabase disconnected');
+  };
+
+  async function sbEnsureStateTable(){
+    /* No SQL is executed from the browser. The companion SQL file creates the table. */
+    return true;
+  }
+
+  async function sbStartRealtime(){
+    if(!sbClient)return;
+    const me=currentIdentity();
+    try{sbPresenceChannel?.unsubscribe()}catch(e){}
+    sbPresenceChannel=sbClient.channel('dlimans-presence-'+me.business_id,{
+      config:{presence:{key:me.id}}
+    });
+    sbPresenceChannel.on('presence',{event:'sync'},()=>sbRenderPeople()).on('presence',{event:'join'},()=>sbRenderPeople()).on('presence',{event:'leave'},()=>sbRenderPeople());
+    await sbPresenceChannel.subscribe(async status=>{
+      if(status==='SUBSCRIBED'){
+        await sbPresenceChannel.track({...me,online_at:new Date().toISOString()});
+        sbRenderPeople();
+      }
+    });
+
+    try{sbChannel?.unsubscribe()}catch(e){}
+    sbChannel=sbClient.channel('dlimans-realtime-'+me.business_id);
+    sbChannel.on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_messages',filter:'business_id=eq.'+me.business_id},payload=>{
+      const m=payload.new;
+      if(m&&m.to_user_id===me.id || m&&m.from_user_id===me.id)sbRenderMessages();
+      if(m&&m.to_user_id===me.id && typeof toast==='function')toast('💬 New message from '+(m.from_name||'Staff'));
+    });
+    sbChannel.on('postgres_changes',{event:'*',schema:'public',table:'communication_calls',filter:'business_id=eq.'+me.business_id},payload=>{
+      sbHandleCallRow(payload.new||payload.old||{});
+    });
+    await sbChannel.subscribe();
+  }
+
+  async function sbRenderPeople(){
+    const box=el('sbPeople'); if(!box)return;
+    const me=currentIdentity();
+    let people=[];
+    try{
+      if(sbPresenceChannel){
+        const state=sbPresenceChannel.presenceState();
+        Object.values(state||{}).flat().forEach(p=>{
+          if(p&&p.id!==me.id)people.push(p)
+        });
+      }
+    }catch(e){}
+    if(!people.length && Array.isArray(window.state?.users)){
+      people=state.users.filter(u=>u&&u.active!==false&&String(u.id)!==me.id).map(u=>({
+        id:String(u.id),name:u.name||u.username,username:u.username||'',role:u.role||'Cashier',online_at:null
+      }));
+    }
+    box.innerHTML=people.map(p=>{
+      const pid=encodeURIComponent(String(p.id||''));
+      const pname=encodeURIComponent(String(p.name||p.username||'Staff'));
+      return `<div class="sb-person">
+        <b>${escapeHTML(p.name||p.username||'Staff')}</b>
+        <div class="small">${escapeHTML(p.role||'Staff')} • ${p.online_at?'🟢 Online':'⚪ Available'}</div>
+        <button class="btn sm" onclick="sbSelectUser(decodeURIComponent('${pid}'),decodeURIComponent('${pname}'))">Chat</button>
+        <button class="btn sm primary" onclick="sbSelectUser(decodeURIComponent('${pid}'),decodeURIComponent('${pname}'));sbStartVideoCall()">🎥</button>
+      </div>`;
+    }).join('') || '<div class="small">No other Admin/Cashier is currently connected.</div>';
+  }
+  window.sbSelectUser=function(id,name){
+    sbSelectedUser={id,name}; sbRenderMessages();
+    if(typeof toast==='function')toast('Chatting with '+name);
+  };
+  async function sbRenderMessages(){
+    const box=el('sbMessages'); if(!box)return;
+    if(!sbClient||!sbSelectedUser){box.innerHTML='<div class="small">Select a staff member to start chat.</div>';return}
+    const me=currentIdentity();
+    try{
+      const {data,error}=await sbClient.from('communication_messages').select('*').eq('business_id',me.business_id).or(`and(from_user_id.eq.${me.id},to_user_id.eq.${sbSelectedUser.id}),and(from_user_id.eq.${sbSelectedUser.id},to_user_id.eq.${me.id})`).order('created_at',{ascending:true}).limit(200);
+      if(error)throw error;
+      sbMessages=data||[];
+      box.innerHTML=sbMessages.map(m=>`<div class="sb-msg ${m.from_user_id===me.id?'me':''}"><b>${escapeHTML(m.from_name||'Staff')}</b><div>${escapeHTML(m.message||'')}</div><div class="small">${new Date(m.created_at).toLocaleString()}</div></div>`).join('')||'<div class="small">No messages yet.</div>';
+      box.scrollTop=box.scrollHeight;
+    }catch(e){console.warn('Chat load:',e);box.innerHTML='<div class="small">Chat unavailable. Check the Supabase SQL/RLS setup.</div>'}
+  }
+  window.sbSendMessage=async function(){
+    if(!sbClient||!sbSelectedUser){toast('Select a staff member first');return}
+    const input=el('sbMessage'), message=(input?.value||'').trim(); if(!message)return;
+    const me=currentIdentity();
+    try{
+      const {error}=await sbClient.from('communication_messages').insert({
+        business_id:me.business_id,from_user_id:me.id,from_name:me.name,from_role:me.role,
+        to_user_id:sbSelectedUser.id,to_name:sbSelectedUser.name,message
+      });
+      if(error)throw error;
+      input.value=''; await sbRenderMessages();
+    }catch(e){toast('Message failed: '+(e.message||e))}
+  };
+
+  async function sbSyncState(){
+    if(!sbClient)return;
+    const me=currentIdentity();
+    const payload={business_id:me.business_id,state_json:window.state||{},updated_by:me.id,updated_at:new Date().toISOString()};
+    const {error}=await sbClient.from('pos_state').upsert(payload,{onConflict:'business_id'});
+    if(error)throw error;
+  }
+  async function sbPullState(){
+    if(!sbClient)return;
+    const me=currentIdentity();
+    const {data,error}=await sbClient.from('pos_state').select('state_json,updated_at').eq('business_id',me.business_id).maybeSingle();
+    if(error)throw error;
+    if(data?.state_json && typeof data.state_json==='object'){
+      const localUpdated=Number(localStorage.getItem('DLIMANS_STATE_LAST_PUSH')||0);
+      const remoteTime=Date.parse(data.updated_at||0)||0;
+      if(remoteTime>localUpdated && window.state){
+        const remote=data.state_json;
+        if(confirm('Cloud data is newer than this device. Load the latest cloud POS data now?')){
+          window.state=remote;
+          if(typeof save==='function')save();
+          if(typeof refresh==='function')refresh();
+        }
+      }
+    }
+  }
+  async function sbInitialSync(){
+    if(!sbClient)return;
+    const me=currentIdentity();
+    const {data,error}=await sbClient.from('pos_state').select('state_json,updated_at').eq('business_id',me.business_id).maybeSingle();
+    if(error)throw error;
+    if(!data){
+      await sbSyncState();
+      localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(Date.now()));
+      return;
+    }
+    const remoteTime=Date.parse(data.updated_at||0)||0;
+    const localTime=Number(localStorage.getItem('DLIMANS_STATE_LAST_PUSH')||0);
+    if(remoteTime>localTime && data.state_json && typeof data.state_json==='object'){
+      const useRemote=confirm('A newer Dlimans POS database is available in the cloud. Load it on this device?');
+      if(useRemote){
+        window.state=data.state_json;
+        if(typeof save==='function')save();
+        if(typeof refresh==='function')refresh();
+        localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(remoteTime));
+        return;
+      }
+    }
+    await sbSyncState();
+    localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(Date.now()));
+  }
+  window.sbSyncNow=async function(){
+    if(!sbClient){if(!await connect())return}
+    try{
+      await sbSyncState();
+      localStorage.setItem('DLIMANS_STATE_LAST_PUSH',String(Date.now()));
+      if(typeof toast==='function')toast('☁️ POS cloud sync completed');
+    }catch(e){console.error('Supabase sync:',e);if(typeof toast==='function')toast('Cloud sync failed: '+(e.message||e))}
+  };
+
+  function pc(){
+    return window.RTCPeerConnection?new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]}):null;
+  }
+  function waitIceComplete(peer,timeout=7000){
+    return new Promise(resolve=>{
+      if(!peer || peer.iceGatheringState==='complete'){resolve();return}
+      let done=false;
+      const finish=()=>{if(done)return;done=true;peer.removeEventListener('icegatheringstatechange',check);resolve()};
+      const check=()=>{if(peer.iceGatheringState==='complete')finish()};
+      peer.addEventListener('icegatheringstatechange',check);
+      setTimeout(finish,timeout);
+    });
+  }
+  function peerCandidates(peer){
+    try{
+      return (peer.localDescription?.sdp||'').split('\n').filter(x=>x.startsWith('a=candidate:')).map(x=>({candidate:x.trim()}));
+    }catch(e){return []}
+  }
+  async function sbStartCall(kind){
+    if(!sbClient||!sbSelectedUser){toast('Select a staff member first');return}
+    if(!navigator.mediaDevices?.getUserMedia){toast('Camera/microphone is not supported here');return}
+    const me=currentIdentity();
+    sbCallId=crypto.randomUUID();
+    sbPeer=pc();
+    if(!sbPeer){toast('WebRTC is not supported');return}
+    try{
+      sbLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:kind==='video'});
+      const lv=el('sbLocalVideo'); if(lv)lv.srcObject=sbLocalStream;
+      sbLocalStream.getTracks().forEach(t=>sbPeer.addTrack(t,sbLocalStream));
+      sbPeer.ontrack=e=>{const v=el('sbRemoteVideo');if(v)v.srcObject=e.streams[0]; const a=el('voiceRemoteAudio');if(a)a.srcObject=e.streams[0]};
+      const offer=await sbPeer.createOffer(); await sbPeer.setLocalDescription(offer);
+      await waitIceComplete(sbPeer);
+      const candidates=peerCandidates(sbPeer);
+      const {error}=await sbClient.from('communication_calls').insert({
+        id:sbCallId,business_id:me.business_id,from_user_id:me.id,from_name:me.name,to_user_id:sbSelectedUser.id,to_name:sbSelectedUser.name,
+        kind,status:'ringing',offer:sbPeer.localDescription,offer_candidates:candidates
+      });
+      if(error)throw error;
+      el('sbCallInfo').textContent='Calling '+sbSelectedUser.name+'…';
+      setTimeout(async()=>{try{await sbWaitForAnswer()}catch(e){console.warn(e)}},500);
+    }catch(e){console.error(e);toast('Call could not start: '+(e.message||e));sbEndCall()}
+  }
+  window.sbStartVideoCall=()=>sbStartCall('video');
+  window.sbStartAudioCall=()=>sbStartCall('audio');
+
+  async function sbWaitForAnswer(){
+    if(!sbClient||!sbCallId)return;
+    const me=currentIdentity();
+    const started=Date.now();
+    const timer=setInterval(async()=>{
+      if(!sbCallId||Date.now()-started>30000){clearInterval(timer);return}
+      const {data}=await sbClient.from('communication_calls').select('*').eq('id',sbCallId).maybeSingle();
+      if(!data)return;
+      if(data.answer && sbPeer?.signalingState==='have-local-offer'){
+        try{await sbPeer.setRemoteDescription(new RTCSessionDescription(data.answer));el('sbCallInfo').textContent='🟢 Call connected';}catch(e){}
+      }
+      await sbAddRemoteCandidates(data.answer_candidates||[]);
+      if(data.status==='ended'){clearInterval(timer);sbEndCall(false)}
+    },700);
+  }
+  async function sbHandleCallRow(row){
+    if(!row||!sbClient)return;
+    const me=currentIdentity();
+    if(row.to_user_id!==me.id)return;
+    if(row.status==='ringing'&&row.offer&&!sbCallId){
+      const who=row.from_name||'Staff';
+      if(!confirm('Incoming '+row.kind+' call from '+who+'. Accept?')){await sbUpdateCall(row.id,{status:'ended'});return}
+      sbSelectedUser={id:row.from_user_id,name:who};sbCallId=row.id;
+      try{
+        sbPeer=pc(); sbLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:row.kind==='video'});
+        const lv=el('sbLocalVideo');if(lv)lv.srcObject=sbLocalStream;
+        sbLocalStream.getTracks().forEach(t=>sbPeer.addTrack(t,sbLocalStream));
+        sbPeer.ontrack=e=>{const v=el('sbRemoteVideo');if(v)v.srcObject=e.streams[0];const a=el('voiceRemoteAudio');if(a)a.srcObject=e.streams[0]};
+        await sbPeer.setRemoteDescription(row.offer);
+        await sbAddRemoteCandidates(row.offer_candidates||[]);
+        const answer=await sbPeer.createAnswer();await sbPeer.setLocalDescription(answer);
+        await waitIceComplete(sbPeer);
+        await sbUpdateCall(row.id,{answer:sbPeer.localDescription,answer_candidates:peerCandidates(sbPeer),status:'connected'});
+        el('sbCallInfo').textContent='🟢 Connected to '+who;
+      }catch(e){toast('Could not accept call: '+(e.message||e));sbEndCall()}
+    }
+  }
+  async function sbAddRemoteCandidates(arr){
+    if(!sbPeer)return;
+    for(const c of (arr||[])){
+      const key=JSON.stringify(c);if(sbSeenCandidates.has(key))continue;sbSeenCandidates.add(key);
+      try{await sbPeer.addIceCandidate(c)}catch(e){}
+    }
+  }
+  async function sbUpdateCall(id,patch){
+    if(!sbClient||!id)return;
+    try{await sbClient.from('communication_calls').update(patch).eq('id',id)}catch(e){console.warn('call update',e)}
+  }
+  window.sbEndCall=async function(doUpdate=true){
+    if(doUpdate&&sbCallId)await sbUpdateCall(sbCallId,{status:'ended',ended_at:new Date().toISOString()});
+    try{sbPeer?.close()}catch(e){}
+    try{sbLocalStream?.getTracks?.().forEach(t=>t.stop())}catch(e){}
+    sbPeer=null;sbLocalStream=null;sbCallId=null;sbSeenCandidates=new Set();
+    if(el('sbLocalVideo'))el('sbLocalVideo').srcObject=null;
+    if(el('sbRemoteVideo'))el('sbRemoteVideo').srcObject=null;
+    if(el('sbCallInfo'))el('sbCallInfo').textContent='No Supabase call active.';
+  };
+
+  // Hook existing save() without replacing it: local save remains authoritative.
+  const originalSave=window.save;
+  if(typeof originalSave==='function'){
+    window.save=function(){
+      const r=originalSave.apply(this,arguments);
+      if(sbClient && navigator.onLine && window.currentUser){
+        clearTimeout(window.__sbSaveTimer);
+        window.__sbSaveTimer=setTimeout(()=>sbSyncNow().catch(()=>{}),1200);
+      }
+      return r;
+    };
+  }
+
+  window.addEventListener('load',()=>{
+    loadConfigUI();
+    if(cfg().url&&cfg().key) setTimeout(()=>connect().catch(()=>{}),1200);
+  });
 })();
 </script>
 </body>

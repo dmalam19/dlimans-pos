@@ -846,8 +846,8 @@ body.noisy-theme::after{pointer-events:none!important;
         </div>
         <div class="grid grid3">
           <div class="card"><h3>💬 Chat</h3><p class="small">Private Admin ↔ Cashier messages with real-time delivery and read status.</p><button class="btn primary" onclick="dcuOpen()">Open Chat</button></div>
-          <div class="card"><h3>📞 Voice Call</h3><p class="small">Start a private voice call with an available Admin or Cashier.</p><button class="btn primary" onclick="dcuOpen()">Start Voice Call</button></div>
-          <div class="card"><h3>📹 Video Call</h3><p class="small">Start a private video call with microphone and camera controls.</p><button class="btn primary" onclick="dcuOpen()">Start Video Call</button></div>
+          <div class="card"><h3>📞 Voice Call</h3><p class="small">Start a private voice call with an available Admin or Cashier.</p><button class="btn primary" onclick="dcuOpen('voice')">Start Voice Call</button></div>
+          <div class="card"><h3>📹 Video Call</h3><p class="small">Start a private video call with microphone and camera controls.</p><button class="btn primary" onclick="dcuOpen('video')">Start Video Call</button></div>
         </div>
         <div class="card" style="margin-top:14px">
           <h3>👥 Staff Communication</h3>
@@ -3469,10 +3469,12 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
 
   const $=id=>document.getElementById(id);
   const esc=v=>typeof escapeHTML==='function'?escapeHTML(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-  const me=()=>String(currentUser?.id||syncUser?.uid||'');
+  const me=()=>String(window.currentUser?.id||currentUser?.id||cloudUser()?.uid||'');
   const myName=()=>currentUser?.username||currentUser?.role||'User';
-  const db=()=>window.syncDb;
-  const root=()=>db()&&syncUser?db().collection('dlimansStores').doc(syncUser.uid):null;
+  const db=()=>window.syncDb || null;
+  const auth=()=>window.syncAuth || null;
+  const cloudUser=()=>window.syncUser || null;
+  const root=()=>db()&&cloudUser()?db().collection('dlimansStores').doc(cloudUser().uid):null;
   const pair=(a,b)=>[''+a,''+b].sort().join('__');
   const now=()=>firebase.firestore.FieldValue.serverTimestamp();
 
@@ -3507,36 +3509,36 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     const box=$('dcuUsers');if(!box)return;const q=($('dcuSearch')?.value||'').toLowerCase();const list=await getStaff();
     box.innerHTML=list.filter(u=>(u.name+' '+u.role).toLowerCase().includes(q)).map(u=>`<button class="${currentPartner?.id===u.id?'active':''}" onclick="dcuSelect('${esc(u.id)}','${esc(u.name)}','${esc(u.role)}')"><b>${esc(u.name)}</b><br><span class="dcu-pill">${esc(u.role)}</span></button>`).join('')||'<small>No Admin/Cashier found.</small>';
   }
-  async function open(){
+  async function open(mode){
     ensureUI();
     /* Communication must NEVER open a second Firebase login dialog. The normal
        POS cloud login owns Firebase Auth. Wait briefly for Firebase's persisted
        Auth session to restore after a page refresh, then use it directly. */
-    if(!syncUser && syncAuth){
+    if(!cloudUser() && auth()){
       await new Promise(resolve=>{
         let done=false;
         const finish=()=>{if(done)return;done=true;resolve()};
         const timer=setTimeout(finish,1800);
         try{
-          const unsub=syncAuth.onAuthStateChanged(u=>{
-            if(u){syncUser=u;clearTimeout(timer);try{unsub()}catch(e){};finish()}
+          const unsub=auth().onAuthStateChanged(u=>{
+            if(u){window.syncUser=u;clearTimeout(timer);try{unsub()}catch(e){};finish()}
           });
         }catch(e){clearTimeout(timer);finish()}
       });
     }
-    if(!syncUser && typeof loadFirebaseSDK==='function'){
+    if(!cloudUser() && typeof loadFirebaseSDK==='function'){
       try{
         await loadFirebaseSDK();
-        if(!syncFirebaseApp){const c=getSyncConfig();syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth()}
-        syncUser=syncAuth.currentUser||null;
+        if(!window.syncFirebaseApp){const c=getSyncConfig();window.syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');window.syncDb=window.syncFirebaseApp.firestore();window.syncAuth=window.syncFirebaseApp.auth()}
+        window.syncUser=auth()?.currentUser||null;
       }catch(e){console.warn('Unified Firebase startup:',e)}
     }
     /* If the persisted Firebase session exists, attach the cloud sync without
        showing any extra login UI. */
-    if(syncUser && typeof finishFirebaseCloudSync==='function'){
+    if(cloudUser() && typeof finishFirebaseCloudSync==='function'){
       try{await finishFirebaseCloudSync()}catch(e){console.warn('Unified cloud sync:',e)}
     }
-    if(!syncUser||!db()){
+    if(!cloudUser()||!db()){
       toastMsg('Cloud is not signed in yet. Log in with the business email/password once; after that Firebase stays signed in on this device.');
       return;
     }
@@ -3544,6 +3546,8 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     if($('dcuStatus'))$('dcuStatus').textContent='🟢 Firebase connected';
     startIncomingListener();
     await renderStaff();
+    if(mode==='voice') $('dcuStatus').textContent='🟢 Select a staff member for Voice Call';
+    if(mode==='video') $('dcuStatus').textContent='🟢 Select a staff member for Video Call';
   }
   function close(){if($('dcuPanel'))$('dcuPanel').classList.remove('show')}
   async function select(id,name,role){
@@ -3621,6 +3625,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     },e=>console.warn('Incoming call listener:',e));
   }
   window.dcuOpen=open;window.dcuClose=close;
+  window.dlimansCommunicationOpen=open;
   document.addEventListener('DOMContentLoaded',()=>{
     const originalShowView=window.showView;
     if(typeof originalShowView==='function' && !window.__dlimansUnifiedShowView){
@@ -3632,14 +3637,14 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
       };
     }
     const vb=document.getElementById('voiceBtn');
-    if(vb){vb.textContent='💬 Communication';vb.title='Chat • Voice Call • Video Call';vb.addEventListener('click',e=>{e.preventDefault();open()},{capture:true});}
+    if(vb){vb.textContent='💬 Communication';vb.title='Chat • Voice Call • Video Call';vb.addEventListener('click',e=>{e.preventDefault();window.dcuOpen()},{capture:true});}
     const vc=document.getElementById('view-communication');
     if(vc&&!vc.querySelector('[data-dcu-open]')){
       const b=document.createElement('button');b.className='btn primary';b.dataset.dcuOpen='1';b.textContent='💬 Open Communication Center';b.onclick=open;vc.prepend(b);
     }
   });window.dcuSelect=select;window.dcuSend=send;window.dcuKey=key;window.dcuCall=call;window.dcuAccept=accept;window.dcuHangup=hangup;window.dcuMute=mute;window.dcuCamera=camera;
   document.addEventListener('click',e=>{const b=e.target.closest?.('[data-dlimans-communication]');if(b){e.preventDefault();open()}});
-  window.addEventListener('load',()=>{if($('view-communication'))renderStaff().catch(()=>{});setTimeout(()=>{if(window.syncUser&&db())startIncomingListener()},1200)});
+  window.addEventListener('load',()=>{if($('view-communication'))renderStaff().catch(()=>{});setTimeout(()=>{if(cloudUser()&&db())startIncomingListener()},1200)});
 })();
 
 </script>

@@ -3505,7 +3505,24 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     const box=$('dcuUsers');if(!box)return;const q=($('dcuSearch')?.value||'').toLowerCase();const list=await getStaff();
     box.innerHTML=list.filter(u=>(u.name+' '+u.role).toLowerCase().includes(q)).map(u=>`<button class="${currentPartner?.id===u.id?'active':''}" onclick="dcuSelect('${esc(u.id)}','${esc(u.name)}','${esc(u.role)}')"><b>${esc(u.name)}</b><br><span class="dcu-pill">${esc(u.role)}</span></button>`).join('')||'<small>No Admin/Cashier found.</small>';
   }
-  async function open(){ensureUI();if(!syncUser||!db()){toastMsg('Connect Cloud/Firebase first');return} $('dcuPanel').classList.add('show');if($('dcuStatus'))$('dcuStatus').textContent='🟢 Firebase connected';startIncomingListener();await renderStaff()}
+  async function open(){
+    ensureUI();
+    /* First try the existing Firebase session. If this is the first device/session,
+       use the POS's existing cloud connector instead of forcing a separate button. */
+    if(!syncUser||!db()){
+      try{
+        if(typeof connectAutoSync==='function') await connectAutoSync();
+      }catch(e){console.warn('Unified communication auto-connect:',e)}
+    }
+    if(!syncUser||!db()){
+      toastMsg('Firebase Cloud connection is required for Chat, Voice and Video.');
+      return;
+    }
+    $('dcuPanel').classList.add('show');
+    if($('dcuStatus'))$('dcuStatus').textContent='🟢 Firebase connected';
+    startIncomingListener();
+    await renderStaff();
+  }
   function close(){if($('dcuPanel'))$('dcuPanel').classList.remove('show')}
   async function select(id,name,role){
     currentPartner={id,name,role};$('dcuPartner').textContent=name;$('dcuAvatar').textContent=(name||role||'?').charAt(0).toUpperCase();await renderStaff();subscribeMessages();
@@ -3531,7 +3548,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
       pc.ontrack=e=>{$('dcuRemote').srcObject=e.streams[0]};
       pc.onicecandidate=e=>{if(e.candidate)root().collection('communicationCalls').doc(callId).collection('candidates').add({side:'caller',candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{})};
       const offer=await pc.createOffer();await pc.setLocalDescription(offer);
-      await root().collection('communicationCalls').doc(callId).set({callerId:me(),callerName:myName(),calleeId:currentPartner.id,calleeName:currentPartner.name,kind,status:'ringing',offer:{type:offer.type,sdp:offer.sdp},createdAt:Date.now()});
+      await root().collection('communicationCalls').doc(callId).set({callerId:me(),callerName:myName(),callerRole:currentUser?.role||'Staff',calleeId:currentPartner.id,calleeName:currentPartner.name,calleeRole:currentPartner.role||'Staff',kind,status:'ringing',offer:{type:offer.type,sdp:offer.sdp},createdAt:Date.now()});
       listenCall(callId,'caller');$('dcuCallStatus').textContent='Calling '+currentPartner.name+'…';
     }catch(e){cleanup();toastMsg('Call failed: '+(e.message||e))}
   }
@@ -3565,10 +3582,13 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
 
   function startIncomingListener(){
     if(incomingUnsub||!root())return;
-    incomingUnsub=root().collection('communicationCalls').where('calleeId','==',me()).where('status','==','ringing').onSnapshot(snap=>{
+    /* Query only by calleeId to avoid requiring a Firestore composite index;
+       status is filtered locally. */
+    incomingUnsub=root().collection('communicationCalls').where('calleeId','==',me()).onSnapshot(snap=>{
       snap.docChanges().forEach(ch=>{
         if(ch.type!=='added'||callId)return;
         const c=ch.doc.data()||{};
+        if(c.status!=='ringing')return;
         currentPartner={id:String(c.callerId||''),name:c.callerName||'Admin/Cashier',role:c.callerRole||'Staff'};
         ensureUI();
         $('dcuPanel')?.classList.add('show');

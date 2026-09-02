@@ -1206,6 +1206,7 @@ function toggleRememberLogin(event){
       new Promise((_,reject)=>setTimeout(()=>reject(Error('Firebase connection timed out')),12000))
     ]);
     if(!syncFirebaseApp){syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth()}
+    try{await syncAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Firebase persistence:',e)}
     await Promise.race([
       syncAuth.signInWithEmailAndPassword(u,p),
       new Promise((_,reject)=>setTimeout(()=>reject(Error('Firebase sign-in timed out')),12000))
@@ -1304,7 +1305,8 @@ async function connectFirebaseForLogin(email,password){
   syncUser=syncAuth.currentUser;
   if(!syncUser){
    try{
-    await syncAuth.signInWithEmailAndPassword(email,password);
+    try{await syncAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Firebase persistence:',e)}
+  await syncAuth.signInWithEmailAndPassword(email,password);
    }catch(e){
     // For the built-in local Admin account, create its Firebase identity once.
     // For a real registered business account, do not silently create another account.
@@ -2649,7 +2651,7 @@ window.addEventListener('load',async()=>{
     setSyncStatus('🟢 Firebase account ready — Cloud can sync automatically');
     setTimeout(()=>{
       if(currentUser){
-        if(currentUser.cloud) connectAutoSync().catch(()=>{});
+        if(currentUser.cloud) finishFirebaseCloudSync().catch(e=>console.warn('Auto cloud restore:',e));
         else startDlimansChat().catch(()=>{});
       }
     },100);
@@ -3507,15 +3509,35 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
   }
   async function open(){
     ensureUI();
-    /* First try the existing Firebase session. If this is the first device/session,
-       use the POS's existing cloud connector instead of forcing a separate button. */
-    if(!syncUser||!db()){
+    /* Communication must NEVER open a second Firebase login dialog. The normal
+       POS cloud login owns Firebase Auth. Wait briefly for Firebase's persisted
+       Auth session to restore after a page refresh, then use it directly. */
+    if(!syncUser && syncAuth){
+      await new Promise(resolve=>{
+        let done=false;
+        const finish=()=>{if(done)return;done=true;resolve()};
+        const timer=setTimeout(finish,1800);
+        try{
+          const unsub=syncAuth.onAuthStateChanged(u=>{
+            if(u){syncUser=u;clearTimeout(timer);try{unsub()}catch(e){};finish()}
+          });
+        }catch(e){clearTimeout(timer);finish()}
+      });
+    }
+    if(!syncUser && typeof loadFirebaseSDK==='function'){
       try{
-        if(typeof connectAutoSync==='function') await connectAutoSync();
-      }catch(e){console.warn('Unified communication auto-connect:',e)}
+        await loadFirebaseSDK();
+        if(!syncFirebaseApp){const c=getSyncConfig();syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');syncDb=syncFirebaseApp.firestore();syncAuth=syncFirebaseApp.auth()}
+        syncUser=syncAuth.currentUser||null;
+      }catch(e){console.warn('Unified Firebase startup:',e)}
+    }
+    /* If the persisted Firebase session exists, attach the cloud sync without
+       showing any extra login UI. */
+    if(syncUser && typeof finishFirebaseCloudSync==='function'){
+      try{await finishFirebaseCloudSync()}catch(e){console.warn('Unified cloud sync:',e)}
     }
     if(!syncUser||!db()){
-      toastMsg('Firebase Cloud connection is required for Chat, Voice and Video.');
+      toastMsg('Cloud is not signed in yet. Log in with the business email/password once; after that Firebase stays signed in on this device.');
       return;
     }
     $('dcuPanel').classList.add('show');

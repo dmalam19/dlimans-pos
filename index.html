@@ -841,73 +841,18 @@ body.noisy-theme::after{pointer-events:none!important;
 
       <section class="view" id="view-communication">
         <div class="section-title">
-          <div><h2>💬 Communication Center</h2><div class="small">Chat • Voice Call • Video Call — Admin ↔ Cashier communication in one place.</div></div>
-          <div class="row wrap">
-            <span id="voiceCommStatus" class="badge">Offline</span>
-            <button class="btn primary" onclick="dcuOpen()">💬 Open Communication</button>
-          </div>
+          <div><h2>💬 Communication Center</h2><div class="small">Chat • Voice Call • Video Call — Admin ↔ Cashier in one simple place.</div></div>
+          <div class="row wrap"><span id="voiceCommStatus" class="badge">🟢 Ready</span><button class="btn primary" onclick="dcuOpen()">💬 Open Communication</button></div>
         </div>
-        <div class="grid grid2">
-          <div class="card">
-            <h3>👥 Admin / Cashier</h3>
-            <div class="small">Only logged-in Admin/Cashier sessions that are connected to the business cloud are shown as available.</div>
-            <div id="voicePeople" style="margin-top:12px"></div>
-          </div>
-          <div class="card">
-            <h3>📞 Current Call</h3>
-            <div id="voiceCallInfo" class="small">No active call.</div>
-            <audio id="voiceRemoteAudio" autoplay playsinline></audio>
-            <div class="row wrap" style="margin-top:14px">
-              <button class="btn primary" id="voiceMuteBtn" onclick="voiceCommToggleMute()" disabled>🎙 Mute</button>
-              <button class="btn danger" id="voiceHangupBtn" onclick="voiceCommHangup()" disabled>☎ End Call</button>
-            </div>
-            <div class="small" style="margin-top:12px">Tip: allow microphone permission in Chrome when asked. Voice calls require an internet connection and Firebase authentication.</div>
-          </div>
+        <div class="grid grid3">
+          <div class="card"><h3>💬 Chat</h3><p class="small">Private Admin ↔ Cashier messages with real-time delivery and read status.</p><button class="btn primary" onclick="dcuOpen()">Open Chat</button></div>
+          <div class="card"><h3>📞 Voice Call</h3><p class="small">Start a private voice call with an available Admin or Cashier.</p><button class="btn primary" onclick="dcuOpen()">Start Voice Call</button></div>
+          <div class="card"><h3>📹 Video Call</h3><p class="small">Start a private video call with microphone and camera controls.</p><button class="btn primary" onclick="dcuOpen()">Start Video Call</button></div>
         </div>
-        <div class="card dlimans-chat-card dlimans-pro-chat">
-          <div class="dlimans-chat-head">
-            <div>
-              <h3>💬 Professional Communication Center</h3>
-              <div class="small">Admin ↔ Cashier private messaging, staff presence and business announcements.</div>
-            </div>
-            <div class="row wrap">
-              <span id="dlimansChatStatus" class="badge">Offline</span>
-              <span id="dlimansChatUnread" class="badge yellow hidden">0 unread</span>
-            </div>
-          </div>
-
-          <div class="dlimans-chat-layout">
-            <aside class="dlimans-chat-staff">
-              <div class="dlimans-chat-staff-head">
-                <strong>👥 Staff</strong>
-                <span id="dlimansChatStaffCount" class="small">0</span>
-              </div>
-              <input id="dlimansChatStaffSearch" type="search" placeholder="🔎 Search Admin / Cashier..." oninput="renderDlimansChatStaff()">
-              <div id="dlimansChatStaffList" class="dlimans-chat-staff-list"></div>
-            </aside>
-
-            <div class="dlimans-chat-main">
-              <div class="dlimans-chat-conversation-head">
-                <div>
-                  <strong id="dlimansChatPartner">Select a staff member</strong>
-                  <div id="dlimansChatPartnerStatus" class="small">Choose Admin or Cashier to start a private chat.</div>
-                </div>
-                <button id="dlimansChatBroadcastBtn" class="btn sm hidden" type="button" onclick="openDlimansBroadcast()">📢 Broadcast</button>
-              </div>
-
-              <div id="dlimansChatBox" class="dlimans-chat-box">
-                <div class="small">Connect Cloud first to load real-time staff communication.</div>
-              </div>
-
-              <div class="dlimans-chat-compose">
-                <textarea id="dlimansChatInput" maxlength="1000" rows="2" placeholder="Write a professional message..." onkeydown="dlimansChatKeydown(event)"></textarea>
-                <div class="dlimans-chat-compose-actions">
-                  <span class="small">Ctrl/⌘ + Enter to send</span>
-                  <button class="btn primary" type="button" onclick="sendDlimansChat()">💬 Send</button>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="card" style="margin-top:14px">
+          <h3>👥 Staff Communication</h3>
+          <div class="small">Select an Admin or Cashier, then choose Chat, Voice Call, or Video Call. The system uses the existing Firebase cloud connection.</div>
+          <div class="row wrap" style="margin-top:12px"><button class="btn primary" onclick="dcuOpen()">💬 Open Communication Center</button></div>
         </div>
       </section>
 
@@ -3522,10 +3467,10 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
 
   const $=id=>document.getElementById(id);
   const esc=v=>typeof escapeHTML==='function'?escapeHTML(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-  const me=()=>String(window.currentUser?.id||window.syncUser?.uid||'');
-  const myName=()=>window.currentUser?.username||window.currentUser?.role||'User';
+  const me=()=>String(currentUser?.id||syncUser?.uid||'');
+  const myName=()=>currentUser?.username||currentUser?.role||'User';
   const db=()=>window.syncDb;
-  const root=()=>db()&&window.syncUser?db().collection('dlimansStores').doc(window.syncUser.uid):null;
+  const root=()=>db()&&syncUser?db().collection('dlimansStores').doc(syncUser.uid):null;
   const pair=(a,b)=>[''+a,''+b].sort().join('__');
   const now=()=>firebase.firestore.FieldValue.serverTimestamp();
 
@@ -3548,7 +3493,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
   async function getStaff(){
     const rootRef=root(); if(!rootRef) return [];
     // Prefer the POS users document/array if present. This avoids a second account system.
-    let list=Array.isArray(window.users)?window.users:[];
+    let list=Array.isArray(state?.users)?state.users:[];
     list=list.filter(u=>u&&u.active!==false&&(u.role==='Admin'||u.role==='Cashier')&&String(u.id)!==me());
     if(list.length)return list.map(u=>({id:String(u.id),name:u.username||u.role,role:u.role}));
     try{
@@ -3560,7 +3505,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     const box=$('dcuUsers');if(!box)return;const q=($('dcuSearch')?.value||'').toLowerCase();const list=await getStaff();
     box.innerHTML=list.filter(u=>(u.name+' '+u.role).toLowerCase().includes(q)).map(u=>`<button class="${currentPartner?.id===u.id?'active':''}" onclick="dcuSelect('${esc(u.id)}','${esc(u.name)}','${esc(u.role)}')"><b>${esc(u.name)}</b><br><span class="dcu-pill">${esc(u.role)}</span></button>`).join('')||'<small>No Admin/Cashier found.</small>';
   }
-  async function open(){ensureUI();if(!window.syncUser||!db()){toastMsg('Connect Cloud/Firebase first');return} $('dcuPanel').classList.add('show');startIncomingListener();await renderStaff()}
+  async function open(){ensureUI();if(!syncUser||!db()){toastMsg('Connect Cloud/Firebase first');return} $('dcuPanel').classList.add('show');if($('dcuStatus'))$('dcuStatus').textContent='🟢 Firebase connected';startIncomingListener();await renderStaff()}
   function close(){if($('dcuPanel'))$('dcuPanel').classList.remove('show')}
   async function select(id,name,role){
     currentPartner={id,name,role};$('dcuPartner').textContent=name;$('dcuAvatar').textContent=(name||role||'?').charAt(0).toUpperCase();await renderStaff();subscribeMessages();
@@ -3571,7 +3516,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     msgUnsub=ref.where('conversationId','==',cid).limitToLast(150).onSnapshot(s=>{const a=s.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>time(x.createdAt)-time(y.createdAt));$('dcuMsgs').innerHTML=a.length?a.map(m=>`<div class="dcu-msg ${String(m.senderId)===me()?'mine':''}">${esc(m.text||'')}<div class="dcu-time">${new Date(time(m.createdAt)||Date.now()).toLocaleString()}</div></div>`).join(''):'<div class="dcu-warn">No messages yet.</div>';$('dcuMsgs').scrollTop=$('dcuMsgs').scrollHeight},e=>{$('dcuStatus').textContent='Chat error';console.warn(e)});
   }
   const time=v=>v?.toMillis?v.toMillis():v?.seconds?v.seconds*1000:new Date(v||0).getTime()||0;
-  async function send(){const input=$('dcuInput');const text=(input?.value||'').trim();if(!text||!currentPartner)return;if(!root())return toastMsg('Cloud is not connected');try{await root().collection('chatMessages').add({conversationId:pair(me(),currentPartner.id),type:'direct',senderId:me(),senderName:myName(),senderRole:window.currentUser?.role||'',recipientId:currentPartner.id,text,createdAt:now()});input.value=''}catch(e){toastMsg('Chat failed: '+(e.message||e))}}
+  async function send(){const input=$('dcuInput');const text=(input?.value||'').trim();if(!text||!currentPartner)return;if(!root())return toastMsg('Cloud is not connected');try{await root().collection('chatMessages').add({conversationId:pair(me(),currentPartner.id),type:'direct',senderId:me(),senderName:myName(),senderRole:currentUser?.role||'',recipientId:currentPartner.id,text,createdAt:now()});input.value=''}catch(e){toastMsg('Chat failed: '+(e.message||e))}}
   function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
 
   async function call(kind){

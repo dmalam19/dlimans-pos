@@ -2302,8 +2302,10 @@ function startVoice(){
   try{
     voiceRec=new SR();
     voiceRec.lang=localStorage.getItem('DLIMANS_VOICE_LANG')||'en-US';
-    voiceRec.continuous=false; voiceRec.interimResults=true; voiceRec.maxAlternatives=3;
-    if(btn)btn.classList.add('voice-listening');
+    voiceRec.continuous=false;
+    voiceRec.interimResults=true;
+    voiceRec.maxAlternatives=5;
+    if(btn){btn.classList.add('voice-listening');btn.setAttribute('aria-label','Voice listening');}
     if(status)status.textContent='🎙 Listening… say a command';
     voiceRec.onstart=()=>{if(btn)btn.classList.add('voice-listening');if(status)status.textContent='🎙 Listening… say a command'};
     voiceRec.onresult=e=>{
@@ -2314,7 +2316,7 @@ function startVoice(){
       }
       const text=normalizeVoiceText(best);
       if(status)status.textContent=text?'Heard: '+text:'Listening…';
-      if(e.results[e.results.length-1]?.isFinal && text)handleVoice(text);
+      if(e.results[e.results.length-1]?.isFinal && text){handleVoice(text);}
     };
     voiceRec.onerror=e=>{
       const messages={
@@ -2326,7 +2328,8 @@ function startVoice(){
         'aborted':'Voice stopped.'
       };
       const msg=messages[e.error]||('Voice error: '+e.error);
-      if(status)status.textContent='⚠ '+msg;if(e.error!=='aborted')toast(msg);
+      if(status)status.textContent='⚠ '+msg;
+      if(e.error!=='aborted')toast(msg);
     };
     voiceRec.onend=()=>{if(btn)btn.classList.remove('voice-listening');voiceRec=null};
     voiceRec.start();
@@ -2337,14 +2340,16 @@ function normalizeVoiceText(t){
   return String(t||'').toLowerCase().trim()
     .replace(/[.,!?;:]+/g,' ')
     .replace(/\s+/g,' ')
-    .replace(/^please\s+/,'')
-    .replace(/^(hey|hello)\s+(dlimans|assistant)[, ]*/,'')
+    .replace(/^(please|kindly)\s+/,'')
+    .replace(/^(hey|hello|hi)\s+(dlimans|assistant)[, ]*/,'')
     .trim();
 }
 function voiceHas(t,arr){return arr.some(x=>t===x||t.includes(x))}
 function voiceOpen(target,label){showView(target);toast('Opening '+(label||target));}
 function voiceFindProduct(text){
-  const cleaned=text.replace(/^(please\s+)?(add|put|sell|buy)\s+/,'').replace(/\s+(to|into)\s+(my\s+)?(cart|sale)$/,'').trim();
+  const cleaned=text
+    .replace(/^(please\s+)?(add|put|sell|buy)\s+/,'')
+    .replace(/\s+(to|into)\s+(my\s+)?(cart|sale)$/,'').trim();
   let qty=1;
   const qm=cleaned.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
   if(qm){qty=Math.max(1,parseInt(qm[1],10));}
@@ -2360,22 +2365,58 @@ function voiceFindProduct(text){
 function handleVoice(t){
   t=normalizeVoiceText(t); if(!t)return;
 
-  /* Create/open actions must run before broad navigation words like "product" or "customer". */
-  if(voiceHas(t,['add product','new product','create product'])){openProduct();return}
-  if(voiceHas(t,['add customer','new customer','create customer'])){openCustomer();return}
-  if(voiceHas(t,['add expense','new expense','create expense'])){openExpense();return}
-  if(voiceHas(t,['add purchase','new purchase','create purchase'])){openPurchase();return}
-  if(voiceHas(t,['add user','new user','create user'])){openUser();return}
-  if(voiceHas(t,['add branch','new branch','create branch'])){openBranch();return}
-  if(voiceHas(t,['stock adjustment','adjust stock'])){openStockAdjust();return}
-  if(voiceHas(t,['add contact','new contact'])){openContact();return}
-  if(voiceHas(t,['custom icon','add sidebar icon'])){openCustomIcon();return}
+  /* Communication actions must be checked BEFORE the broad navigation word "communication/chat". */
+  if(voiceHas(t,['start voice call','make voice call','voice call','call cashier','call admin','ring cashier','ring admin'])){dcuOpen('voice');return}
+  if(voiceHas(t,['start video call','make video call','video call','call by video','video chat'])){dcuOpen('video');return}
+  if(voiceHas(t,['open chat','send message','chat with staff','staff chat','open communication','communication center'])){dcuOpen();return}
 
-  /* Global navigation — natural phrases, not just button names. */
+  /* Create/add actions. */
+  if(voiceHas(t,['add product','new product','create product'])){showView('products');openProduct();return}
+  if(voiceHas(t,['add customer','new customer','create customer'])){showView('customers');openCustomer();return}
+  if(voiceHas(t,['add expense','new expense','create expense'])){showView('expenses');openExpense();return}
+  if(voiceHas(t,['add purchase','new purchase','create purchase'])){showView('purchases');openPurchase();return}
+  if(voiceHas(t,['add user','new user','create user'])){showView('users');openUser();return}
+  if(voiceHas(t,['add branch','new branch','create branch'])){showView('branches');openBranch();return}
+  if(voiceHas(t,['stock adjustment','adjust stock'])){showView('inventory');openStockAdjust();return}
+  if(voiceHas(t,['add contact','new contact'])){showView('contacts');openContact();return}
+  if(voiceHas(t,['custom icon','add sidebar icon'])){showView('control');openCustomIcon();return}
+
+  /* Sales/cart actions BEFORE broad "sales" navigation. */
+  if(voiceHas(t,['new sale','start selling','sell something','start a sale','make a sale'])){showView('pos');toast('New sale ready');return}
+  if(voiceHas(t,['clear cart','empty cart','remove all from cart'])){clearCart();toast('Cart cleared');return}
+  if(voiceHas(t,['hold sale','hold this sale','save this sale for later'])){holdSale();return}
+  if(voiceHas(t,['resume sale','resume held sale','continue held sale'])){openHeld();return}
+  if(voiceHas(t,['confirm sale','complete sale','finish sale','checkout','check out','take payment','pay now'])){confirmSale();return}
+  if(voiceHas(t,['scan barcode','scan product','barcode scan','scan item'])){showView('pos');scanBarcode();return}
+  if(voiceHas(t,['print receipt','print last receipt','print latest receipt','print receipt now'])){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
+  if(voiceHas(t,['print invoice','print last invoice','print latest invoice'])){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
+
+  /* Product/cart intelligence: "add 2 coca cola", "sell rice", etc. */
+  if(/^(please\s+)?(add|put|sell|buy)\s+/.test(t)){
+    const result=voiceFindProduct(t);
+    if(result?.product)return;
+    if(result?.name){showView('pos');const q=document.getElementById('posSearch');if(q){q.value=result.name;renderPOS()}toast('Product not found: '+result.name);return}
+  }
+  if(t.startsWith('search ')||t.startsWith('find product ')||t.startsWith('look for ')||t.startsWith('find ')){
+    const qtext=t.replace(/^(search|find product|look for|find)\s+/,'').trim();
+    showView('products');const q=document.getElementById('productSearch');if(q){q.value=qtext;renderProducts()}toast('Searching for '+qtext);return
+  }
+
+  /* Utility/admin actions. */
+  if(voiceHas(t,['backup data','backup','export backup','save backup','download backup'])){backupData();return}
+  if(voiceHas(t,['restore backup','restore data'])){toast('Open Settings and choose Restore Data, then select your backup file.');showView('settings');return}
+  if(voiceHas(t,['test print','print test'])){testPrint();return}
+  if(voiceHas(t,['connect bluetooth','bluetooth printer','connect printer'])){connectBluetooth();return}
+  if(voiceHas(t,['open menu','main menu','show menu','open sidebar'])){toggleSidebar();return}
+  if(voiceHas(t,['close menu','hide menu','collapse menu'])){toggleSidebar();return}
+  if(voiceHas(t,['back','go back','previous page','return'])){goBackInApp();return}
+  if(voiceHas(t,['logout','log out','sign out'])){logout();return}
+
+  /* Navigation. Specific phrases are checked before single-word destinations. */
   const nav=[
     [['dashboard','home','main dashboard','go home','open dashboard','show dashboard'],'dashboard','Dashboard'],
-    [['new sale','new sales','pos','point of sale','sales screen','open pos','start sale','make a sale'],'pos','POS'],
-    [['hold sales','held sales','held sale','open held sales','resume sales'],'held','Held Sales'],
+    [['new sale','pos','point of sale','sales screen','open pos'],'pos','POS'],
+    [['hold sales','held sales','held sale','open held sales'],'held','Held Sales'],
     [['drafts','draft sales','open drafts','show drafts'],'drafts','Draft Sales'],
     [['quotations','quotation','quotes','open quotations'],'quotations','Quotations'],
     [['shipments','shipment','open shipments'],'shipments','Shipments'],
@@ -2384,7 +2425,7 @@ function handleVoice(t){
     [['products','product list','product management','open products','show products'],'products','Products'],
     [['inventory','stock','stock list','open inventory','show inventory'],'inventory','Inventory'],
     [['stock transfer','stock transfers','transfer stock'],'stockTransfer','Stock Transfer'],
-    [['sales','sales history','sale history','open sales'],'sales','Sales'],
+    [['sales history','sale history','open sales history','sales list'],'sales','Sales'],
     [['sales check up','sales checkup','returns','return sales','open returns'],'returns','Sales Check-up'],
     [['purchases','purchase list','purchase management','open purchases'],'purchases','Purchases'],
     [['customers','customer list','open customers'],'customers','Customers'],
@@ -2398,55 +2439,18 @@ function handleVoice(t){
     [['users','users roles','user management','staff users','open users'],'users','Users / Roles'],
     [['control center','control','admin control','open control center'],'control','Control Center'],
     [['settings','customize','customization','business settings','open settings'],'settings','Settings'],
-    [['communication','chat','open communication','communication center'],'communication','Communication']
+    [['communication','chat'],'communication','Communication']
   ];
-  /* Exact/strong navigation first so "sales" does not swallow "confirm sale". */
   for(const [words,target,label] of nav){
     if(words.some(w=>t===w || t.startsWith(w+' ') || t.endsWith(' '+w))){voiceOpen(target,label);return}
   }
   for(const [words,target,label] of nav){if(words.some(w=>t.includes(w))){voiceOpen(target,label);return}}
 
-  if(voiceHas(t,['start voice call','make voice call','call cashier','call admin'])){dcuOpen('voice');return}
-  if(voiceHas(t,['start video call','make video call','video call'])){dcuOpen('video');return}
-  if(voiceHas(t,['open chat','send message','chat with staff'])){dcuOpen();return}
-
-  /* POS actions */
-  if(voiceHas(t,['new sale','start selling','sell something'])){showView('pos');toast('New sale ready');return}
-  if(voiceHas(t,['clear cart','empty cart','remove all from cart'])){clearCart();toast('Cart cleared');return}
-  if(voiceHas(t,['hold sale','hold this sale','save this sale for later'])){holdSale();return}
-  if(voiceHas(t,['resume sale','resume held sale','continue held sale'])){openHeld();return}
-  if(voiceHas(t,['confirm sale','complete sale','finish sale','checkout','check out'])){confirmSale();return}
-  if(voiceHas(t,['scan barcode','scan product','barcode scan'])){showView('pos');scanBarcode();return}
-  if(voiceHas(t,['print receipt','print last receipt','print latest receipt'])){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
-  if(voiceHas(t,['print invoice','print last invoice'])){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
-
-  /* Product/cart intelligence: "add 2 coca cola", "sell rice", etc. */
-  if(/^(please\s+)?(add|put|sell|buy)\s+/.test(t)){
-    const result=voiceFindProduct(t);
-    if(result?.product)return;
-    if(result?.name){showView('pos');const q=document.getElementById('posSearch');if(q){q.value=result.name;renderPOS()}toast('Product not found: '+result.name);return}
+  /* Theme control. */
+  const themes={'dark blue':'darkblue','dark green':'darkgreen','maroon':'maroon','purple':'purple','gold':'gold','yellow':'yellow','chocolate':'chocolate','salad green':'salad','black':'black','white':'white','milk':'milk','brown':'brown','green':'green','ocean':'ocean','ocean blue':'ocean','teal':'teal','rose':'rose','orange':'orange','silver':'silver'};
+  for(const [name,key] of Object.entries(themes)){
+    if(t.includes('theme '+name)||t.includes('use '+name+' theme')||t===''+name){applyTheme(key);toast('Theme changed to '+name);return}
   }
-  if(t.startsWith('search ')||t.startsWith('find product ')||t.startsWith('look for ')){
-    const qtext=t.replace(/^search\s+|^find product\s+|^look for\s+/,'').trim();showView('products');const q=document.getElementById('productSearch');if(q){q.value=qtext;renderProducts()}toast('Searching for '+qtext);return
-  }
-
-  /* Utility/admin commands */
-  if(voiceHas(t,['backup data','backup','export backup','save backup'])){backupData();return}
-  if(voiceHas(t,['test print','print test'])){testPrint();return}
-  if(voiceHas(t,['connect bluetooth','bluetooth printer'])){connectBluetooth();return}
-  if(voiceHas(t,['open menu','main menu','show menu','sidebar'])){toggleSidebar();return}
-  if(voiceHas(t,['close menu','hide menu','collapse menu'])){toggleSidebar();return}
-  if(voiceHas(t,['back','go back','previous page'])){goBackInApp();return}
-  if(voiceHas(t,['logout','log out','sign out'])){logout();return}
-
-  /* Theme commands */
-  const themes={
-    'dark blue':'darkblue','dark green':'darkgreen','maroon':'maroon','purple':'purple','gold':'gold','yellow':'yellow',
-    'chocolate':'chocolate','salad green':'salad','black':'black','white':'white','milk':'milk','brown':'brown','green':'green',
-    'ocean':'ocean','ocean blue':'ocean','teal':'teal','rose':'rose','orange':'orange','silver':'silver'
-  };
-  for(const [name,key] of Object.entries(themes))if(t.includes('theme '+name)||t.includes('use '+name+' theme')||t===''+name){applyTheme(key);toast('Theme changed to '+name);return}
-  if(voiceHas(t,['open communication','open chat'])){dcuOpen();return}
 
   toast('Voice command not recognized: '+t);
 }

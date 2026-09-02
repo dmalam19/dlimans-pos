@@ -624,7 +624,8 @@ body.noisy-theme::after{pointer-events:none!important;
     <button class="btn ghost app-back-btn" onclick="goBackInApp()">← Back</button>
     <div class="brand"><span id="topBusiness">Dlimans Supermarket</span> <span class="muted">•</span> <span id="topRole">Admin</span></div>
     <div class="right row">
-      <button class="btn ghost" id="voiceBtn" onclick="startVoice()">🎙️ <span class="side-label">Voice</span></button>
+      <button class="btn ghost" id="voiceBtn" onclick="startVoice()" title="Voice Command">🎙️ <span class="side-label">Voice</span></button>
+      <button class="btn ghost" id="communicationBtn" onclick="dcuOpen()" title="Chat • Voice Call • Video Call">💬 <span class="side-label">Communication</span></button>
       <button class="btn ghost" onclick="showView('control')">⚙️</button>
       <button class="btn danger" onclick="logout()">Logout</button>
     </div>
@@ -2290,81 +2291,164 @@ async function scanBarcode(){
 }
 
 function startVoice(){
- const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- const btn=document.getElementById('voiceBtn');
- const status=document.getElementById('voiceStatus');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const btn=document.getElementById('voiceBtn');
+  const status=document.getElementById('voiceStatus');
+  if(!SR){
+    const msg='Voice recognition is not supported here. Open the live HTTPS app in Chrome and allow microphone access.';
+    if(status)status.textContent='⚠ '+msg; toast(msg); return;
+  }
+  if(voiceRec){try{voiceRec.abort()}catch(e){} voiceRec=null; return;}
+  try{
+    voiceRec=new SR();
+    voiceRec.lang=localStorage.getItem('DLIMANS_VOICE_LANG')||'en-US';
+    voiceRec.continuous=false; voiceRec.interimResults=true; voiceRec.maxAlternatives=3;
+    if(btn)btn.classList.add('voice-listening');
+    if(status)status.textContent='🎙 Listening… say a command';
+    voiceRec.onstart=()=>{if(btn)btn.classList.add('voice-listening');if(status)status.textContent='🎙 Listening… say a command'};
+    voiceRec.onresult=e=>{
+      let best='';
+      for(let i=e.results.length-1;i>=0;i--){
+        const r=e.results[i];
+        if(r?.[0]?.transcript){best=String(r[0].transcript).trim();if(r.isFinal)break;}
+      }
+      const text=normalizeVoiceText(best);
+      if(status)status.textContent=text?'Heard: '+text:'Listening…';
+      if(e.results[e.results.length-1]?.isFinal && text)handleVoice(text);
+    };
+    voiceRec.onerror=e=>{
+      const messages={
+        'not-allowed':'Microphone permission was denied. Allow microphone permission for Chrome.',
+        'service-not-allowed':'Speech service is not allowed. Use the HTTPS live app.',
+        'audio-capture':'No microphone was found.',
+        'network':'Voice recognition network/service error. Check internet and try again.',
+        'no-speech':'No speech detected. Tap Voice and speak again.',
+        'aborted':'Voice stopped.'
+      };
+      const msg=messages[e.error]||('Voice error: '+e.error);
+      if(status)status.textContent='⚠ '+msg;if(e.error!=='aborted')toast(msg);
+    };
+    voiceRec.onend=()=>{if(btn)btn.classList.remove('voice-listening');voiceRec=null};
+    voiceRec.start();
+  }catch(err){if(btn)btn.classList.remove('voice-listening');voiceRec=null;if(status)status.textContent='⚠ Could not start Voice';toast('Could not start Voice. Allow microphone permission and try again.')}
+}
 
- if(!SR){
-   const msg='Voice recognition is not supported here. Open the live HTTPS app in Chrome and allow microphone access.';
-   if(status)status.textContent='⚠ '+msg;
-   toast(msg);
-   return;
- }
- if(voiceRec){
-   try{voiceRec.abort()}catch(e){}
-   voiceRec=null;
- }
- try{
-   voiceRec=new SR();
-   voiceRec.lang='en-US';
-   voiceRec.continuous=false;
-   voiceRec.interimResults=false;
-   voiceRec.maxAlternatives=1;
-   if(btn)btn.classList.add('voice-listening');
-   if(status)status.textContent='🎙 Listening... Speak now';
-
-   voiceRec.onstart=()=>{
-     if(btn)btn.classList.add('voice-listening');
-     if(status)status.textContent='🎙 Listening... Speak now';
-   };
-   voiceRec.onresult=(e)=>{
-     const r=e.results?.[0]?.[0];
-     const text=r ? String(r.transcript||'').trim().toLowerCase() : '';
-     if(status)status.textContent=text?'Heard: '+text:'No speech detected';
-     if(text)handleVoice(text);
-   };
-   voiceRec.onerror=(e)=>{
-     const messages={
-       'not-allowed':'Microphone permission was denied. Allow microphone permission for Chrome.',
-       'service-not-allowed':'Microphone/speech service is not allowed. Use the HTTPS live app.',
-       'audio-capture':'No microphone was found.',
-       'network':'Voice service/network error.',
-       'no-speech':'No speech detected. Tap Voice and speak again.',
-       'aborted':'Voice stopped.'
-     };
-     const msg=messages[e.error]||('Voice error: '+e.error);
-     if(status)status.textContent='⚠ '+msg;
-     if(e.error!=='aborted')toast(msg);
-   };
-   voiceRec.onend=()=>{
-     if(btn)btn.classList.remove('voice-listening');
-     voiceRec=null;
-   };
-   voiceRec.start();
- }catch(err){
-   if(btn)btn.classList.remove('voice-listening');
-   voiceRec=null;
-   const msg='Could not start Voice. Allow microphone permission and try again.';
-   if(status)status.textContent='⚠ '+msg;
-   toast(msg);
- }
+function normalizeVoiceText(t){
+  return String(t||'').toLowerCase().trim()
+    .replace(/[.,!?;:]+/g,' ')
+    .replace(/\s+/g,' ')
+    .replace(/^please\s+/,'')
+    .replace(/^(hey|hello)\s+(dlimans|assistant)[, ]*/,'')
+    .trim();
+}
+function voiceHas(t,arr){return arr.some(x=>t===x||t.includes(x))}
+function voiceOpen(target,label){showView(target);toast('Opening '+(label||target));}
+function voiceFindProduct(text){
+  const cleaned=text.replace(/^(please\s+)?(add|put|sell|buy)\s+/,'').replace(/\s+(to|into)\s+(my\s+)?(cart|sale)$/,'').trim();
+  let qty=1;
+  const qm=cleaned.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  if(qm){qty=Math.max(1,parseInt(qm[1],10));}
+  const name=(qm?qm[2]:cleaned).trim();
+  if(!name)return null;
+  const n=name.toLowerCase();
+  let p=state.products.find(x=>String(x.name||'').toLowerCase()===n||String(x.sku||'').toLowerCase()===n||String(x.barcode||'').toLowerCase()===n);
+  if(!p)p=state.products.find(x=>String(x.name||'').toLowerCase().includes(n)||n.includes(String(x.name||'').toLowerCase()));
+  if(!p)return {name,qty};
+  for(let i=0;i<qty;i++)addToCart(p.id);
+  showView('pos');toast('Added '+qty+' × '+p.name+' to cart');return {product:p,qty};
 }
 function handleVoice(t){
- const commands=[
-  [['dashboard','home'],'dashboard'],[['new sale','pos','sales screen'],'pos'],[['held sale','held sales','resume sale'],'held'],
-  [['products','product'],'products'],[['inventory','stock'],'inventory'],[['purchase','purchases'],'purchases'],
-  [['sales','sale history'],'sales'],[['customers','customer'],'customers'],[['expenses','expense'],'expenses'],
-  [['reports','report'],'reports'],[['accounting'],'accounting'],[['printer','print settings'],'printer'],
-  [['users','user management'],'users'],[['invoice','invoices'],'invoice'],[['control center','control'],'control'],[['settings','customize'],'settings']
- ];
- for(const [words,target] of commands)if(words.some(w=>t.includes(w))){showView(target);toast('Opening '+target);return}
- if(t.includes('hold sale')){holdSale();return}
- if(t.includes('clear cart')){clearCart();toast('Cart cleared');return}
- if(t.includes('confirm sale')||t.includes('complete sale')){confirmSale();return}
- if(t.includes('invoice')){showView('invoice');return}
- if(t.includes('print receipt')||t.includes('print invoice')){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
- if(t.includes('logout')){logout();return}
- toast('Voice command not recognized')
+  t=normalizeVoiceText(t); if(!t)return;
+
+  /* Create/open actions must run before broad navigation words like "product" or "customer". */
+  if(voiceHas(t,['add product','new product','create product'])){openProduct();return}
+  if(voiceHas(t,['add customer','new customer','create customer'])){openCustomer();return}
+  if(voiceHas(t,['add expense','new expense','create expense'])){openExpense();return}
+  if(voiceHas(t,['add purchase','new purchase','create purchase'])){openPurchase();return}
+  if(voiceHas(t,['add user','new user','create user'])){openUser();return}
+  if(voiceHas(t,['add branch','new branch','create branch'])){openBranch();return}
+  if(voiceHas(t,['stock adjustment','adjust stock'])){openStockAdjust();return}
+  if(voiceHas(t,['add contact','new contact'])){openContact();return}
+  if(voiceHas(t,['custom icon','add sidebar icon'])){openCustomIcon();return}
+
+  /* Global navigation — natural phrases, not just button names. */
+  const nav=[
+    [['dashboard','home','main dashboard','go home','open dashboard','show dashboard'],'dashboard','Dashboard'],
+    [['new sale','new sales','pos','point of sale','sales screen','open pos','start sale','make a sale'],'pos','POS'],
+    [['hold sales','held sales','held sale','open held sales','resume sales'],'held','Held Sales'],
+    [['drafts','draft sales','open drafts','show drafts'],'drafts','Draft Sales'],
+    [['quotations','quotation','quotes','open quotations'],'quotations','Quotations'],
+    [['shipments','shipment','open shipments'],'shipments','Shipments'],
+    [['discounts','discount','open discounts'],'discounts','Discounts'],
+    [['import sales','imported sales','open import sales'],'importSales','Import Sales'],
+    [['products','product list','product management','open products','show products'],'products','Products'],
+    [['inventory','stock','stock list','open inventory','show inventory'],'inventory','Inventory'],
+    [['stock transfer','stock transfers','transfer stock'],'stockTransfer','Stock Transfer'],
+    [['sales','sales history','sale history','open sales'],'sales','Sales'],
+    [['sales check up','sales checkup','returns','return sales','open returns'],'returns','Sales Check-up'],
+    [['purchases','purchase list','purchase management','open purchases'],'purchases','Purchases'],
+    [['customers','customer list','open customers'],'customers','Customers'],
+    [['contacts','contact list','open contacts'],'contacts','Contacts'],
+    [['expenses','expense list','open expenses'],'expenses','Expenses'],
+    [['reports','report','business reports','show reports'],'reports','Reports'],
+    [['accounting','accounts','open accounting'],'accounting','Accounting'],
+    [['branching','branches','branch','open branches'],'branches','Branches'],
+    [['printer','printer settings','receipt printer','open printer'],'printer','Printer'],
+    [['invoice','invoices','invoice management','open invoice'],'invoice','Invoice'],
+    [['users','users roles','user management','staff users','open users'],'users','Users / Roles'],
+    [['control center','control','admin control','open control center'],'control','Control Center'],
+    [['settings','customize','customization','business settings','open settings'],'settings','Settings'],
+    [['communication','chat','open communication','communication center'],'communication','Communication']
+  ];
+  /* Exact/strong navigation first so "sales" does not swallow "confirm sale". */
+  for(const [words,target,label] of nav){
+    if(words.some(w=>t===w || t.startsWith(w+' ') || t.endsWith(' '+w))){voiceOpen(target,label);return}
+  }
+  for(const [words,target,label] of nav){if(words.some(w=>t.includes(w))){voiceOpen(target,label);return}}
+
+  if(voiceHas(t,['start voice call','make voice call','call cashier','call admin'])){dcuOpen('voice');return}
+  if(voiceHas(t,['start video call','make video call','video call'])){dcuOpen('video');return}
+  if(voiceHas(t,['open chat','send message','chat with staff'])){dcuOpen();return}
+
+  /* POS actions */
+  if(voiceHas(t,['new sale','start selling','sell something'])){showView('pos');toast('New sale ready');return}
+  if(voiceHas(t,['clear cart','empty cart','remove all from cart'])){clearCart();toast('Cart cleared');return}
+  if(voiceHas(t,['hold sale','hold this sale','save this sale for later'])){holdSale();return}
+  if(voiceHas(t,['resume sale','resume held sale','continue held sale'])){openHeld();return}
+  if(voiceHas(t,['confirm sale','complete sale','finish sale','checkout','check out'])){confirmSale();return}
+  if(voiceHas(t,['scan barcode','scan product','barcode scan'])){showView('pos');scanBarcode();return}
+  if(voiceHas(t,['print receipt','print last receipt','print latest receipt'])){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
+  if(voiceHas(t,['print invoice','print last invoice'])){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
+
+  /* Product/cart intelligence: "add 2 coca cola", "sell rice", etc. */
+  if(/^(please\s+)?(add|put|sell|buy)\s+/.test(t)){
+    const result=voiceFindProduct(t);
+    if(result?.product)return;
+    if(result?.name){showView('pos');const q=document.getElementById('posSearch');if(q){q.value=result.name;renderPOS()}toast('Product not found: '+result.name);return}
+  }
+  if(t.startsWith('search ')||t.startsWith('find product ')||t.startsWith('look for ')){
+    const qtext=t.replace(/^search\s+|^find product\s+|^look for\s+/,'').trim();showView('products');const q=document.getElementById('productSearch');if(q){q.value=qtext;renderProducts()}toast('Searching for '+qtext);return
+  }
+
+  /* Utility/admin commands */
+  if(voiceHas(t,['backup data','backup','export backup','save backup'])){backupData();return}
+  if(voiceHas(t,['test print','print test'])){testPrint();return}
+  if(voiceHas(t,['connect bluetooth','bluetooth printer'])){connectBluetooth();return}
+  if(voiceHas(t,['open menu','main menu','show menu','sidebar'])){toggleSidebar();return}
+  if(voiceHas(t,['close menu','hide menu','collapse menu'])){toggleSidebar();return}
+  if(voiceHas(t,['back','go back','previous page'])){goBackInApp();return}
+  if(voiceHas(t,['logout','log out','sign out'])){logout();return}
+
+  /* Theme commands */
+  const themes={
+    'dark blue':'darkblue','dark green':'darkgreen','maroon':'maroon','purple':'purple','gold':'gold','yellow':'yellow',
+    'chocolate':'chocolate','salad green':'salad','black':'black','white':'white','milk':'milk','brown':'brown','green':'green',
+    'ocean':'ocean','ocean blue':'ocean','teal':'teal','rose':'rose','orange':'orange','silver':'silver'
+  };
+  for(const [name,key] of Object.entries(themes))if(t.includes('theme '+name)||t.includes('use '+name+' theme')||t===''+name){applyTheme(key);toast('Theme changed to '+name);return}
+  if(voiceHas(t,['open communication','open chat'])){dcuOpen();return}
+
+  toast('Voice command not recognized: '+t);
 }
 
 function backupData(){
@@ -3636,8 +3720,6 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
         return result;
       };
     }
-    const vb=document.getElementById('voiceBtn');
-    if(vb){vb.textContent='💬 Communication';vb.title='Chat • Voice Call • Video Call';vb.addEventListener('click',e=>{e.preventDefault();window.dcuOpen()},{capture:true});}
     const vc=document.getElementById('view-communication');
     if(vc&&!vc.querySelector('[data-dcu-open]')){
       const b=document.createElement('button');b.className='btn primary';b.dataset.dcuOpen='1';b.textContent='💬 Open Communication Center';b.onclick=open;vc.prepend(b);

@@ -2322,155 +2322,6 @@ button *,
  
 
 
-<script>
-/* DLIMANS COMMUNICATION UNIFIED
-   Chat + Voice Call + Video Call
-   Uses the POS's existing Firebase Auth/Firestore session.
-   Load after the main POS script.
-*/
-(function(){
-  'use strict';
-  const APP='dlimansUnifiedComm';
-  let callId=null, pc=null, localStream=null, currentPartner=null;
-  let callUnsub=null, msgUnsub=null, presenceUnsub=null, candidateUnsub=null, incomingUnsub=null;
-  let muted=false, cameraOff=false;
-
-  const $=id=>document.getElementById(id);
-  const esc=v=>typeof escapeHTML==='function'?escapeHTML(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-  const me=()=>String(window.currentUser?.id||window.syncUser?.uid||'');
-  const myName=()=>window.currentUser?.username||window.currentUser?.role||'User';
-  const db=()=>window.syncDb;
-  const root=()=>db()&&window.syncUser?db().collection('dlimansStores').doc(window.syncUser.uid):null;
-  const pair=(a,b)=>[''+a,''+b].sort().join('__');
-  const now=()=>firebase.firestore.FieldValue.serverTimestamp();
-
-  function toastMsg(s){if(typeof toast==='function')toast(s);else console.log(s)}
-  function ensureUI(){
-    if($('dcuStyle'))return;
-    const st=document.createElement('style');st.id='dcuStyle';st.textContent=`
-      #dcuPanel{position:fixed;inset:0;z-index:9999;background:#000b;display:none;align-items:center;justify-content:center;padding:12px}
-      #dcuPanel.show{display:flex}.dcu-box{width:min(1100px,100%);height:min(760px,94vh);background:#0b1727;color:#f7fafc;border:1px solid #263b55;border-radius:18px;overflow:hidden;display:grid;grid-template-columns:240px 1fr 290px;box-shadow:0 25px 80px #0009}
-      .dcu-side,.dcu-right{background:#091523;padding:12px;overflow:auto}.dcu-side{border-right:1px solid #263b55}.dcu-right{border-left:1px solid #263b55}.dcu-head{padding:12px;border-bottom:1px solid #263b55;display:flex;gap:8px;align-items:center}.dcu-head strong{flex:1}.dcu-users button{width:100%;text-align:left;border:1px solid transparent;background:#ffffff06;color:#fff;border-radius:10px;padding:9px;margin:4px 0}.dcu-users button.active{border-color:#00e67655;background:#00e67612}.dcu-chat{display:grid;grid-template-rows:auto 1fr auto;min-width:0}.dcu-msgs{overflow:auto;padding:14px}.dcu-msg{max-width:78%;padding:9px 11px;border:1px solid #263b55;border-radius:12px;margin:6px 0;background:#ffffff08}.dcu-msg.mine{margin-left:auto;background:#00e67616;border-color:#00e67644}.dcu-time{font-size:9px;color:#94a3b8;text-align:right;margin-top:4px}.dcu-compose{display:flex;gap:7px;padding:10px;border-top:1px solid #263b55}.dcu-compose textarea{min-height:44px;max-height:120px;resize:vertical}.dcu-btn{border:1px solid #30445d;background:#15263c;color:#fff;border-radius:9px;padding:8px 10px;font-weight:700}.dcu-btn.primary{background:#00e676;color:#03140b;border-color:#00e676}.dcu-btn.danger{background:#681827;border-color:#8d2234}.dcu-videos{position:relative;aspect-ratio:16/10;background:#02060b;border-radius:10px;overflow:hidden;border:1px solid #263b55}.dcu-videos video{width:100%;height:100%;object-fit:cover}.dcu-local{position:absolute;right:7px;bottom:7px;width:105px;aspect-ratio:16/10;border:1px solid #fff5;border-radius:8px;overflow:hidden}.dcu-local video{width:100%;height:100%;object-fit:cover}.dcu-pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#ffffff10;font-size:10px}.dcu-ok{color:#70ffb0}.dcu-warn{color:#ffc45c}
-      @media(max-width:850px){.dcu-box{grid-template-columns:210px 1fr}.dcu-right{display:none}}@media(max-width:650px){.dcu-box{grid-template-columns:1fr;height:96vh}.dcu-side{display:none}.dcu-head .dcu-mobile{display:inline-block}}
-    `;document.head.appendChild(st);
-    const p=document.createElement('div');p.id='dcuPanel';p.innerHTML=`<div class="dcu-box">
-      <aside class="dcu-side"><div class="dcu-head"><strong>Admin / Cashier</strong><button class="dcu-btn" onclick="dcuClose()">✕</button></div><input id="dcuSearch" placeholder="Search staff" style="margin:9px 0"><div id="dcuUsers" class="dcu-users"></div></aside>
-      <section class="dcu-chat"><div class="dcu-head"><div id="dcuAvatar" class="dcu-pill">?</div><strong id="dcuPartner">Select staff</strong><span id="dcuStatus" class="dcu-pill">Ready</span><button class="dcu-btn" onclick="dcuCall('voice')">📞</button><button class="dcu-btn primary" onclick="dcuCall('video')">📹</button></div><div id="dcuMsgs" class="dcu-msgs"><div class="dcu-warn">Select an Admin or Cashier.</div></div><div class="dcu-compose"><textarea id="dcuInput" placeholder="Write a message..." onkeydown="dcuKey(event)"></textarea><button class="dcu-btn primary" onclick="dcuSend()">Send</button></div></section>
-      <aside class="dcu-right"><div class="dcu-head"><strong>Current Call</strong></div><div class="dcu-videos"><video id="dcuRemote" autoplay playsinline></video><div class="dcu-local"><video id="dcuLocal" autoplay muted playsinline></video></div></div><div style="display:flex;gap:6px;margin-top:8px"><button class="dcu-btn" onclick="dcuMute()">🎙️</button><button class="dcu-btn" onclick="dcuCamera()">📷</button><button class="dcu-btn danger" onclick="dcuHangup()">End</button></div><p id="dcuCallStatus" class="dcu-warn">No active call.</p></aside>
-    </div>`;document.body.appendChild(p);
-  }
-
-  async function getStaff(){
-    const rootRef=root(); if(!rootRef) return [];
-    // Prefer the POS users document/array if present. This avoids a second account system.
-    let list=Array.isArray(window.users)?window.users:[];
-    list=list.filter(u=>u&&u.active!==false&&(u.role==='Admin'||u.role==='Cashier')&&String(u.id)!==me());
-    if(list.length)return list.map(u=>({id:String(u.id),name:u.username||u.role,role:u.role}));
-    try{
-      const s=await rootRef.get();const d=s.data()||{};const arr=Array.isArray(d.users)?d.users:[];
-      return arr.filter(u=>u&&(u.role==='Admin'||u.role==='Cashier')&&String(u.id)!==me()).map(u=>({id:String(u.id),name:u.username||u.role,role:u.role}));
-    }catch(e){return []}
-  }
-  async function renderStaff(){
-    const box=$('dcuUsers');if(!box)return;const q=($('dcuSearch')?.value||'').toLowerCase();const list=await getStaff();
-    box.innerHTML=list.filter(u=>(u.name+' '+u.role).toLowerCase().includes(q)).map(u=>`<button class="${currentPartner?.id===u.id?'active':''}" onclick="dcuSelect('${esc(u.id)}','${esc(u.name)}','${esc(u.role)}')"><b>${esc(u.name)}</b><br><span class="dcu-pill">${esc(u.role)}</span></button>`).join('')||'<small>No Admin/Cashier found.</small>';
-  }
-  async function open(){ensureUI();if(!window.syncUser||!db()){toastMsg('Connect Cloud/Firebase first');return} $('dcuPanel').classList.add('show');startIncomingListener();await renderStaff()}
-  function close(){if($('dcuPanel'))$('dcuPanel').classList.remove('show')}
-  async function select(id,name,role){
-    currentPartner={id,name,role};$('dcuPartner').textContent=name;$('dcuAvatar').textContent=(name||role||'?').charAt(0).toUpperCase();await renderStaff();subscribeMessages();
-  }
-  function subscribeMessages(){
-    if(msgUnsub)msgUnsub();if(!currentPartner||!root())return;
-    const ref=root().collection('chatMessages');const cid=pair(me(),currentPartner.id);
-    msgUnsub=ref.where('conversationId','==',cid).limitToLast(150).onSnapshot(s=>{const a=s.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>time(x.createdAt)-time(y.createdAt));$('dcuMsgs').innerHTML=a.length?a.map(m=>`<div class="dcu-msg ${String(m.senderId)===me()?'mine':''}">${esc(m.text||'')}<div class="dcu-time">${new Date(time(m.createdAt)||Date.now()).toLocaleString()}</div></div>`).join(''):'<div class="dcu-warn">No messages yet.</div>';$('dcuMsgs').scrollTop=$('dcuMsgs').scrollHeight},e=>{$('dcuStatus').textContent='Chat error';console.warn(e)});
-  }
-  const time=v=>v?.toMillis?v.toMillis():v?.seconds?v.seconds*1000:new Date(v||0).getTime()||0;
-  async function send(){const input=$('dcuInput');const text=(input?.value||'').trim();if(!text||!currentPartner)return;if(!root())return toastMsg('Cloud is not connected');try{await root().collection('chatMessages').add({conversationId:pair(me(),currentPartner.id),type:'direct',senderId:me(),senderName:myName(),senderRole:window.currentUser?.role||'',recipientId:currentPartner.id,text,createdAt:now()});input.value=''}catch(e){toastMsg('Chat failed: '+(e.message||e))}}
-  function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
-
-  async function call(kind){
-    if(!currentPartner)return toastMsg('Select an Admin/Cashier first');if(!root())return toastMsg('Cloud is not connected');
-    if(callId)return toastMsg('A call is already active');
-    try{
-      localStream=await navigator.mediaDevices.getUserMedia(kind==='video'?{audio:true,video:true}:{audio:true,video:false});
-      $('dcuLocal').srcObject=localStream;$('dcuLocal').style.display=kind==='video'?'block':'none';
-      callId=(crypto.randomUUID?crypto.randomUUID():('call-'+Date.now()));
-      pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
-      localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-      pc.ontrack=e=>{$('dcuRemote').srcObject=e.streams[0]};
-      pc.onicecandidate=e=>{if(e.candidate)root().collection('communicationCalls').doc(callId).collection('candidates').add({side:'caller',candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{})};
-      const offer=await pc.createOffer();await pc.setLocalDescription(offer);
-      await root().collection('communicationCalls').doc(callId).set({callerId:me(),callerName:myName(),calleeId:currentPartner.id,calleeName:currentPartner.name,kind,status:'ringing',offer:{type:offer.type,sdp:offer.sdp},createdAt:Date.now()});
-      listenCall(callId,'caller');$('dcuCallStatus').textContent='Calling '+currentPartner.name+'…';
-    }catch(e){cleanup();toastMsg('Call failed: '+(e.message||e))}
-  }
-  function listenCall(id,side){
-    if(callUnsub)callUnsub();
-    if(candidateUnsub)candidateUnsub();
-    const ref=root().collection('communicationCalls').doc(id);
-    callUnsub=ref.onSnapshot(async s=>{const c=s.data();if(!c)return;
-      if(side==='caller'&&c.answer&&!pc.currentRemoteDescription){await pc.setRemoteDescription(c.answer).catch(()=>{});}
-      if(c.status==='ended')cleanup();
-    });
-    const remoteSide=side==='caller'?'callee':'caller';
-    candidateUnsub=ref.collection('candidates').where('side','==',remoteSide).onSnapshot(async snap=>{
-      for(const d of snap.docChanges()){if(d.type==='added'&&pc){const x=d.doc.data().candidate;await pc.addIceCandidate(new RTCIceCandidate(x)).catch(()=>{});}}
-    });
-  }
-  async function addCandidates(id,side){try{const s=await root().collection('communicationCalls').doc(id).collection('candidates').where('side','==',side).get();for(const d of s.docs){const x=d.data().candidate;await pc.addIceCandidate(new RTCIceCandidate(x)).catch(()=>{})}}catch(e){}}
-  async function accept(id){
-    if(callId)return;const ref=root().collection('communicationCalls').doc(id);const s=await ref.get();const c=s.data();if(!c)return;
-    try{
-      localStream=await navigator.mediaDevices.getUserMedia(c.kind==='video'?{audio:true,video:true}:{audio:true,video:false});$('dcuLocal').srcObject=localStream;$('dcuLocal').style.display=c.kind==='video'?'block':'none';
-      callId=id;pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));pc.ontrack=e=>$('dcuRemote').srcObject=e.streams[0];pc.onicecandidate=e=>{if(e.candidate)ref.collection('candidates').add({side:'callee',candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{})};
-      await pc.setRemoteDescription(c.offer);await addCandidates(id,'caller');const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await ref.update({answer:{type:answer.type,sdp:answer.sdp},status:'active'});listenCall(id,'callee');$('dcuCallStatus').textContent='Connected';
-    }catch(e){toastMsg('Accept failed: '+(e.message||e));cleanup()}
-  }
-  async function hangup(){if(callId&&root()){try{await root().collection('communicationCalls').doc(callId).set({status:'ended',endedAt:Date.now()},{merge:true})}catch(e){}}cleanup()}
-  function cleanup(){if(callUnsub)callUnsub();callUnsub=null;if(candidateUnsub)candidateUnsub();candidateUnsub=null;if(msgUnsub)msgUnsub();msgUnsub=null;if(localStream)localStream.getTracks().forEach(t=>t.stop());localStream=null;if(pc)pc.close();pc=null;callId=null;$('dcuCallStatus')&&($('dcuCallStatus').textContent='No active call.');if($('dcuRemote'))$('dcuRemote').srcObject=null;if($('dcuLocal'))$('dcuLocal').srcObject=null}
-  function mute(){muted=!muted;(localStream?.getAudioTracks()||[]).forEach(t=>t.enabled=!muted);toastMsg(muted?'Microphone muted':'Microphone on')}
-  function camera(){cameraOff=!cameraOff;(localStream?.getVideoTracks()||[]).forEach(t=>t.enabled=!cameraOff);toastMsg(cameraOff?'Camera off':'Camera on')}
-
-
-  function startIncomingListener(){
-    if(incomingUnsub||!root())return;
-    incomingUnsub=root().collection('communicationCalls').where('calleeId','==',me()).where('status','==','ringing').onSnapshot(snap=>{
-      snap.docChanges().forEach(ch=>{
-        if(ch.type!=='added'||callId)return;
-        const c=ch.doc.data()||{};
-        currentPartner={id:String(c.callerId||''),name:c.callerName||'Admin/Cashier',role:c.callerRole||'Staff'};
-        ensureUI();
-        $('dcuPanel')?.classList.add('show');
-        $('dcuCallStatus') && ($('dcuCallStatus').textContent='Incoming '+(c.kind==='video'?'video':'voice')+' call from '+currentPartner.name+'…');
-        const acceptIt=window.confirm('Incoming '+(c.kind==='video'?'video':'voice')+' call from '+currentPartner.name+'. Accept?');
-        if(acceptIt)accept(ch.doc.id); else root().collection('communicationCalls').doc(ch.doc.id).set({status:'ended',endedAt:Date.now()},{merge:true});
-      });
-    },e=>console.warn('Incoming call listener:',e));
-  }
-  window.dcuOpen=open;window.dcuClose=close;
-  document.addEventListener('DOMContentLoaded',()=>{
-    const originalShowView=window.showView;
-    if(typeof originalShowView==='function' && !window.__dlimansUnifiedShowView){
-      window.__dlimansUnifiedShowView=true;
-      window.showView=function(name,...args){
-        const result=originalShowView.call(this,name,...args);
-        if(name==='communication')setTimeout(open,60);
-        return result;
-      };
-    }
-    const vb=document.getElementById('voiceBtn');
-    if(vb){vb.textContent='💬 Communication';vb.title='Chat • Voice Call • Video Call';vb.addEventListener('click',e=>{e.preventDefault();open()},{capture:true});}
-    const vc=document.getElementById('view-communication');
-    if(vc&&!vc.querySelector('[data-dcu-open]')){
-      const b=document.createElement('button');b.className='btn primary';b.dataset.dcuOpen='1';b.textContent='💬 Open Communication Center';b.onclick=open;vc.prepend(b);
-    }
-  });window.dcuSelect=select;window.dcuSend=send;window.dcuKey=key;window.dcuCall=call;window.dcuAccept=accept;window.dcuHangup=hangup;window.dcuMute=mute;window.dcuCamera=camera;
-  document.addEventListener('click',e=>{const b=e.target.closest?.('[data-dlimans-communication]');if(b){e.preventDefault();open()}});
-  window.addEventListener('load',()=>{if($('view-communication'))renderStaff().catch(()=>{});setTimeout(()=>{if(window.syncUser&&db())startIncomingListener()},1200)});
-})();
-
-</script>
 </body></html>`);
  win.document.close()
 }
@@ -3654,6 +3505,156 @@ async function startDlimansChat(){
 window.addEventListener('load',()=>setTimeout(startDlimansChat,1000));
 window.addEventListener('online',()=>setTimeout(startDlimansChat,500));
 window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearDlimansChatListeners()}catch(e){}});
+</script>
+
+<script>
+/* DLIMANS COMMUNICATION UNIFIED
+   Chat + Voice Call + Video Call
+   Uses the POS's existing Firebase Auth/Firestore session.
+   Load after the main POS script.
+*/
+(function(){
+  'use strict';
+  const APP='dlimansUnifiedComm';
+  let callId=null, pc=null, localStream=null, currentPartner=null;
+  let callUnsub=null, msgUnsub=null, presenceUnsub=null, candidateUnsub=null, incomingUnsub=null;
+  let muted=false, cameraOff=false;
+
+  const $=id=>document.getElementById(id);
+  const esc=v=>typeof escapeHTML==='function'?escapeHTML(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const me=()=>String(window.currentUser?.id||window.syncUser?.uid||'');
+  const myName=()=>window.currentUser?.username||window.currentUser?.role||'User';
+  const db=()=>window.syncDb;
+  const root=()=>db()&&window.syncUser?db().collection('dlimansStores').doc(window.syncUser.uid):null;
+  const pair=(a,b)=>[''+a,''+b].sort().join('__');
+  const now=()=>firebase.firestore.FieldValue.serverTimestamp();
+
+  function toastMsg(s){if(typeof toast==='function')toast(s);else console.log(s)}
+  function ensureUI(){
+    if($('dcuStyle'))return;
+    const st=document.createElement('style');st.id='dcuStyle';st.textContent=`
+      #dcuPanel{position:fixed;inset:0;z-index:9999;background:#000b;display:none;align-items:center;justify-content:center;padding:12px}
+      #dcuPanel.show{display:flex}.dcu-box{width:min(1100px,100%);height:min(760px,94vh);background:#0b1727;color:#f7fafc;border:1px solid #263b55;border-radius:18px;overflow:hidden;display:grid;grid-template-columns:240px 1fr 290px;box-shadow:0 25px 80px #0009}
+      .dcu-side,.dcu-right{background:#091523;padding:12px;overflow:auto}.dcu-side{border-right:1px solid #263b55}.dcu-right{border-left:1px solid #263b55}.dcu-head{padding:12px;border-bottom:1px solid #263b55;display:flex;gap:8px;align-items:center}.dcu-head strong{flex:1}.dcu-users button{width:100%;text-align:left;border:1px solid transparent;background:#ffffff06;color:#fff;border-radius:10px;padding:9px;margin:4px 0}.dcu-users button.active{border-color:#00e67655;background:#00e67612}.dcu-chat{display:grid;grid-template-rows:auto 1fr auto;min-width:0}.dcu-msgs{overflow:auto;padding:14px}.dcu-msg{max-width:78%;padding:9px 11px;border:1px solid #263b55;border-radius:12px;margin:6px 0;background:#ffffff08}.dcu-msg.mine{margin-left:auto;background:#00e67616;border-color:#00e67644}.dcu-time{font-size:9px;color:#94a3b8;text-align:right;margin-top:4px}.dcu-compose{display:flex;gap:7px;padding:10px;border-top:1px solid #263b55}.dcu-compose textarea{min-height:44px;max-height:120px;resize:vertical}.dcu-btn{border:1px solid #30445d;background:#15263c;color:#fff;border-radius:9px;padding:8px 10px;font-weight:700}.dcu-btn.primary{background:#00e676;color:#03140b;border-color:#00e676}.dcu-btn.danger{background:#681827;border-color:#8d2234}.dcu-videos{position:relative;aspect-ratio:16/10;background:#02060b;border-radius:10px;overflow:hidden;border:1px solid #263b55}.dcu-videos video{width:100%;height:100%;object-fit:cover}.dcu-local{position:absolute;right:7px;bottom:7px;width:105px;aspect-ratio:16/10;border:1px solid #fff5;border-radius:8px;overflow:hidden}.dcu-local video{width:100%;height:100%;object-fit:cover}.dcu-pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#ffffff10;font-size:10px}.dcu-ok{color:#70ffb0}.dcu-warn{color:#ffc45c}
+      @media(max-width:850px){.dcu-box{grid-template-columns:210px 1fr}.dcu-right{display:none}}@media(max-width:650px){.dcu-box{grid-template-columns:1fr;height:96vh}.dcu-side{display:none}.dcu-head .dcu-mobile{display:inline-block}}
+    `;document.head.appendChild(st);
+    const p=document.createElement('div');p.id='dcuPanel';p.innerHTML=`<div class="dcu-box">
+      <aside class="dcu-side"><div class="dcu-head"><strong>Admin / Cashier</strong><button class="dcu-btn" onclick="dcuClose()">✕</button></div><input id="dcuSearch" placeholder="Search staff" style="margin:9px 0"><div id="dcuUsers" class="dcu-users"></div></aside>
+      <section class="dcu-chat"><div class="dcu-head"><div id="dcuAvatar" class="dcu-pill">?</div><strong id="dcuPartner">Select staff</strong><span id="dcuStatus" class="dcu-pill">Ready</span><button class="dcu-btn" onclick="dcuCall('voice')">📞</button><button class="dcu-btn primary" onclick="dcuCall('video')">📹</button></div><div id="dcuMsgs" class="dcu-msgs"><div class="dcu-warn">Select an Admin or Cashier.</div></div><div class="dcu-compose"><textarea id="dcuInput" placeholder="Write a message..." onkeydown="dcuKey(event)"></textarea><button class="dcu-btn primary" onclick="dcuSend()">Send</button></div></section>
+      <aside class="dcu-right"><div class="dcu-head"><strong>Current Call</strong></div><div class="dcu-videos"><video id="dcuRemote" autoplay playsinline></video><div class="dcu-local"><video id="dcuLocal" autoplay muted playsinline></video></div></div><div style="display:flex;gap:6px;margin-top:8px"><button class="dcu-btn" onclick="dcuMute()">🎙️</button><button class="dcu-btn" onclick="dcuCamera()">📷</button><button class="dcu-btn danger" onclick="dcuHangup()">End</button></div><p id="dcuCallStatus" class="dcu-warn">No active call.</p></aside>
+    </div>`;document.body.appendChild(p);
+  }
+
+  async function getStaff(){
+    const rootRef=root(); if(!rootRef) return [];
+    // Prefer the POS users document/array if present. This avoids a second account system.
+    let list=Array.isArray(window.users)?window.users:[];
+    list=list.filter(u=>u&&u.active!==false&&(u.role==='Admin'||u.role==='Cashier')&&String(u.id)!==me());
+    if(list.length)return list.map(u=>({id:String(u.id),name:u.username||u.role,role:u.role}));
+    try{
+      const s=await rootRef.get();const d=s.data()||{};const arr=Array.isArray(d.users)?d.users:[];
+      return arr.filter(u=>u&&(u.role==='Admin'||u.role==='Cashier')&&String(u.id)!==me()).map(u=>({id:String(u.id),name:u.username||u.role,role:u.role}));
+    }catch(e){return []}
+  }
+  async function renderStaff(){
+    const box=$('dcuUsers');if(!box)return;const q=($('dcuSearch')?.value||'').toLowerCase();const list=await getStaff();
+    box.innerHTML=list.filter(u=>(u.name+' '+u.role).toLowerCase().includes(q)).map(u=>`<button class="${currentPartner?.id===u.id?'active':''}" onclick="dcuSelect('${esc(u.id)}','${esc(u.name)}','${esc(u.role)}')"><b>${esc(u.name)}</b><br><span class="dcu-pill">${esc(u.role)}</span></button>`).join('')||'<small>No Admin/Cashier found.</small>';
+  }
+  async function open(){ensureUI();if(!window.syncUser||!db()){toastMsg('Connect Cloud/Firebase first');return} $('dcuPanel').classList.add('show');startIncomingListener();await renderStaff()}
+  function close(){if($('dcuPanel'))$('dcuPanel').classList.remove('show')}
+  async function select(id,name,role){
+    currentPartner={id,name,role};$('dcuPartner').textContent=name;$('dcuAvatar').textContent=(name||role||'?').charAt(0).toUpperCase();await renderStaff();subscribeMessages();
+  }
+  function subscribeMessages(){
+    if(msgUnsub)msgUnsub();if(!currentPartner||!root())return;
+    const ref=root().collection('chatMessages');const cid=pair(me(),currentPartner.id);
+    msgUnsub=ref.where('conversationId','==',cid).limitToLast(150).onSnapshot(s=>{const a=s.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>time(x.createdAt)-time(y.createdAt));$('dcuMsgs').innerHTML=a.length?a.map(m=>`<div class="dcu-msg ${String(m.senderId)===me()?'mine':''}">${esc(m.text||'')}<div class="dcu-time">${new Date(time(m.createdAt)||Date.now()).toLocaleString()}</div></div>`).join(''):'<div class="dcu-warn">No messages yet.</div>';$('dcuMsgs').scrollTop=$('dcuMsgs').scrollHeight},e=>{$('dcuStatus').textContent='Chat error';console.warn(e)});
+  }
+  const time=v=>v?.toMillis?v.toMillis():v?.seconds?v.seconds*1000:new Date(v||0).getTime()||0;
+  async function send(){const input=$('dcuInput');const text=(input?.value||'').trim();if(!text||!currentPartner)return;if(!root())return toastMsg('Cloud is not connected');try{await root().collection('chatMessages').add({conversationId:pair(me(),currentPartner.id),type:'direct',senderId:me(),senderName:myName(),senderRole:window.currentUser?.role||'',recipientId:currentPartner.id,text,createdAt:now()});input.value=''}catch(e){toastMsg('Chat failed: '+(e.message||e))}}
+  function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
+
+  async function call(kind){
+    if(!currentPartner)return toastMsg('Select an Admin/Cashier first');if(!root())return toastMsg('Cloud is not connected');
+    if(callId)return toastMsg('A call is already active');
+    try{
+      localStream=await navigator.mediaDevices.getUserMedia(kind==='video'?{audio:true,video:true}:{audio:true,video:false});
+      $('dcuLocal').srcObject=localStream;$('dcuLocal').style.display=kind==='video'?'block':'none';
+      callId=(crypto.randomUUID?crypto.randomUUID():('call-'+Date.now()));
+      pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
+      localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+      pc.ontrack=e=>{$('dcuRemote').srcObject=e.streams[0]};
+      pc.onicecandidate=e=>{if(e.candidate)root().collection('communicationCalls').doc(callId).collection('candidates').add({side:'caller',candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{})};
+      const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+      await root().collection('communicationCalls').doc(callId).set({callerId:me(),callerName:myName(),calleeId:currentPartner.id,calleeName:currentPartner.name,kind,status:'ringing',offer:{type:offer.type,sdp:offer.sdp},createdAt:Date.now()});
+      listenCall(callId,'caller');$('dcuCallStatus').textContent='Calling '+currentPartner.name+'…';
+    }catch(e){cleanup();toastMsg('Call failed: '+(e.message||e))}
+  }
+  function listenCall(id,side){
+    if(callUnsub)callUnsub();
+    if(candidateUnsub)candidateUnsub();
+    const ref=root().collection('communicationCalls').doc(id);
+    callUnsub=ref.onSnapshot(async s=>{const c=s.data();if(!c)return;
+      if(side==='caller'&&c.answer&&!pc.currentRemoteDescription){await pc.setRemoteDescription(c.answer).catch(()=>{});}
+      if(c.status==='ended')cleanup();
+    });
+    const remoteSide=side==='caller'?'callee':'caller';
+    candidateUnsub=ref.collection('candidates').where('side','==',remoteSide).onSnapshot(async snap=>{
+      for(const d of snap.docChanges()){if(d.type==='added'&&pc){const x=d.doc.data().candidate;await pc.addIceCandidate(new RTCIceCandidate(x)).catch(()=>{});}}
+    });
+  }
+  async function addCandidates(id,side){try{const s=await root().collection('communicationCalls').doc(id).collection('candidates').where('side','==',side).get();for(const d of s.docs){const x=d.data().candidate;await pc.addIceCandidate(new RTCIceCandidate(x)).catch(()=>{})}}catch(e){}}
+  async function accept(id){
+    if(callId)return;const ref=root().collection('communicationCalls').doc(id);const s=await ref.get();const c=s.data();if(!c)return;
+    try{
+      localStream=await navigator.mediaDevices.getUserMedia(c.kind==='video'?{audio:true,video:true}:{audio:true,video:false});$('dcuLocal').srcObject=localStream;$('dcuLocal').style.display=c.kind==='video'?'block':'none';
+      callId=id;pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));pc.ontrack=e=>$('dcuRemote').srcObject=e.streams[0];pc.onicecandidate=e=>{if(e.candidate)ref.collection('candidates').add({side:'callee',candidate:e.candidate.toJSON(),createdAt:Date.now()}).catch(()=>{})};
+      await pc.setRemoteDescription(c.offer);await addCandidates(id,'caller');const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await ref.update({answer:{type:answer.type,sdp:answer.sdp},status:'active'});listenCall(id,'callee');$('dcuCallStatus').textContent='Connected';
+    }catch(e){toastMsg('Accept failed: '+(e.message||e));cleanup()}
+  }
+  async function hangup(){if(callId&&root()){try{await root().collection('communicationCalls').doc(callId).set({status:'ended',endedAt:Date.now()},{merge:true})}catch(e){}}cleanup()}
+  function cleanup(){if(callUnsub)callUnsub();callUnsub=null;if(candidateUnsub)candidateUnsub();candidateUnsub=null;if(msgUnsub)msgUnsub();msgUnsub=null;if(localStream)localStream.getTracks().forEach(t=>t.stop());localStream=null;if(pc)pc.close();pc=null;callId=null;$('dcuCallStatus')&&($('dcuCallStatus').textContent='No active call.');if($('dcuRemote'))$('dcuRemote').srcObject=null;if($('dcuLocal'))$('dcuLocal').srcObject=null}
+  function mute(){muted=!muted;(localStream?.getAudioTracks()||[]).forEach(t=>t.enabled=!muted);toastMsg(muted?'Microphone muted':'Microphone on')}
+  function camera(){cameraOff=!cameraOff;(localStream?.getVideoTracks()||[]).forEach(t=>t.enabled=!cameraOff);toastMsg(cameraOff?'Camera off':'Camera on')}
+
+
+  function startIncomingListener(){
+    if(incomingUnsub||!root())return;
+    incomingUnsub=root().collection('communicationCalls').where('calleeId','==',me()).where('status','==','ringing').onSnapshot(snap=>{
+      snap.docChanges().forEach(ch=>{
+        if(ch.type!=='added'||callId)return;
+        const c=ch.doc.data()||{};
+        currentPartner={id:String(c.callerId||''),name:c.callerName||'Admin/Cashier',role:c.callerRole||'Staff'};
+        ensureUI();
+        $('dcuPanel')?.classList.add('show');
+        $('dcuCallStatus') && ($('dcuCallStatus').textContent='Incoming '+(c.kind==='video'?'video':'voice')+' call from '+currentPartner.name+'…');
+        const acceptIt=window.confirm('Incoming '+(c.kind==='video'?'video':'voice')+' call from '+currentPartner.name+'. Accept?');
+        if(acceptIt)accept(ch.doc.id); else root().collection('communicationCalls').doc(ch.doc.id).set({status:'ended',endedAt:Date.now()},{merge:true});
+      });
+    },e=>console.warn('Incoming call listener:',e));
+  }
+  window.dcuOpen=open;window.dcuClose=close;
+  document.addEventListener('DOMContentLoaded',()=>{
+    const originalShowView=window.showView;
+    if(typeof originalShowView==='function' && !window.__dlimansUnifiedShowView){
+      window.__dlimansUnifiedShowView=true;
+      window.showView=function(name,...args){
+        const result=originalShowView.call(this,name,...args);
+        if(name==='communication')setTimeout(open,60);
+        return result;
+      };
+    }
+    const vb=document.getElementById('voiceBtn');
+    if(vb){vb.textContent='💬 Communication';vb.title='Chat • Voice Call • Video Call';vb.addEventListener('click',e=>{e.preventDefault();open()},{capture:true});}
+    const vc=document.getElementById('view-communication');
+    if(vc&&!vc.querySelector('[data-dcu-open]')){
+      const b=document.createElement('button');b.className='btn primary';b.dataset.dcuOpen='1';b.textContent='💬 Open Communication Center';b.onclick=open;vc.prepend(b);
+    }
+  });window.dcuSelect=select;window.dcuSend=send;window.dcuKey=key;window.dcuCall=call;window.dcuAccept=accept;window.dcuHangup=hangup;window.dcuMute=mute;window.dcuCamera=camera;
+  document.addEventListener('click',e=>{const b=e.target.closest?.('[data-dlimans-communication]');if(b){e.preventDefault();open()}});
+  window.addEventListener('load',()=>{if($('view-communication'))renderStaff().catch(()=>{});setTimeout(()=>{if(window.syncUser&&db())startIncomingListener()},1200)});
+})();
+
 </script>
 </body>
 </html>

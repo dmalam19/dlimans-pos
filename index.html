@@ -2666,7 +2666,7 @@ async function finishFirebaseCloudSync(){
  if(syncUnsub)syncUnsub();
  syncUnsub=ref.onSnapshot(s=>{
   const d=s.data()?.state;if(!d||!Array.isArray(d.products)||!Array.isArray(d.sales))return;
-  state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
+  state=preserveLocalAppearance(d,state);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
   setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
  },e=>{console.warn('Sync listener',e);setSyncStatus('⚠️ Cloud listener error — local data still active')});
  window.__dlimansSyncRef=ref;
@@ -3717,6 +3717,261 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
   window.addEventListener('load',()=>{if($('view-communication'))renderStaff().catch(()=>{});setTimeout(()=>{if(cloudUser()&&db())startIncomingListener()},1200)});
 })();
 
+</script>
+<script>
+/* =========================================================
+   DLIMANS FINAL UX PATCH — GENERAL VOICE + LOGIN WELCOME
+   + Theme persistence + Communication lifecycle safety
+   This layer extends the current master without removing existing features.
+========================================================= */
+(function(){
+  'use strict';
+  if(window.__dlimansFinalUXPatch)return;
+  window.__dlimansFinalUXPatch=true;
+
+  const speak=(text)=>{
+    try{
+      if(!('speechSynthesis' in window))return;
+      window.speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(String(text));
+      u.lang=(navigator.language&&/^en/i.test(navigator.language))?navigator.language:'en-NG';
+      u.rate=.96;u.pitch=1;u.volume=1;
+      window.speechSynthesis.speak(u);
+    }catch(e){console.warn('Dlimans speech:',e)}
+  };
+  window.dlimansSpeak=speak;
+
+  function norm(v){
+    return String(v||'').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[.,!?;:()[\]{}"']/g,' ')
+      .replace(/\s+/g,' ').trim();
+  }
+  const sayDone=(msg)=>{try{toast(msg)}catch(e){};speak(msg)};
+
+  /* Broad natural-language voice router. It first handles safe navigation,
+     POS actions and communication, then falls back to visible app controls. */
+  window.handleVoice=function(input){
+    const text=norm(input).replace(/^(hey |hello |hi |okay |ok |dlimans |dliman )+/,'').trim();
+    if(!text)return sayDone('I did not hear a command. Please try again.');
+
+    const go=(view,label)=>{
+      if(typeof showView==='function'&&document.getElementById('view-'+view)){
+        showView(view,true);sayDone('Opening '+label);return true;
+      }return false;
+    };
+    const has=(...words)=>words.some(w=>text===w||text.includes(w));
+
+    /* Global controls */
+    if(has('log out','logout','sign out','exit account')){logout();return}
+    if(has('go back','back','previous page','previous')){goBackInApp();return}
+    if(has('open menu','show menu','main menu','menu')){
+      if(typeof toggleSidebar==='function')toggleSidebar(); else document.getElementById('mainMenuBtn')?.click();
+      sayDone('Menu updated');return;
+    }
+    if(has('close menu','hide menu')){try{closeMobileSidebar()}catch(e){};sayDone('Menu closed');return}
+
+    /* Communication: explicit first so "video" never becomes a generic search. */
+    if(/\b(start|make|place|call|open)\b.*\b(video|video call)\b/.test(text)||text==='video call'||text==='video'){
+      go('communication','Communication');setTimeout(()=>window.dcuOpen?.('video'),150);return;
+    }
+    if(/\b(start|make|place|call|open)\b.*\b(voice|voice call|audio call)\b/.test(text)||text==='voice call'||text==='voice'){
+      go('communication','Communication');setTimeout(()=>window.dcuOpen?.('voice'),150);return;
+    }
+    if(/\b(open|show|go to|view)\b.*\b(chat|communication|messages)\b/.test(text)||has('communication center','open chat','show chat')){
+      go('communication','Communication');setTimeout(()=>window.dcuOpen?.(),150);return;
+    }
+
+    /* Cart / sales actions */
+    if(/\b(clear|empty|remove all|delete all)\b.*\b(cart|basket|items)\b/.test(text)){
+      clearCart();sayDone('Cart cleared');return;
+    }
+    if(/\b(hold|park|save)\b.*\b(sale|order|cart)\b/.test(text)){holdSale();sayDone('Sale held');return}
+    if(/\b(resume|continue|open)\b.*\b(held|hold)\b.*\b(sale|order)?/.test(text)){openHeld();sayDone('Held sales opened');return}
+    if(/\b(confirm|complete|finish|checkout|finalize)\b.*\b(sale|order|payment|checkout)?/.test(text)){confirmSale();return}
+    if(has('new sale','new order','start sale','start selling','sell')){go('pos','New Sale');return}
+
+    /* Product/cart natural language: "add 2 coca cola", "sell rice". */
+    let m=text.match(/\b(?:add|put|include|sell|buy)\s+(\d+(?:\.\d+)?)\s+(.+?)(?:\s+(?:to|into|on)\s+(?:my\s+)?(?:cart|basket))?$/);
+    if(!m)m=text.match(/\b(?:add|put|include|sell|buy)\s+(.+?)\s+(?:to|into|on)\s+(?:my\s+)?(?:cart|basket)$/);
+    if(m){
+      let qty=1,name='';
+      if(m.length===3&&/^\d/.test(m[1])){qty=Math.max(1,Number(m[1])||1);name=m[2].trim()}
+      else{name=(m[1]||'').trim()}
+      const clean=name.replace(/\b(cart|basket)\b$/,'').trim();
+      const p=(state.products||[]).find(x=>norm(x.name)===norm(clean)) ||
+        (state.products||[]).find(x=>norm(x.name).includes(norm(clean))||norm(clean).includes(norm(x.name)));
+      if(p){
+        let added=0;for(let i=0;i<qty;i++){const before=cart.find(x=>x.productId===p.id)?.qty||0;addToCart(p.id);const after=cart.find(x=>x.productId===p.id)?.qty||0;if(after>before)added++}
+        sayDone(added+' '+p.name+(added===1?' added to cart':' added to cart'));return;
+      }
+      go('products','Products');setTimeout(()=>{const q=document.getElementById('productSearch');if(q){q.value=clean;q.dispatchEvent(new Event('input',{bubbles:true}))}},120);
+      sayDone('I could not find '+clean+'. I opened Products to search.');return;
+    }
+    m=text.match(/\b(?:remove|delete|take out)\s+(?:from\s+)?(?:my\s+)?(?:cart|basket)?\s*(.+)$/);
+    if(m){
+      const name=m[1].trim();const item=cart.find(i=>{const p=state.products.find(x=>x.id===i.productId);return p&&norm(p.name).includes(norm(name))});
+      if(item){cart=cart.filter(x=>x.productId!==item.productId);renderCart();sayDone('Removed '+name+' from cart');return}
+    }
+
+    /* Creation/opening actions must run before broad navigation aliases. */
+    if(has('add product','new product','create product')){go('products','Products');setTimeout(()=>openProduct?.(),120);return}
+    if(has('add customer','new customer','create customer')){go('customers','Customers');setTimeout(()=>openCustomer?.(),120);return}
+    if(has('add expense','new expense','create expense')){go('expenses','Expenses');setTimeout(()=>openExpense?.(),120);return}
+    if(has('add purchase','new purchase','create purchase')){go('purchases','Purchases');setTimeout(()=>openPurchase?.(),120);return}
+    if(has('add user','new user','create user','add cashier')){go('users','Users');setTimeout(()=>openUser?.(),120);return}
+    if(has('add contact','edit contact')){go('contacts','Contacts');setTimeout(()=>openContact?.(),120);return}
+    if(has('add branch','new branch')){go('branches','Branching');setTimeout(()=>openBranch?.(),120);return}
+    if(has('stock adjustment','adjust stock','adjust inventory')){go('inventory','Inventory');setTimeout(()=>openStockAdjust?.(),120);return}
+
+    /* Navigation aliases, including Hausa-friendly words. */
+    const nav=[
+      ['dashboard',['dashboard','home','main screen','overview','gida'],'Dashboard'],
+      ['pos',['pos','new sale','sales screen','sell','checkout','sayar'],'POS / New Sale'],
+      ['held',['hold sales','held sales','parked sales'],'Hold Sales'],
+      ['drafts',['draft sales','drafts','saved sales'],'Draft Sales'],
+      ['quotations',['quotation','quotations','quote'],'Quotations'],
+      ['shipments',['shipment','shipments','delivery'],'Shipments'],
+      ['discounts',['discount','discounts','rangwame'],'Discounts'],
+      ['importSales',['import sales','import sale'],'Import Sales'],
+      ['products',['products','product','kaya','items'],'Products'],
+      ['inventory',['inventory','stock','haja'],'Inventory'],
+      ['stockTransfer',['stock transfer','transfer stock','move stock'],'Stock Transfer'],
+      ['sales',['sales','sale history','transactions','sold items'],'Sales'],
+      ['returns',['returns','sales check up','return sale'],'Sales Check-up'],
+      ['purchases',['purchases','purchase','buying'],'Purchases'],
+      ['customers',['customers','customer','buyers','kwastomomi'],'Customers'],
+      ['contacts',['contacts','contact'],'Contacts'],
+      ['expenses',['expenses','expense','spending','kudin kashewa'],'Expenses'],
+      ['reports',['reports','report','analytics','statistics'],'Reports'],
+      ['accounting',['accounting','accounts','ledger'],'Accounting'],
+      ['branches',['branches','branch','store branches'],'Branching'],
+      ['printer',['printer','receipt','printing','print settings'],'Printer / Receipt'],
+      ['invoice',['invoice','invoices'],'Invoice'],
+      ['users',['users','staff','roles','cashiers','admins'],'Users / Roles'],
+      ['control',['control center','controls'],'Control Center'],
+      ['settings',['settings','customize','configuration','preferences'],'Settings / Customize']
+    ];
+    for(const [view,aliases,label] of nav){
+      if(aliases.some(a=>text===a||text.includes(a))){go(view,label);return}
+    }
+
+    /* Direct creation/opening commands. */
+    if(has('add product','new product','create product')){go('products','Products');setTimeout(()=>openProduct?.(),120);return}
+    if(has('add customer','new customer','create customer')){go('customers','Customers');setTimeout(()=>openCustomer?.(),120);return}
+    if(has('add expense','new expense','create expense')){go('expenses','Expenses');setTimeout(()=>openExpense?.(),120);return}
+    if(has('add purchase','new purchase','create purchase')){go('purchases','Purchases');setTimeout(()=>openPurchase?.(),120);return}
+    if(has('add user','new user','create user','add cashier')){go('users','Users');setTimeout(()=>openUser?.(),120);return}
+    if(has('add contact','edit contact')){go('contacts','Contacts');setTimeout(()=>openContact?.(),120);return}
+    if(has('add branch','new branch')){go('branches','Branching');setTimeout(()=>openBranch?.(),120);return}
+    if(has('stock adjustment','adjust stock','adjust inventory')){go('inventory','Inventory');setTimeout(()=>openStockAdjust?.(),120);return}
+    if(has('scan barcode','scan product','barcode')){scanBarcode();return}
+    if(has('print receipt','print invoice','reprint receipt','print last receipt')){if(state.sales.length)printSale(state.sales[state.sales.length-1].id);else testPrint();return}
+    if(has('backup','back up','export data')){backupData();sayDone('Backup created');return}
+    if(has('restore backup','restore data','import backup')){document.getElementById('restoreFile')?.click();sayDone('Restore file selector opened');return}
+
+    /* Theme commands. */
+    const themeNames={
+      'dark blue':'darkblue','darkblue':'darkblue','dark green':'darkgreen','darkgreen':'darkgreen','maroon':'maroon','purple':'purple','gold':'gold','yellow':'yellow','chocolate':'chocolate','salad':'salad','black':'black','white':'white','milk':'milk','brown':'brown','green':'green','ocean':'ocean','ocean blue':'ocean','teal':'teal','rose':'rose','orange':'orange','silver':'silver'
+    };
+    if(/\b(change|set|use|switch)\b.*\btheme\b/.test(text)||text.startsWith('theme ')){
+      const found=Object.keys(themeNames).find(k=>text.includes(k));
+      if(found){applyTheme(themeNames[found],true);sayDone('Theme changed to '+found);return}
+    }
+
+    /* Generic UI fallback: if the spoken command closely matches a visible
+       button/side item, execute that existing action. This lets future POS
+       buttons become voice-controllable without rewriting the voice router. */
+    const candidates=[...document.querySelectorAll('button,.side-item,.dash-action,.admin-tool')]
+      .filter(el=>el.offsetParent!==null&&!el.disabled)
+      .map(el=>({el,label:norm(el.innerText||el.getAttribute('aria-label')||el.title)}))
+      .filter(x=>x.label&&x.label.length>1);
+    const exact=candidates.find(x=>x.label===text || text.includes(x.label));
+    if(exact){exact.el.click();sayDone(exact.label);return}
+
+    toast('Voice command not recognized: '+input);
+    speak('I heard '+input+', but I do not have an action for that command yet.');
+  };
+
+  /* Replace the microphone implementation so every recognized phrase reaches
+     the broad router above, while keeping Chrome's native SpeechRecognition. */
+  window.startVoice=function(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    const btn=document.getElementById('voiceBtn'),status=document.getElementById('voiceStatus');
+    if(!SR){const msg='Voice recognition is not supported here. Please use the live HTTPS app in Chrome and allow microphone access.';if(status)status.textContent='⚠ '+msg;toast(msg);return}
+    try{if(window.__dlimansVoiceRec){window.__dlimansVoiceRec.abort();window.__dlimansVoiceRec=null}}catch(e){}
+    const rec=new SR();window.__dlimansVoiceRec=rec;
+    rec.lang=(navigator.language&&/^en/i.test(navigator.language))?navigator.language:'en-NG';
+    rec.continuous=false;rec.interimResults=false;rec.maxAlternatives=3;
+    if(btn)btn.classList.add('voice-listening');
+    if(status)status.textContent='🎙 Listening… Speak your command';
+    rec.onresult=e=>{
+      let text='';const r=e.results?.[0];
+      if(r){for(let i=0;i<r.length;i++){if(r[i]?.transcript){text=r[i].transcript;break}}}
+      text=String(text||'').trim();
+      if(status)status.textContent=text?'Heard: '+text:'No speech detected';
+      if(text)window.handleVoice(text);
+    };
+    rec.onerror=e=>{
+      const map={'not-allowed':'Microphone permission was denied.','service-not-allowed':'Speech service is not allowed.','audio-capture':'No microphone was found.','network':'Voice service/network error.','no-speech':'No speech detected.'};
+      const msg=map[e.error]||('Voice error: '+e.error);if(status)status.textContent='⚠ '+msg;if(e.error!=='aborted')toast(msg);
+    };
+    rec.onend=()=>{if(btn)btn.classList.remove('voice-listening');if(window.__dlimansVoiceRec===rec)window.__dlimansVoiceRec=null};
+    try{rec.start()}catch(e){if(status)status.textContent='⚠ Could not start voice. Please try again.';if(btn)btn.classList.remove('voice-listening');window.__dlimansVoiceRec=null}
+  };
+
+  /* Modern POS welcome after a successful login. */
+  if(typeof window.login==='function'&&!window.__dlimansLoginWelcome){
+    window.__dlimansLoginWelcome=true;
+    const originalLogin=window.login;
+    window.login=async function(){
+      const result=await originalLogin.apply(this,arguments);
+      if(result){
+        setTimeout(()=>{
+          const name=(currentUser?.username||currentUser?.role||'there').replace(/[_-]+/g,' ');
+          const msg='Welcome to Dlimans Supermarket, '+name+'. Your POS is ready. You can use Voice Command to open any section, add products, manage sales, print receipts, or open Communication.';
+          toast('👋 Welcome '+name+' — Voice Command is ready');
+          speak(msg);
+        },650);
+      }
+      return result;
+    };
+  }
+
+  /* Keep the selected theme local and prevent Firebase live sync from replacing
+     the appearance chosen on this device. */
+  try{
+    const oldApply=window.applyTheme;
+    if(typeof oldApply==='function'&&!window.__dlimansThemeWrapped){
+      window.__dlimansThemeWrapped=true;
+      window.applyTheme=function(name,saveIt=true){
+        const result=oldApply.call(this,name,saveIt);
+        try{localStorage.setItem('DLIMANS_SELECTED_THEME',String(document.documentElement.dataset.dlimansTheme||name||'darkblue'))}catch(e){}
+        return result;
+      };
+      const savedTheme=localStorage.getItem('DLIMANS_SELECTED_THEME');
+      if(savedTheme&&typeof themes!=='undefined'&&themes[savedTheme]){
+        setTimeout(()=>{try{window.applyTheme(savedTheme,false)}catch(e){}},0);
+      }
+    }
+  }catch(e){console.warn('Theme persistence patch:',e)}
+
+  /* Communication is user-opened, not page-opened. Close the modal when the
+     user navigates elsewhere, but keep it open during calls. */
+  try{
+    const oldShow=window.showView;
+    if(typeof oldShow==='function'&&!window.__dlimansCommViewGuard){
+      window.__dlimansCommViewGuard=true;
+      window.showView=function(name,...args){
+        const result=oldShow.apply(this,[name,...args]);
+        if(name!=='communication'&&!document.querySelector('#dcuPanel .dcu-call-active')){
+          document.getElementById('dcuPanel')?.classList.remove('show');
+        }
+        return result;
+      };
+    }
+  }catch(e){console.warn('Communication view guard:',e)}
+})();
 </script>
 </body>
 </html>

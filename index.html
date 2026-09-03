@@ -781,7 +781,7 @@ html[data-dlimans-light="1"][data-dlimans-transparent="1"] .topbar{background:rg
         <div class="pos-layout">
           <div class="card">
             <div class="row">
-              <input id="posSearch" class="grow" placeholder="🔎 Search product / SKU / barcode" oninput="renderPOS()">
+              <input id="posSearch" class="grow" placeholder="🔎 Search product / SKU / barcode" oninput="queuePOSRender()">
               <button class="btn" onclick="scanBarcode()">▣ Scan</button>
             </div>
             <div style="height:10px"></div>
@@ -1630,15 +1630,25 @@ function showView(name,force=false){
  if(!force && !allowed(name) && name!=='dashboard'){toast(permissionMessage(name));return false}
  const v=document.getElementById('view-'+name);
  if(!v){toast('Feature not found: '+name);return false}
- const current=document.querySelector('.view.active')?.id?.replace('view-','');
- if(current && current!==name && !force){appViewHistory.push(current);if(appViewHistory.length>30)appViewHistory.shift()}
- document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+
+ const active=document.querySelector('.view.active');
+ const current=active?.id?.replace('view-','');
+ if(current===name)return true;
+ if(current && !force){
+   appViewHistory.push(current);
+   if(appViewHistory.length>30)appViewHistory.shift();
+ }
+
+ if(active)active.classList.remove('active');
  v.classList.add('active');
+
  savedModalState=null;
  saveAppSession();
- document.querySelectorAll('.side-item').forEach(x=>x.classList.toggle('active',x.dataset.view===name));
+ document.querySelectorAll('.side-item.active').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.side-item[data-view="'+CSS.escape(name)+'"]').forEach(x=>x.classList.add('active'));
+
  closeMobileSidebar();
- safeRefresh();
+ safeRefresh(false);
  window.scrollTo(0,0);
  return true;
 }
@@ -1690,6 +1700,14 @@ function toggleSidebar(){
       btn.setAttribute('aria-label',btn.title);
     }
   }
+}
+let __dlimansPOSSearchFrame=0;
+function queuePOSRender(){
+ if(__dlimansPOSSearchFrame)return;
+ __dlimansPOSSearchFrame=requestAnimationFrame(()=>{
+   __dlimansPOSSearchFrame=0;
+   safeRun(renderPOS);
+ });
 }
 function renderPOS(){
  const q=(document.getElementById('posSearch').value||'').toLowerCase();
@@ -2579,24 +2597,55 @@ function loadSettings(){
 }
 function safeRun(fn){try{fn()}catch(e){console.error('Dlimans render error:',e)}}
 let __dlimansLastRenderedView='';
+let __dlimansRefreshFrame=0;
+let __dlimansRefreshFull=false;
+
+/* FAST UI REFRESH ENGINE
+   Navigation changes are painted first; heavy table/dashboard rendering runs
+   on the next animation frame. This keeps taps/clicks responsive on Android
+   and low-power PCs without removing any POS feature. */
 function safeRefresh(full=false){
- /* PERFORMANCE/STABILITY: render only the active view during navigation.
-    Full refresh updates dashboard + active view instead of every hidden table. */
- const active=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
- if(full){
-   safeRun(()=>buildSidebar());
-   safeRun(()=>applyTheme(state.settings.theme||'darkblue',false));
-   safeRun(()=>applyBranding());
-   safeRun(()=>renderDashboard());
-   const map={pos:renderPOS,held:renderHeld,drafts:renderDrafts,quotations:renderQuotations,shipments:renderShipments,discounts:renderDiscounts,products:renderProducts,inventory:renderInventory,stockTransfer:renderStockTransfers,sales:renderSales,purchases:renderPurchases,customers:renderCustomers,contacts:renderContacts,expenses:renderExpenses,reports:refreshReports,branches:renderBranches,invoice:renderInvoiceList,users:renderUsers,control:loadControl,settings:loadSettings};
-   if(map[active])safeRun(map[active]);
-   __dlimansLastRenderedView=active;
-   return;
- }
- if(!__dlimansLastRenderedView) safeRun(()=>buildSidebar());
- const map={dashboard:renderDashboard,pos:renderPOS,held:renderHeld,drafts:renderDrafts,quotations:renderQuotations,shipments:renderShipments,discounts:renderDiscounts,importSales:()=>{},products:renderProducts,inventory:renderInventory,stockTransfer:renderStockTransfers,sales:renderSales,returns:()=>{},purchases:renderPurchases,customers:renderCustomers,contacts:renderContacts,communication:()=>{},expenses:renderExpenses,reports:refreshReports,accounting:()=>{},branches:renderBranches,printer:()=>{},invoice:renderInvoiceList,users:renderUsers,control:loadControl,settings:loadSettings};
- if(map[active])safeRun(map[active]);
- __dlimansLastRenderedView=active;
+  const active=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
+  __dlimansRefreshFull=__dlimansRefreshFull||!!full;
+  if(__dlimansRefreshFrame)cancelAnimationFrame(__dlimansRefreshFrame);
+  __dlimansRefreshFrame=requestAnimationFrame(()=>{
+    __dlimansRefreshFrame=0;
+    const current=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
+    const doFull=__dlimansRefreshFull;
+    __dlimansRefreshFull=false;
+
+    if(doFull){
+      safeRun(()=>buildSidebar());
+      /* Theme/branding are only reapplied when a full data refresh really
+         needs them; normal navigation does not touch them. */
+      safeRun(()=>renderDashboard());
+      const map={
+        pos:renderPOS,held:renderHeld,drafts:renderDrafts,quotations:renderQuotations,
+        shipments:renderShipments,discounts:renderDiscounts,products:renderProducts,
+        inventory:renderInventory,stockTransfer:renderStockTransfers,sales:renderSales,
+        purchases:renderPurchases,customers:renderCustomers,contacts:renderContacts,
+        expenses:renderExpenses,reports:refreshReports,branches:renderBranches,
+        invoice:renderInvoiceList,users:renderUsers,control:loadControl,settings:loadSettings
+      };
+      if(map[current])safeRun(map[current]);
+      __dlimansLastRenderedView=current;
+      return;
+    }
+
+    if(!__dlimansLastRenderedView) safeRun(()=>buildSidebar());
+    const map={
+      dashboard:renderDashboard,pos:renderPOS,held:renderHeld,drafts:renderDrafts,
+      quotations:renderQuotations,shipments:renderShipments,discounts:renderDiscounts,
+      importSales:()=>{},products:renderProducts,inventory:renderInventory,
+      stockTransfer:renderStockTransfers,sales:renderSales,returns:()=>{},
+      purchases:renderPurchases,customers:renderCustomers,contacts:renderContacts,
+      communication:()=>{},expenses:renderExpenses,reports:refreshReports,
+      accounting:()=>{},branches:renderBranches,printer:()=>{},invoice:renderInvoiceList,
+      users:renderUsers,control:loadControl,settings:loadSettings
+    };
+    if(map[current])safeRun(map[current]);
+    __dlimansLastRenderedView=current;
+  });
 }
 
 function draftTotal(items){return (items||[]).reduce((a,i)=>a+(Number(i.qty)||0)*(Number(i.price)||0),0)}
@@ -4066,8 +4115,6 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
    box.querySelectorAll('[data-perm]').forEach(function(x){x.onchange=function(){if(!isAdmin()){this.checked=!this.checked;toast('Admin only');return}state.permissions.cashier[this.dataset.perm]=!!this.checked}});
  };
  window.savePermissions=function(){if(!isAdmin()){toast('Admin only');return}var box=document.getElementById('permissionBox');if(box)box.querySelectorAll('[data-perm]').forEach(function(x){state.permissions.cashier[x.dataset.perm]=!!x.checked});save();buildSidebar();renderPermissions();toast('Cashier permissions saved')};
- document.addEventListener('click',function(e){var item=e.target.closest&&e.target.closest('.sidebar .side-item[data-view]');if(!item)return;e.preventDefault();e.stopPropagation();var view=item.dataset.view;if(view)showView(view)},true);
- document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.product-tile,.btn.primary');if(!b)return;if(b.__dlimansBusy){e.preventDefault();e.stopImmediatePropagation();return}b.__dlimansBusy=true;setTimeout(function(){b.__dlimansBusy=false},700)},true);
  var oldApplyTheme=window.applyTheme;window.applyTheme=function(name,saveIt){var r=oldApplyTheme.call(this,name,saveIt===undefined?true:saveIt);try{document.body.dataset.dlimansTheme=document.documentElement.dataset.dlimansTheme||name}catch(e){}return r};
  var oldClose=window.closeMobileSidebar;window.closeMobileSidebar=function(){try{oldClose.call(this)}catch(e){}document.querySelectorAll('.mobile-sidebar-backdrop').forEach(function(x){x.style.pointerEvents='none';setTimeout(function(){x.style.pointerEvents=''},220)})};
  var oldShowView=window.showView;window.showView=function(name,force){if(!force&&currentUser&&currentUser.role!=='Admin'&&!allowed(name)){toast(permissionMessage(name));return false}return oldShowView.call(this,name,force)};
@@ -4081,19 +4128,6 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
-<script>
-(function(){
- 'use strict';
- if(window.__dlimansFinalStability)return;
- window.__dlimansFinalStability=true;
- document.addEventListener('click',function(e){
-  const b=e.target.closest&&e.target.closest('button');
-  if(!b||b.disabled)return;
-  const now=performance.now(),last=Number(b.dataset.dlimansLastClick||0);
-  if(last&&now-last<280){e.preventDefault();e.stopImmediatePropagation();return}
-  b.dataset.dlimansLastClick=String(now);
- },true);
-})();
-</script>
+
 </body>
 </html>

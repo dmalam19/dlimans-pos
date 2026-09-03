@@ -2565,10 +2565,20 @@ function loadSettings(){
  const dd=document.getElementById('dashDate');if(dd)dd.textContent=new Date().toLocaleString();
 }
 function safeRun(fn){try{fn()}catch(e){console.error('Dlimans render error:',e)}}
-function safeRefresh(){
- safeRun(()=>buildSidebar());safeRun(()=>loadSettings());
- [renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,renderCustomers,renderContacts,renderExpenses,renderPurchases,renderUsers,renderPermissions,renderCustomIcons,renderDashboard,refreshReports,renderInvoiceList,renderShipments,renderDiscounts,renderStockTransfers]
-  .forEach(fn=>safeRun(fn));
+function safeRefresh(full=false){
+ /* Performance: rendering every hidden POS view on every navigation was the
+    main source of slow startup/navigation. Render only what is visible by
+    default; callers that truly need a complete redraw can request full=true. */
+ safeRun(()=>buildSidebar());
+ safeRun(()=>loadSettings());
+ if(full){
+  [renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,renderCustomers,renderContacts,renderExpenses,renderPurchases,renderUsers,renderPermissions,renderCustomIcons,renderDashboard,refreshReports,renderInvoiceList,renderShipments,renderDiscounts,renderStockTransfers]
+   .forEach(fn=>safeRun(fn));
+  return;
+ }
+ const active=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
+ const map={dashboard:renderDashboard,pos:renderPOS,held:renderHeld,drafts:renderDrafts,quotations:renderQuotations,shipments:renderShipments,discounts:renderDiscounts,importSales:()=>{},products:renderProducts,inventory:renderInventory,stockTransfer:renderStockTransfers,sales:renderSales,returns:()=>{},purchases:renderPurchases,customers:renderCustomers,contacts:renderContacts,communication:()=>{},expenses:renderExpenses,reports:refreshReports,accounting:()=>{},branches:renderBranches,printer:()=>{},invoice:renderInvoiceList,users:renderUsers,control:loadControl,settings:loadSettings};
+ if(map[active])safeRun(map[active]);
 }
 
 function draftTotal(items){return (items||[]).reduce((a,i)=>a+(Number(i.qty)||0)*(Number(i.price)||0),0)}
@@ -2620,7 +2630,7 @@ function importSalesJSON(){const f=document.getElementById('importSalesFile')?.f
 function renderStockTransfers(){const box=document.getElementById('stockTransfersTable');if(!box)return;box.innerHTML=state.stockTransfers.slice().reverse().map(x=>`<tr><td>${escapeHTML(fmtDate(x.date))}</td><td>${escapeHTML(x.productName)}</td><td>${x.qty}</td><td>${escapeHTML(x.from)}</td><td>${escapeHTML(x.to)}</td><td><button class="btn sm danger" onclick="deleteStockTransfer('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="6">No stock transfers yet</td></tr>'}
 function addStockTransfer(){if(!isAdmin()){toast('Admin only');return}const product=state.products[0];if(!product){toast('Add a product first');return}const name=prompt('Product name:',product.name);if(name===null)return;const qty=Number(prompt('Quantity to transfer:','1'));if(!Number.isFinite(qty)||qty<=0){toast('Invalid quantity');return}const from=prompt('From branch:','Main Branch');if(from===null)return;const to=prompt('To branch:','Main Branch');if(to===null)return;state.stockTransfers.push({id:uid(),date:today(),productName:name,qty,from,to});save();renderStockTransfers();toast('Stock transfer recorded')}
 function deleteStockTransfer(id){if(!isAdmin()){toast('Admin only');return}state.stockTransfers=state.stockTransfers.filter(x=>x.id!==id);save();renderStockTransfers()}
-function refreshAll(){safeRefresh();try{renderDrafts();renderQuotations()}catch(e){console.warn('Draft/quotation refresh:',e)}}
+function refreshAll(){safeRefresh(true);try{renderDrafts();renderQuotations()}catch(e){console.warn('Draft/quotation refresh:',e)}}
 /* Sidebar safety repair: protects against old/corrupt localStorage data. */
 window.addEventListener('error',function(e){
   console.error('Dlimans error:',e.error||e.message);
@@ -3073,69 +3083,7 @@ async function voiceCommStop(){
 // Start automatically when a Firebase session already exists.
 /* Voice calls start only from Communication actions; no background WebRTC startup. */
 
-/* ================================================================
-   DLIMANS FINAL REFRESH / SESSION RECOVERY
-   - Uses the real in-script currentUser variable (not window.currentUser).
-   - Restores the exact active page after browser refresh.
-   - Restores Add/Edit Product modal when it was open.
-   - Logout clears the recovery record.
-   ================================================================ */
-(function(){
-  const SESSION_KEY='DLIMANS_APP_SESSION_PERSISTENT';
-  let restoring=false;
-  function readSession(){
-    try{
-      const x=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
-      return x&&x.userId&&x.role?x:null;
-    }catch(e){return null}
-  }
-  function restoreNow(){
-    if(restoring)return;
-    const sess=readSession();
-    if(!sess)return;
-    const app=document.getElementById('app'), login=document.getElementById('loginScreen');
-    if(!app||!login)return;
-
-    /* Important: currentUser is declared with `let` in the main script.
-       Do not use window.currentUser here; that is a different property. */
-    let restored=currentUser;
-    if(!restored || !restored.id){
-      const users=(Array.isArray(state?.users)?state.users:[]);
-      restored=users.find(u=>u&&u.id===sess.userId&&u.active!==false)
-        ||users.find(u=>u&&u.username===sess.username&&u.role===sess.role&&u.active!==false);
-      if(!restored)return;
-      currentUser=restored;
-    }
-
-    restoring=true;
-    try{
-      login.style.display='none';
-      app.style.display='block';
-      const role=document.getElementById('topRole');
-      if(role)role.textContent=currentUser.role||sess.role||'';
-      const biz=document.getElementById('topBusiness');
-      if(biz)biz.textContent=state.settings.business||'Dlimans Supermarket';
-      buildSidebar();
-      const target=(sess.view&&document.getElementById('view-'+sess.view))?sess.view:'dashboard';
-      setTimeout(()=>{
-        try{
-          buildSidebar();
-          showView(target,true);
-          if(sess.modal)restoreSavedModal(sess);
-          saveAppSession({modal:sess.modal||null});
-        }catch(e){console.warn('Final refresh restore:',e)}
-        restoring=false;
-      },50);
-    }catch(e){
-      console.warn('Final session restore failed:',e);
-      restoring=false;
-    }
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restoreNow,{once:false});
-  else restoreNow();
-  window.addEventListener('load',()=>setTimeout(restoreNow,120));
-  window.addEventListener('pageshow',()=>setTimeout(restoreNow,80));
-})();
+/* FINAL SESSION RECOVERY: handled once by initLogin() above. */
 window.addEventListener('resize',()=>{
   if(window.innerWidth>800) closeMobileSidebar();
 });
@@ -3817,7 +3765,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     if(tb){tb.title='Chat • Voice Call • Video Call';}
   });window.dcuSelect=select;window.dcuSend=send;window.dcuKey=key;window.dcuCall=call;window.dcuAccept=accept;window.dcuHangup=hangup;window.dcuMute=mute;window.dcuCamera=camera;
   document.addEventListener('click',e=>{const b=e.target.closest?.('[data-dlimans-communication]');if(b){e.preventDefault();open()}});
-  window.addEventListener('load',()=>{if($('view-communication'))renderStaff().catch(()=>{});setTimeout(()=>{if(cloudUser()&&db())startIncomingListener()},1200)});
+  window.addEventListener('load',()=>{setTimeout(()=>{if(cloudUser()&&db())startIncomingListener()},5000)});
 })();
 
 </script>
@@ -4084,7 +4032,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
  window.__dlimansInteractionPatch=true;
  var permissionDefaults={dashboard:true,pos:true,held:true,drafts:true,quotations:true,shipments:true,discounts:true,importSales:false,products:true,inventory:true,stockTransfer:false,sales:true,returns:true,purchases:false,customers:true,contacts:true,communication:true,expenses:false,reports:false,accounting:false,branches:false,printer:true,invoice:true,users:false,control:false,settings:false};
  var permissionLabels={dashboard:'Dashboard',pos:'POS / New Sale',held:'Hold Sales',drafts:'Draft Sales',quotations:'Quotations',shipments:'Shipments',discounts:'Discounts',importSales:'Import Sales',products:'Products',inventory:'Inventory',stockTransfer:'Stock Transfer',sales:'Sales',returns:'Sales Check-up',purchases:'Purchases',customers:'Customers',contacts:'Contacts',communication:'Communication',expenses:'Expenses',reports:'Reports',accounting:'Accounting',branches:'Branches',printer:'Printer / Receipt',invoice:'Invoice',settings:'Settings / Customize'};
- try{state.permissions=state.permissions||{};state.permissions.cashier=Object.assign({},permissionDefaults,state.permissions.cashier||{});save()}catch(e){console.warn('Permission normalization:',e)}
+ try{state.permissions=state.permissions||{};var before=JSON.stringify(state.permissions.cashier||{});state.permissions.cashier=Object.assign({},permissionDefaults,state.permissions.cashier||{});if(JSON.stringify(state.permissions.cashier)!==before)save()}catch(e){console.warn('Permission normalization:',e)}
  window.renderPermissions=function(){
    var box=document.getElementById('permissionBox');if(!box)return;
    var keys=builtInNav.map(function(x){return x[0]}).filter(function(k){return k!=='users'&&k!=='control'});

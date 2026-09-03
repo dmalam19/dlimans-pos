@@ -1733,22 +1733,26 @@ function confirmSale(){
  const review=cart.map(i=>{const p=state.products.find(x=>x.id===i.productId);return `<tr><td>${escapeHTML(p?.name||'Item')}</td><td>${i.qty}</td><td>${money(i.qty*i.price)}</td></tr>`}).join('');
  openModal(`<h3>Sales Check-up</h3><p class="small">Review the customer's items before final confirmation. You can still remove an item from the cart.</p><div class="table-wrap"><table><thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${review}</tbody></table></div><div class="total-box">${money(total)}</div><div class="row"><button class="btn primary" onclick="finalizeSale()">✓ Confirm & Sell</button><button class="btn" onclick="closeModal()">Back to Cart</button></div>`);
 }
+let __dlimansSaleBusy=false;
 function finalizeSale(){
- closeModal();
- const total=cartTotal(),paid=document.getElementById('paidAmount').value===''?total:Number(document.getElementById('paidAmount').value);
-
- const sale={id:uid(),invoice:invoiceNumber(),date:today(),customer:document.getElementById('customerName').value.trim()||'Walk-in',note:document.getElementById('customerNote').value.trim(),payment:document.getElementById('paymentMethod').value,items:structuredClone(cart),total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser.username};
- advanceInvoiceNumber();
- state.sales.push(sale);
- sale.items.forEach(i=>{const p=state.products.find(x=>x.id===i.productId);if(p)p.stock-=i.qty});
- const cn=sale.customer;if(cn!=='Walk-in'){
-  let c=state.customers.find(x=>x.name.toLowerCase()===cn.toLowerCase());
-  if(!c){c={id:uid(),name:cn,phone:'',address:'',due:0};state.customers.push(c)}
-  c.due=(c.due||0)+sale.due
- }
- save();cart=[];document.getElementById('customerName').value='';document.getElementById('customerNote').value='';document.getElementById('paidAmount').value='';
- renderCart();refreshAll();toast('Sale confirmed successfully');
- if(state.settings.autoPrint)receiptPrint(sale);
+ if(__dlimansSaleBusy){toast('Sale is already being processed');return}
+ if(!cart.length){toast('Cart is empty');closeModal();return}
+ __dlimansSaleBusy=true;
+ try{
+  const total=cartTotal(),paidInput=document.getElementById('paidAmount')?.value;
+  const paid=paidInput===''||paidInput==null?total:Number(paidInput);
+  if(!Number.isFinite(paid)||paid<0||paid>total){toast('Invalid paid amount');return}
+  const items=typeof structuredClone==='function'?structuredClone(cart):JSON.parse(JSON.stringify(cart));
+  const sale={id:uid(),invoice:invoiceNumber(),date:today(),customer:document.getElementById('customerName')?.value.trim()||'Walk-in',note:document.getElementById('customerNote')?.value.trim()||'',payment:document.getElementById('paymentMethod')?.value||'Cash',items,total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser?.username||'Unknown'};
+  for(const i of items){const p=state.products.find(x=>x.id===i.productId);if(!p){toast('A product in the cart no longer exists');return}if(Number(p.stock)<Number(i.qty)){toast('Not enough stock for '+p.name);return}}
+  advanceInvoiceNumber();state.sales.push(sale);
+  items.forEach(i=>{const p=state.products.find(x=>x.id===i.productId);if(p)p.stock=Math.max(0,Number(p.stock||0)-Number(i.qty||0))});
+  const cn=sale.customer;
+  if(cn!=='Walk-in'){let c=state.customers.find(x=>String(x.name||'').toLowerCase()===cn.toLowerCase());if(!c){c={id:uid(),name:cn,phone:'',address:'',due:0};state.customers.push(c)}c.due=(Number(c.due)||0)+sale.due}
+  save();cart=[];
+  const a=document.getElementById('customerName'),b=document.getElementById('customerNote'),c=document.getElementById('paidAmount');if(a)a.value='';if(b)b.value='';if(c)c.value='';
+  closeModal();renderCart();refreshAll();toast('Sale confirmed successfully');if(state.settings.autoPrint)receiptPrint(sale);
+ }catch(e){console.error('Finalize sale error:',e);toast('Sale could not be completed. Your cart was kept safe')}finally{__dlimansSaleBusy=false}
 }
 function holdSale(){
  if(!cart.length){toast('Cart is empty');return}
@@ -1839,7 +1843,16 @@ function editSale(id){
  const s=state.sales.find(x=>x.id===id);if(!s)return;
  openModal(`<h3>Edit Sale ${escapeHTML(s.invoice)}</h3><div class="grid grid2"><input id="editCustomer" value="${escapeHTML(s.customer)}"><input id="editPaid" type="number" value="${s.paid}"><select id="editPayment"><option ${s.payment==='Cash'?'selected':''}>Cash</option><option ${s.payment==='Card'?'selected':''}>Card</option><option ${s.payment==='POS'?'selected':''}>POS</option><option ${s.payment==='Transfer'?'selected':''}>Transfer</option></select><textarea id="editNote">${escapeHTML(s.note||'')}</textarea></div><div class="row" style="margin-top:12px"><button class="btn primary" onclick="saveEditSale('${id}')">Save</button><button class="btn" onclick="closeModal()">Cancel</button></div>`)
 }
-function saveEditSale(id){const s=state.sales.find(x=>x.id===id);if(!s)return;s.customer=document.getElementById('editCustomer').value.trim()||'Walk-in';s.paid=Math.min(s.total,Math.max(0,Number(document.getElementById('editPaid').value)||0));s.due=s.total-s.paid;s.payment=document.getElementById('editPayment').value;s.note=document.getElementById('editNote').value;save();closeModal();refreshAll();toast('Sale updated')}
+function saveEditSale(id){
+ if(!isAdmin()){toast('Admin only');return}
+ const s=state.sales.find(x=>x.id===id);if(!s)return;
+ const oldCustomer=s.customer||'Walk-in',oldDue=Number(s.due)||0,newCustomer=document.getElementById('editCustomer')?.value.trim()||'Walk-in';
+ const paid=Math.min(Number(s.total)||0,Math.max(0,Number(document.getElementById('editPaid')?.value)||0)),newDue=Math.max(0,(Number(s.total)||0)-paid);
+ if(oldCustomer!=='Walk-in'){const c=state.customers.find(x=>String(x.name||'').toLowerCase()===oldCustomer.toLowerCase());if(c)c.due=Math.max(0,(Number(c.due)||0)-oldDue)}
+ if(newCustomer!=='Walk-in'){let c=state.customers.find(x=>String(x.name||'').toLowerCase()===newCustomer.toLowerCase());if(!c){c={id:uid(),name:newCustomer,phone:'',address:'',due:0};state.customers.push(c)}c.due=(Number(c.due)||0)+newDue}
+ s.customer=newCustomer;s.paid=paid;s.due=newDue;s.payment=document.getElementById('editPayment')?.value||s.payment||'Cash';s.note=document.getElementById('editNote')?.value||'';
+ save();closeModal();refreshAll();toast('Sale updated');
+}
 
 
 function renderBranches(){
@@ -2565,20 +2578,25 @@ function loadSettings(){
  const dd=document.getElementById('dashDate');if(dd)dd.textContent=new Date().toLocaleString();
 }
 function safeRun(fn){try{fn()}catch(e){console.error('Dlimans render error:',e)}}
+let __dlimansLastRenderedView='';
 function safeRefresh(full=false){
- /* Performance: rendering every hidden POS view on every navigation was the
-    main source of slow startup/navigation. Render only what is visible by
-    default; callers that truly need a complete redraw can request full=true. */
- safeRun(()=>buildSidebar());
- safeRun(()=>loadSettings());
- if(full){
-  [renderPOS,renderHeld,renderProducts,renderInventory,renderSales,renderBranches,renderCustomers,renderContacts,renderExpenses,renderPurchases,renderUsers,renderPermissions,renderCustomIcons,renderDashboard,refreshReports,renderInvoiceList,renderShipments,renderDiscounts,renderStockTransfers]
-   .forEach(fn=>safeRun(fn));
-  return;
- }
+ /* PERFORMANCE/STABILITY: render only the active view during navigation.
+    Full refresh updates dashboard + active view instead of every hidden table. */
  const active=document.querySelector('.view.active')?.id?.replace('view-','')||'dashboard';
+ if(full){
+   safeRun(()=>buildSidebar());
+   safeRun(()=>applyTheme(state.settings.theme||'darkblue',false));
+   safeRun(()=>applyBranding());
+   safeRun(()=>renderDashboard());
+   const map={pos:renderPOS,held:renderHeld,drafts:renderDrafts,quotations:renderQuotations,shipments:renderShipments,discounts:renderDiscounts,products:renderProducts,inventory:renderInventory,stockTransfer:renderStockTransfers,sales:renderSales,purchases:renderPurchases,customers:renderCustomers,contacts:renderContacts,expenses:renderExpenses,reports:refreshReports,branches:renderBranches,invoice:renderInvoiceList,users:renderUsers,control:loadControl,settings:loadSettings};
+   if(map[active])safeRun(map[active]);
+   __dlimansLastRenderedView=active;
+   return;
+ }
+ if(!__dlimansLastRenderedView) safeRun(()=>buildSidebar());
  const map={dashboard:renderDashboard,pos:renderPOS,held:renderHeld,drafts:renderDrafts,quotations:renderQuotations,shipments:renderShipments,discounts:renderDiscounts,importSales:()=>{},products:renderProducts,inventory:renderInventory,stockTransfer:renderStockTransfers,sales:renderSales,returns:()=>{},purchases:renderPurchases,customers:renderCustomers,contacts:renderContacts,communication:()=>{},expenses:renderExpenses,reports:refreshReports,accounting:()=>{},branches:renderBranches,printer:()=>{},invoice:renderInvoiceList,users:renderUsers,control:loadControl,settings:loadSettings};
  if(map[active])safeRun(map[active]);
+ __dlimansLastRenderedView=active;
 }
 
 function draftTotal(items){return (items||[]).reduce((a,i)=>a+(Number(i.qty)||0)*(Number(i.price)||0),0)}
@@ -2630,7 +2648,10 @@ function importSalesJSON(){const f=document.getElementById('importSalesFile')?.f
 function renderStockTransfers(){const box=document.getElementById('stockTransfersTable');if(!box)return;box.innerHTML=state.stockTransfers.slice().reverse().map(x=>`<tr><td>${escapeHTML(fmtDate(x.date))}</td><td>${escapeHTML(x.productName)}</td><td>${x.qty}</td><td>${escapeHTML(x.from)}</td><td>${escapeHTML(x.to)}</td><td><button class="btn sm danger" onclick="deleteStockTransfer('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="6">No stock transfers yet</td></tr>'}
 function addStockTransfer(){if(!isAdmin()){toast('Admin only');return}const product=state.products[0];if(!product){toast('Add a product first');return}const name=prompt('Product name:',product.name);if(name===null)return;const qty=Number(prompt('Quantity to transfer:','1'));if(!Number.isFinite(qty)||qty<=0){toast('Invalid quantity');return}const from=prompt('From branch:','Main Branch');if(from===null)return;const to=prompt('To branch:','Main Branch');if(to===null)return;state.stockTransfers.push({id:uid(),date:today(),productName:name,qty,from,to});save();renderStockTransfers();toast('Stock transfer recorded')}
 function deleteStockTransfer(id){if(!isAdmin()){toast('Admin only');return}state.stockTransfers=state.stockTransfers.filter(x=>x.id!==id);save();renderStockTransfers()}
-function refreshAll(){safeRefresh(true);try{renderDrafts();renderQuotations()}catch(e){console.warn('Draft/quotation refresh:',e)}}
+function refreshAll(){
+ safeRefresh(true);
+ try{const active=document.querySelector('.view.active')?.id?.replace('view-','');if(active!=='drafts')renderDrafts();if(active!=='quotations')renderQuotations()}catch(e){console.warn('Draft/quotation refresh:',e)}
+}
 /* Sidebar safety repair: protects against old/corrupt localStorage data. */
 window.addEventListener('error',function(e){
   console.error('Dlimans error:',e.error||e.message);
@@ -4052,5 +4073,27 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
  var oldShowView=window.showView;window.showView=function(name,force){if(!force&&currentUser&&currentUser.role!=='Admin'&&!allowed(name)){toast(permissionMessage(name));return false}return oldShowView.call(this,name,force)};
  window.addEventListener('load',function(){try{state.permissions.cashier=Object.assign({},permissionDefaults,state.permissions.cashier||{});renderPermissions();buildSidebar();applyTheme(state.settings.theme||'darkblue',false)}catch(e){console.warn('Final interaction patch init:',e)}});
 })();
-</script></body>
+</script><style id="dlimans-performance-final">
+@media(max-width:800px){
+ .topbar,.sidebar,.card,.dash-panel,.dash-kpi,.dash-action,.admin-tool,.product-tile,.modal-box,.login-box{box-shadow:0 4px 18px #0004!important}
+ .sidebar{will-change:transform}
+ .product-grid,.table-wrap,.purchase-table-wrap,.cart-list{contain:layout paint}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+<script>
+(function(){
+ 'use strict';
+ if(window.__dlimansFinalStability)return;
+ window.__dlimansFinalStability=true;
+ document.addEventListener('click',function(e){
+  const b=e.target.closest&&e.target.closest('button');
+  if(!b||b.disabled)return;
+  const now=performance.now(),last=Number(b.dataset.dlimansLastClick||0);
+  if(last&&now-last<280){e.preventDefault();e.stopImmediatePropagation();return}
+  b.dataset.dlimansLastClick=String(now);
+ },true);
+})();
+</script>
+</body>
 </html>

@@ -589,6 +589,57 @@ body.noisy-theme::after{pointer-events:none!important;
   .dlimans-chat-compose-actions .btn{width:100%}
 }
 
+
+/* ===== FINAL UNIVERSAL THEME + POS PRODUCT VISIBILITY FIX ===== */
+:root{
+  --text-strong:#f8fafc;--muted-theme:#94a3b8;--border-theme:#26364e;
+  --input-bg:#091321;--topbar-theme:#07101df2;--sidebar-theme:#091523f5;
+  --card-theme:#102033;--product-bg:#ffffff08;--product-hover:#ffffff12;
+}
+html,body{background:var(--bg)!important;color:var(--text-strong)!important}
+body{background-image:var(--page-bg,radial-gradient(circle at 15% 0%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 42%),linear-gradient(145deg,var(--bg),var(--panel)))!important;background-attachment:fixed!important}
+input,select,textarea{background:var(--input-bg)!important;color:var(--text-strong)!important;border-color:var(--border-theme)!important}
+input::placeholder,textarea::placeholder{color:var(--muted-theme)!important;opacity:1}
+.topbar{background:var(--topbar-theme)!important;border-color:var(--border-theme)!important}
+.sidebar{background:var(--sidebar-theme)!important;border-color:var(--border-theme)!important}
+.content{background:transparent!important}
+.card,.dash-panel,.dash-kpi,.dash-action,.admin-tool,.purchase-nav,.dlimans-chat-staff,.dlimans-chat-main{background:linear-gradient(145deg,var(--card-theme),var(--panel))!important;border-color:var(--border-theme)!important;color:var(--text-strong)!important}
+.btn{background:var(--panel2)!important;color:var(--text-strong)!important;border-color:var(--border-theme)!important}
+.btn.primary{background:var(--accent)!important;color:var(--accent-contrast,#03140b)!important;border-color:var(--accent)!important}
+.side-item{color:var(--text-strong)!important}.side-item:hover,.side-item.active{background:color-mix(in srgb,var(--accent) 15%,transparent)!important;color:var(--accent)!important;border-color:color-mix(in srgb,var(--accent) 40%,transparent)!important}
+.small,.muted,.dash-date,.dash-kpi .label,.dash-action small{color:var(--muted-theme)!important}
+th{color:var(--text-strong)!important;background:color-mix(in srgb,var(--panel2) 80%,transparent)!important}
+th,td{border-color:var(--border-theme)!important}
+.badge{color:var(--text-strong)}
+/* POS product cards: make the selected theme unmistakable and product text highly readable. */
+.product-grid{gap:12px!important;padding:3px!important}
+.product-tile{
+  appearance:none!important;-webkit-appearance:none!important;width:100%!important;
+  min-height:155px!important;padding:12px!important;border:1px solid var(--border-theme)!important;
+  border-radius:15px!important;background:linear-gradient(145deg,var(--product-bg),var(--panel))!important;
+  color:var(--text-strong)!important;box-shadow:0 7px 18px color-mix(in srgb,var(--bg) 65%,transparent)!important;
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease,background .15s ease!important;
+}
+.product-tile:hover,.product-tile:focus-visible{transform:translateY(-2px)!important;border-color:var(--accent)!important;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 12%,var(--panel)),var(--panel))!important;box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 16%,transparent)!important;outline:none!important}
+.product-tile:disabled{opacity:.58!important;filter:none!important}
+.product-tile .product-img{width:100%!important;height:82px!important;margin:0 0 9px!important;border-radius:11px!important;background:var(--panel2)!important;border:1px solid var(--border-theme)!important;object-fit:contain!important}
+.product-tile>b{display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;overflow:hidden!important;min-height:36px!important;font-size:14px!important;line-height:18px!important;font-weight:900!important;color:var(--text-strong)!important;letter-spacing:.1px!important}
+.product-tile .small{display:block!important;margin-top:5px!important;font-size:11px!important;line-height:15px!important;color:var(--muted-theme)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.product-tile>strong{display:block!important;margin-top:7px!important;font-size:16px!important;line-height:20px!important;color:var(--accent)!important;font-weight:950!important}
+.cart-row b,.total-box{color:var(--text-strong)!important}.cart-row .small{color:var(--muted-theme)!important}
+@media(max-width:520px){.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}.product-tile{min-height:145px!important;padding:9px!important}.product-tile .product-img{height:68px!important}.product-tile>b{font-size:13px!important;line-height:16px!important}.product-tile>strong{font-size:14px!important}}
+/* Light themes */
+:root[data-dlimans-light="1"]{--text-strong:#172033;--muted-theme:#536174;--border-theme:#cbd5e1;--input-bg:#ffffff;--topbar-theme:#ffffffee;--sidebar-theme:#ffffff;--card-theme:#ffffff;--product-bg:#ffffff;--product-hover:#f8fafc;--accent-contrast:#fff}
+:root[data-dlimans-light="1"] .side-item{color:#243247!important}:root[data-dlimans-light="1"] .side-group{color:#64748b!important}:root[data-dlimans-light="1"] .topbar{box-shadow:0 5px 22px #0001!important}:root[data-dlimans-light="1"] .dash-kpi .kpi{color:#172033!important}:root[data-dlimans-light="1"] .dash-panel h3, :root[data-dlimans-light="1"] .card h3{color:#172033!important}
+
+
+/* ===== DLIMANS TRANSPARENT / GLASS THEME LAYER — additive only ===== */
+html[data-dlimans-transparent="1"] body{background-attachment:fixed;}
+html[data-dlimans-transparent="1"] .topbar,html[data-dlimans-transparent="1"] .sidebar,html[data-dlimans-transparent="1"] .card,html[data-dlimans-transparent="1"] .panel,html[data-dlimans-transparent="1"] .modal,html[data-dlimans-transparent="1"] .product-tile,html[data-dlimans-transparent="1"] .side-item,html[data-dlimans-transparent="1"] .stat-card,html[data-dlimans-transparent="1"] .table-wrap,html[data-dlimans-transparent="1"] .login-box{backdrop-filter:blur(var(--glass-blur)) saturate(135%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(135%);border-color:var(--glass-border)!important;box-shadow:0 8px 32px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.10);}
+html[data-dlimans-transparent="1"] .topbar{background:rgba(255,255,255,.055)!important;}html[data-dlimans-transparent="1"] .sidebar{background:rgba(0,0,0,.16)!important;}html[data-dlimans-transparent="1"] .card,html[data-dlimans-transparent="1"] .panel,html[data-dlimans-transparent="1"] .stat-card{background:rgba(255,255,255,.055)!important;}
+html[data-dlimans-transparent="1"] input,html[data-dlimans-transparent="1"] select,html[data-dlimans-transparent="1"] textarea{background:rgba(255,255,255,.07)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+html[data-dlimans-transparent="1"] .product-tile{background:var(--product-bg)!important;}html[data-dlimans-transparent="1"] .product-tile:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.20),0 0 0 1px var(--accent);}html[data-dlimans-transparent="1"] .btn{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+html[data-dlimans-light="1"][data-dlimans-transparent="1"] .topbar{background:rgba(255,255,255,.52)!important;}html[data-dlimans-light="1"][data-dlimans-transparent="1"] .sidebar{background:rgba(255,255,255,.42)!important;}html[data-dlimans-light="1"][data-dlimans-transparent="1"] .card,html[data-dlimans-light="1"][data-dlimans-transparent="1"] .panel,html[data-dlimans-light="1"][data-dlimans-transparent="1"] .stat-card{background:rgba(255,255,255,.40)!important;}
 </style>
 </head>
 <body>
@@ -901,6 +952,8 @@ body.noisy-theme::after{pointer-events:none!important;
               <option value="darkblue">Dark Blue</option><option value="darkgreen">Dark Green</option><option value="maroon">Maroon Dark</option>
               <option value="purple">Purple Dark</option><option value="gold">Gold</option><option value="yellow">Yellow Dark</option>
               <option value="chocolate">Chocolate</option><option value="salad">Salad Green</option><option value="black">Black</option><option value="white">White</option><option value="milk">Milk</option><option value="brown">Brown</option><option value="green">Green</option><option value="ocean">Ocean Blue</option><option value="teal">Teal</option><option value="rose">Rose</option><option value="orange">Orange</option><option value="silver">Silver</option>
+              <option value="glass-darkblue">Glass Dark Blue</option><option value="glass-darkgreen">Glass Dark Green</option><option value="glass-maroon">Glass Maroon</option><option value="glass-purple">Glass Purple</option><option value="glass-gold">Glass Gold</option><option value="glass-yellow">Glass Yellow</option><option value="glass-chocolate">Glass Chocolate</option><option value="glass-salad">Glass Salad</option><option value="glass-black">Glass Black</option><option value="glass-white">Glass White</option><option value="glass-milk">Glass Milk</option><option value="glass-brown">Glass Brown</option><option value="glass-green">Glass Green</option><option value="glass-ocean">Glass Ocean</option><option value="glass-teal">Glass Teal</option><option value="glass-rose">Glass Rose</option><option value="glass-orange">Glass Orange</option><option value="glass-silver">Glass Silver</option>
+              <option value="glass-aurora">Glass Aurora</option><option value="glass-crystal">Crystal Glass</option><option value="glass-sapphire">Sapphire Glass</option><option value="glass-emerald">Emerald Glass</option><option value="glass-amethyst">Amethyst Glass</option><option value="glass-sunset">Sunset Glass</option><option value="glass-cosmic">Cosmic Glass</option><option value="glass-pearl">Pearl Glass</option>
             </select>
             <label class="remember"><input id="blinkTheme" type="checkbox" onchange="toggleBlink(this.checked)"> Blinking theme</label>
             <label class="remember"><input id="blinkSidebar" type="checkbox" onchange="toggleSidebarBlink(this.checked)"> Blinking sidebar icons</label>
@@ -1460,8 +1513,14 @@ const builtInNav=[
  ['settings','⚙️','Settings / Customize','settings']
 ];
 function allowed(key){
- if(currentUser?.role==='Admin')return true;
- return !!state.permissions.cashier[key];
+ if(!currentUser)return false;
+ if(currentUser.role==='Admin')return true;
+ const perms=state.permissions?.cashier||{};
+ return perms[key]===true;
+}
+function permissionMessage(key){
+ const labels={dashboard:'Dashboard',pos:'POS / New Sale',held:'Held Sales',products:'Products',inventory:'Inventory',sales:'Sales',customers:'Customers',contacts:'Contacts',expenses:'Expenses',reports:'Reports',purchases:'Purchases',accounting:'Accounting',printer:'Printer / Receipt',returns:'Sales Check-up',branches:'Branches',invoice:'Invoice',users:'Users / Roles',control:'Control Center',settings:'Settings / Customize',communication:'Communication'};
+ return (labels[key]||key)+' is not enabled for your role. Ask Admin to enable this permission.';
 }
 function buildSidebar(){
  const side=document.getElementById('sidebar');
@@ -1537,12 +1596,13 @@ window.addEventListener('pagehide',()=>{try{if(currentUser)saveAppSession({modal
 window.addEventListener('load',()=>{
  try{
   loadSettings();
+  applyTheme(state.settings.theme||'darkblue',false);
   if(state.settings.blink)toggleBlink(true);
  }catch(e){console.error('Dlimans initialization error',e)}
 });
 
 function showView(name,force=false){
- if(!force && !allowed(name) && name!=='dashboard'){toast('Your role does not have permission for this feature');return false}
+ if(!force && !allowed(name) && name!=='dashboard'){toast(permissionMessage(name));return false}
  const v=document.getElementById('view-'+name);
  if(!v){toast('Feature not found: '+name);return false}
  const current=document.querySelector('.view.active')?.id?.replace('view-','');
@@ -2112,13 +2172,63 @@ const themes={
  black:['#030303','#0b0b0b','#151515','#ffffff'],
  white:['#f5f7fa','#ffffff','#eef2f6','#1769aa'],milk:['#f4f0e6','#fffdf7','#eee8da','#8b5e34'],brown:['#1a100b','#2a1a12','#3a2518','#d99a5b'],green:['#07180f','#0d2a19','#154027','#55e38a'],ocean:['#06151f','#0b2433','#12384d','#20c7ff'],teal:['#061817','#0b2927','#123b38','#20e0c4'],rose:['#1b0b13','#301320','#452033','#ff7da7'],orange:['#1b1006','#30200d','#442c12','#ffae42'],silver:['#11151a','#20262d','#303943','#d6e0ea']
 };
+/* Transparent / Glass variants: additive only. Existing themes remain unchanged. */
+(function addTransparentThemes(){
+ const glass={
+  'glass-darkblue':['rgba(7,17,31,.58)','rgba(14,26,43,.52)','rgba(20,34,56,.46)','#00e676'],
+  'glass-darkgreen':['rgba(7,20,15,.58)','rgba(13,33,24,.52)','rgba(18,51,36,.46)','#39ff88'],
+  'glass-maroon':['rgba(24,7,12,.58)','rgba(42,13,21,.52)','rgba(58,20,32,.46)','#ff6b8a'],
+  'glass-purple':['rgba(16,7,28,.58)','rgba(28,14,44,.52)','rgba(40,20,62,.46)','#c084fc'],
+  'glass-gold':['rgba(23,17,6,.58)','rgba(38,28,8,.52)','rgba(56,40,13,.46)','#ffd166'],
+  'glass-yellow':['rgba(21,20,4,.58)','rgba(36,34,9,.52)','rgba(53,50,13,.46)','#f7e84b'],
+  'glass-chocolate':['rgba(20,11,7,.58)','rgba(36,21,13,.52)','rgba(53,32,20,.46)','#ffb27a'],
+  'glass-salad':['rgba(13,22,8,.58)','rgba(23,36,13,.52)','rgba(33,52,20,.46)','#b8ff5a'],
+  'glass-black':['rgba(3,3,3,.58)','rgba(11,11,11,.52)','rgba(21,21,21,.46)','#ffffff'],
+  'glass-white':['rgba(245,247,250,.58)','rgba(255,255,255,.52)','rgba(238,242,246,.46)','#1769aa'],
+  'glass-milk':['rgba(244,240,230,.58)','rgba(255,253,247,.52)','rgba(238,232,218,.46)','#8b5e34'],
+  'glass-brown':['rgba(26,16,11,.58)','rgba(42,26,18,.52)','rgba(58,37,24,.46)','#d99a5b'],
+  'glass-green':['rgba(7,24,15,.58)','rgba(13,42,25,.52)','rgba(21,64,39,.46)','#55e38a'],
+  'glass-ocean':['rgba(6,21,31,.58)','rgba(11,36,51,.52)','rgba(18,56,77,.46)','#20c7ff'],
+  'glass-teal':['rgba(6,24,23,.58)','rgba(11,41,39,.52)','rgba(18,59,56,.46)','#20e0c4'],
+  'glass-rose':['rgba(27,11,19,.58)','rgba(48,19,32,.52)','rgba(69,32,51,.46)','#ff7da7'],
+  'glass-orange':['rgba(27,16,6,.58)','rgba(48,32,13,.52)','rgba(68,44,18,.46)','#ffae42'],
+  'glass-silver':['rgba(17,21,26,.58)','rgba(32,38,45,.52)','rgba(48,57,67,.46)','#d6e0ea'],
+  'glass-aurora':['rgba(8,25,35,.48)','rgba(16,47,49,.42)','rgba(36,52,72,.38)','#67ffd8'],
+  'glass-crystal':['rgba(255,255,255,.30)','rgba(255,255,255,.24)','rgba(225,240,255,.20)','#8fd3ff'],
+  'glass-sapphire':['rgba(3,18,48,.52)','rgba(8,37,82,.44)','rgba(15,57,110,.38)','#58a6ff'],
+  'glass-emerald':['rgba(2,30,20,.50)','rgba(5,55,35,.43)','rgba(10,78,50,.37)','#54f0a5'],
+  'glass-amethyst':['rgba(27,7,47,.50)','rgba(48,13,78,.43)','rgba(70,22,105,.37)','#d6a2ff'],
+  'glass-sunset':['rgba(57,16,8,.50)','rgba(86,28,12,.43)','rgba(115,43,18,.37)','#ffb86b'],
+  'glass-cosmic':['rgba(10,6,31,.52)','rgba(23,13,57,.44)','rgba(39,23,85,.38)','#a78bfa'],
+  'glass-pearl':['rgba(255,250,242,.46)','rgba(255,255,255,.40)','rgba(245,238,226,.34)','#c08b5c']
+ };
+ Object.keys(glass).forEach(k=>themes[k]=glass[k]);
+})();
 function applyTheme(name,saveIt=true){
  const key=themes[name]?name:'darkblue';const t=themes[key];
- document.documentElement.style.setProperty('--bg',t[0]);document.documentElement.style.setProperty('--panel',t[1]);document.documentElement.style.setProperty('--panel2',t[2]);document.documentElement.style.setProperty('--accent',t[3]);document.documentElement.style.setProperty('--accent2',t[3]);
- document.documentElement.dataset.dlimansTheme=key;
+ const root=document.documentElement;
+ const light=['white','milk','silver','glass-white','glass-milk','glass-silver','glass-crystal','glass-pearl'].includes(key);
+ const transparent=key.startsWith('glass-');
+ root.style.setProperty('--bg',t[0]);root.style.setProperty('--panel',t[1]);root.style.setProperty('--panel2',t[2]);root.style.setProperty('--card',t[2]);root.style.setProperty('--accent',t[3]);root.style.setProperty('--accent2',t[3]);
+ root.style.setProperty('--text-strong',light?'#172033':'#f8fafc');
+ root.style.setProperty('--muted-theme',light?'#536174':'#94a3b8');
+ root.style.setProperty('--border-theme',light?'#cbd5e1':'color-mix(in srgb,'+t[3]+' 22%, '+t[2]+')');
+ root.style.setProperty('--input-bg',light?'#ffffff':t[0]);
+ root.style.setProperty('--topbar-theme',light?'#ffffffee':t[0]+'f2');
+ root.style.setProperty('--sidebar-theme',light?'#ffffff':t[0]);
+ root.style.setProperty('--card-theme',t[2]);
+ root.style.setProperty('--product-bg',transparent?(light?'rgba(255,255,255,.34)':'rgba(255,255,255,.07)'):(light?'#ffffff':'#ffffff0a'));
+ root.style.setProperty('--glass-blur',transparent?'18px':'0px');
+ root.style.setProperty('--glass-border',transparent?(light?'rgba(255,255,255,.55)':'rgba(255,255,255,.16)'):'var(--border-theme)');
+ root.dataset.dlimansTransparent=transparent?'1':'0';
+ root.style.setProperty('--accent-contrast',light?'#ffffff':'#03140b');
+ root.dataset.dlimansTheme=key;
+ root.dataset.dlimansLight=light?'1':'0';
  if(state?.settings)state.settings.theme=key;
  const sel=document.getElementById('themeSelect');if(sel&&sel.value!==key)sel.value=key;
  if(saveIt)save();
+ // Re-render visible POS/dashboard areas so theme changes are immediately visible.
+ try{safeRefresh()}catch(e){}
 }
 function toggleBlink(on){state.settings.blink=!!on;save();document.querySelector('.login-box')?.classList.toggle('login-blink',!!on);}
 function toggleSidebarBlink(on){state.settings.blinkSidebar=!!on;save();buildSidebar();toast(on?'Sidebar icon blinking enabled':'Sidebar icon blinking disabled');}
@@ -2347,7 +2457,12 @@ function handleVoice(t){
  const text=raw.replace(/\s+/g,' ');
  if(!text)return toast('I did not hear a command. Please try again.');
  const say=(msg)=>{try{if('speechSynthesis' in window){window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(msg);u.rate=.98;window.speechSynthesis.speak(u)}}catch(e){}};
- const go=(view,label)=>{showView(view);toast('Opening '+label);};
+ const go=(view,label)=>{
+   if(!allowed(view)){toast(permissionMessage(view));say('You do not have permission for '+label+'. Ask the Admin to enable it.');return false}
+   const opened=showView(view);
+   if(opened){toast('Opening '+label);say('Opening '+label)}
+   return !!opened;
+ };
  // Highest-priority actions first so words like "sale" do not hijack commands such as "clear cart".
  if(/\b(clear|empty|remove all)\b.*\b(cart|basket)\b/.test(text)){clearCart();toast('Cart cleared');say('Cart cleared');return}
  if(/\b(hold|park)\b.*\b(sale|order)\b/.test(text)){holdSale();say('Sale held');return}
@@ -3896,6 +4011,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
        buttons become voice-controllable without rewriting the voice router. */
     const candidates=[...document.querySelectorAll('button,.side-item,.dash-action,.admin-tool')]
       .filter(el=>el.offsetParent!==null&&!el.disabled)
+      .filter(el=>{const v=el.dataset?.view;return !v||allowed(v)})
       .map(el=>({el,label:norm(el.innerText||el.getAttribute('aria-label')||el.title)}))
       .filter(x=>x.label&&x.label.length>1);
     const exact=candidates.find(x=>x.label===text || text.includes(x.label));

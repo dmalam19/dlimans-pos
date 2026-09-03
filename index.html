@@ -1222,11 +1222,18 @@ function load(){
  }catch(e){console.error('Dlimans load error',e);return cloneBase()}
 }
 function save(){
- localStorage.setItem(KEY,JSON.stringify(state));
+ try{
+  localStorage.setItem(KEY,JSON.stringify(state));
+ }catch(e){
+  console.error('Dlimans local save error:',e);
+  toast('Local storage is full or unavailable. Please make a backup.');
+  return false;
+ }
  if(window.__dlimansSyncRef && navigator.onLine){
   clearTimeout(window.__dlimansSyncTimer);
   window.__dlimansSyncTimer=setTimeout(()=>pushAutoSync(),650);
  }
+ return true;
 }
 function toast(msg){
  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
@@ -1761,7 +1768,8 @@ function finalizeSale(){
   const paid=paidInput===''||paidInput==null?total:Number(paidInput);
   if(!Number.isFinite(paid)||paid<0||paid>total){toast('Invalid paid amount');return}
   const items=typeof structuredClone==='function'?structuredClone(cart):JSON.parse(JSON.stringify(cart));
-  const sale={id:uid(),invoice:invoiceNumber(),date:today(),customer:document.getElementById('customerName')?.value.trim()||'Walk-in',note:document.getElementById('customerNote')?.value.trim()||'',payment:document.getElementById('paymentMethod')?.value||'Cash',items,total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser?.username||'Unknown'};
+  const invoice=nextUniqueInvoiceNumber();
+  const sale={id:uid(),invoice,date:today(),customer:document.getElementById('customerName')?.value.trim()||'Walk-in',note:document.getElementById('customerNote')?.value.trim()||'',payment:document.getElementById('paymentMethod')?.value||'Cash',items,total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser?.username||'Unknown'};
   for(const i of items){const p=state.products.find(x=>x.id===i.productId);if(!p){toast('A product in the cart no longer exists');return}if(Number(p.stock)<Number(i.qty)){toast('Not enough stock for '+p.name);return}}
   advanceInvoiceNumber();state.sales.push(sale);
   items.forEach(i=>{const p=state.products.find(x=>x.id===i.productId);if(p)p.stock=Math.max(0,Number(p.stock||0)-Number(i.qty||0))});
@@ -2036,9 +2044,17 @@ function saveEditedPurchase(id){
  const paid=Math.min(total,Math.max(0,Number(document.getElementById('purPaid')?.value)||0));
  if(!supplier){toast('Supplier required');return}
  if(!itemsDetail.length||total<=0){toast('Add at least one purchase item with cost price');return}
- /* Reverse old stock impact, then apply the edited purchase. */
- (old.itemsDetail||[]).forEach(i=>{const prod=state.products.find(x=>x.id===i.productId);if(prod)prod.stock=Math.max(0,(Number(prod.stock)||0)-Number(i.qty||0))});
- itemsDetail.forEach(i=>{const prod=state.products.find(x=>x.id===i.productId);if(prod)prod.stock=(Number(prod.stock)||0)+i.qty});
+ /* Apply only the net quantity change. This is safer than subtracting the
+    entire old purchase and adding the new one because later sales/adjustments
+    may already have changed the current stock. */
+ const deltaByProduct={};
+ (old.itemsDetail||[]).forEach(i=>{deltaByProduct[i.productId]=(deltaByProduct[i.productId]||0)-Number(i.qty||0)});
+ itemsDetail.forEach(i=>{deltaByProduct[i.productId]=(deltaByProduct[i.productId]||0)+Number(i.qty||0)});
+ Object.entries(deltaByProduct).forEach(([productId,delta])=>{
+  if(!delta)return;
+  const prod=state.products.find(x=>x.id===productId);
+  if(prod)prod.stock=Math.max(0,(Number(prod.stock)||0)+delta);
+ });
  old.supplier=supplier;old.payment=payment;old.items=itemsDetail.reduce((a,x)=>a+x.qty,0);old.itemsDetail=itemsDetail;old.total=total;old.paid=paid;old.due=total-paid;old.note=document.getElementById('purNote')?.value||'';
  save();closeModal();refreshAll();toast('Purchase updated and stock adjusted');
 }
@@ -2140,12 +2156,19 @@ function customNav(target){showView(target)}
 function invoiceNumber(){
  const inv=state.settings.invoice||defaultState.settings.invoice;
  const prefix=String(inv.prefix||'INV-');
- const n=Math.max(1,Number(inv.nextNumber)||1);
+ const n=Math.max(1,Math.floor(Number(inv.nextNumber)||1));
  return prefix+String(n).padStart(6,'0');
 }
 function advanceInvoiceNumber(){
  if(!state.settings.invoice) state.settings.invoice=JSON.parse(JSON.stringify(defaultState.settings.invoice));
- state.settings.invoice.nextNumber=Math.max(1,Number(state.settings.invoice.nextNumber)||1)+1;
+ state.settings.invoice.nextNumber=Math.max(1,Math.floor(Number(state.settings.invoice.nextNumber)||1))+1;
+}
+function nextUniqueInvoiceNumber(){
+ let candidate=invoiceNumber(),guard=0;
+ while(state.sales.some(s=>String(s.invoice||'')===candidate)&&guard<100000){
+  advanceInvoiceNumber();candidate=invoiceNumber();guard++;
+ }
+ return candidate;
 }
 function saveInvoiceSettings(){
  if(!isAdmin()){toast('Admin only');return}
@@ -2314,7 +2337,14 @@ function loadControl(){
  set('paperSize',['58mm','80mm','A4'].includes(state.settings.paper)?state.settings.paper:'58mm');check('autoPrint',state.settings.autoPrint);check('blinkTheme',state.settings.blink);check('blinkSidebar',state.settings.blinkSidebar);
 }
 function renderDashboard(){
- const sales=state.sales.reduce((a,s)=>a+s.total,0),cost=state.sales.reduce((a,s)=>a+s.items.reduce((q,i)=>{const p=state.products.find(x=>x.id===i.productId);return q+i.qty*(p?.cost||0)},0),0),exp=state.expenses.reduce((a,e)=>a+e.amount,0),purchases=state.purchases.reduce((a,p)=>a+p.total,0),due=state.sales.reduce((a,s)=>a+s.due,0);
+ const dayKey=new Date().toISOString().slice(0,10);
+ const todaySales=state.sales.filter(s=>String(s.date||'').slice(0,10)===dayKey);
+ const todayExpenses=state.expenses.filter(e=>String(e.date||'').slice(0,10)===dayKey);
+ const sales=todaySales.reduce((a,s)=>a+Number(s.total||0),0);
+ const cost=todaySales.reduce((a,s)=>a+(s.items||[]).reduce((q,i)=>{const p=state.products.find(x=>x.id===i.productId);return q+Number(i.qty||0)*(Number(p?.cost)||0)},0),0);
+ const exp=todayExpenses.reduce((a,e)=>a+Number(e.amount||0),0);
+ const purchases=state.purchases.reduce((a,p)=>a+Number(p.total||0),0);
+ const due=state.sales.reduce((a,s)=>a+Number(s.due||0),0);
  document.getElementById('kSales').textContent=money(sales);document.getElementById('kProfit').textContent=money(sales-cost-exp);document.getElementById('kPurchase').textContent=money(purchases);document.getElementById('kDue').textContent=money(due);
  document.getElementById('kProducts').textContent=state.products.length;document.getElementById('kLow').textContent=state.products.filter(p=>p.stock<=p.min).length;document.getElementById('kCustomers').textContent=state.customers.length;document.getElementById('kExpense').textContent=money(exp);
  document.getElementById('recentSales').innerHTML=state.sales.slice(-5).reverse().map(s=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>${escapeHTML(s.invoice)}<br><span class="small">${escapeHTML(s.customer||'Walk-in')}</span></span><b>${money(s.total)}</b></div>`).join('')||'<div class="dash-empty">No sales yet</div>';
@@ -2566,7 +2596,7 @@ function handleVoice(t){
    for(let i=0;i<qty;i++)addToCart(p.id);toast(`Added ${qty} × ${p.name}`);return;
  }
  const searchMatch=text.match(/\b(?:search|find|look for)\s+(.+)$/);
- if(searchMatch){const q=searchMatch[1].trim();go('products','Products');setTimeout(()=>{const e=document.getElementById('posSearch');if(e){e.value=q;renderPOS()}},120);return}
+ if(searchMatch){const q=searchMatch[1].trim();go('products','Products');setTimeout(()=>{const e=document.getElementById('productSearch');if(e){e.value=q;renderProducts()}else{const pos=document.getElementById('posSearch');if(pos){pos.value=q;renderPOS()}}},120);return}
  if(/\b(open|close|toggle)\b.*\b(menu|sidebar)\b/.test(text)){toggleSidebar();return}
  if(/\bbluetooth\b.*\b(printer|connect)\b|\bconnect\b.*\bbluetooth\b/.test(text)){go('printer','Printer / Receipt');return}
  toast('Voice command not recognized: '+text);
@@ -2576,7 +2606,25 @@ function backupData(){
  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Dlimans_POS_Backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)
 }
 function restoreData(e){
- const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.products||!x.users)throw Error();state=x;save();location.reload()}catch(err){toast('Invalid backup file')}};r.readAsText(f)
+ const f=e?.target?.files?.[0];if(!f)return;
+ const r=new FileReader();
+ r.onload=()=>{
+  try{
+   const x=JSON.parse(r.result);
+   if(!x||typeof x!=='object'||!Array.isArray(x.products)||!Array.isArray(x.users))throw Error('Invalid backup structure');
+   const normalized=normalizeState(x);
+   state=normalized;
+   cart=[];
+   selectedSales.clear();
+   savedModalState=null;
+   localStorage.setItem(KEY,JSON.stringify(state));
+   toast('Backup restored successfully. Reloading…');
+   setTimeout(()=>location.reload(),80);
+  }catch(err){console.error('Restore backup error:',err);toast('Invalid or damaged backup file')}
+  finally{try{e.target.value=''}catch(_){} }
+ };
+ r.onerror=()=>toast('Could not read backup file');
+ r.readAsText(f);
 }
 function factoryReset(){
  if(!isAdmin()){toast('Admin only');return}
@@ -2668,7 +2716,8 @@ function resumeDraft(id){
 function deleteDraft(id){if(!isAdmin()){toast('Admin only');return}if(!confirm('Delete this draft?'))return;state.drafts=state.drafts.filter(x=>x.id!==id);save();renderDrafts();}
 function saveCurrentQuotation(){
  if(!cart.length){toast('Cart is empty');return}
- const qn='QUO-'+String(state.quotations.length+1).padStart(6,'0');
+ let qn='QUO-'+String(state.quotations.length+1).padStart(6,'0'),qguard=0;
+ while(state.quotations.some(x=>String(x.number||'')===qn)&&qguard<100000){qguard++;qn='QUO-'+String(state.quotations.length+1+qguard).padStart(6,'0')}
  const q={id:uid(),date:today(),number:qn,customer:document.getElementById('customerName')?.value||'Walk-in',note:document.getElementById('customerNote')?.value||'',items:JSON.parse(JSON.stringify(cart)),total:cartTotal()};
  state.quotations.push(q);save();renderQuotations();toast('Quotation created');showView('quotations');
 }

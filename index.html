@@ -625,6 +625,7 @@ body.noisy-theme::after{pointer-events:none!important;
     <div class="brand"><span id="topBusiness">Dlimans Supermarket</span> <span class="muted">•</span> <span id="topRole">Admin</span></div>
     <div class="right row">
       <button class="btn ghost" id="voiceBtn" onclick="startVoice()">🎙️ <span class="side-label">Voice</span></button>
+      <button class="btn ghost" id="topCommunicationBtn" onclick="dcuOpen()">💬 <span class="side-label">Communication</span></button>
       <button class="btn ghost" onclick="showView('control')">⚙️</button>
       <button class="btn danger" onclick="logout()">Logout</button>
     </div>
@@ -1328,7 +1329,7 @@ async function connectFirebaseForLogin(email,password){
   if(syncUnsub)syncUnsub();
   syncUnsub=ref.onSnapshot(ds=>{
    const d=ds.data()?.state;if(!d)return;
-   state=normalizeState(d);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
+   state=preserveLocalAppearance(d,state);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
    setSyncStatus('🟢 Firebase Cloud: Connected • Live sync');
   },e=>{console.warn('Cloud listener',e);setSyncStatus('⚠️ Cloud listener error — local data still active')});
   window.__dlimansSyncRef=ref;
@@ -2124,8 +2125,12 @@ const themes={
  white:['#f5f7fa','#ffffff','#eef2f6','#1769aa'],milk:['#f4f0e6','#fffdf7','#eee8da','#8b5e34'],brown:['#1a100b','#2a1a12','#3a2518','#d99a5b'],green:['#07180f','#0d2a19','#154027','#55e38a'],ocean:['#06151f','#0b2433','#12384d','#20c7ff'],teal:['#061817','#0b2927','#123b38','#20e0c4'],rose:['#1b0b13','#301320','#452033','#ff7da7'],orange:['#1b1006','#30200d','#442c12','#ffae42'],silver:['#11151a','#20262d','#303943','#d6e0ea']
 };
 function applyTheme(name,saveIt=true){
- const t=themes[name]||themes.darkblue;document.documentElement.style.setProperty('--bg',t[0]);document.documentElement.style.setProperty('--panel',t[1]);document.documentElement.style.setProperty('--panel2',t[2]);document.documentElement.style.setProperty('--accent',t[3]);document.documentElement.style.setProperty('--accent2',t[3]);
- if(saveIt){state.settings.theme=name;save()}
+ const key=themes[name]?name:'darkblue';const t=themes[key];
+ document.documentElement.style.setProperty('--bg',t[0]);document.documentElement.style.setProperty('--panel',t[1]);document.documentElement.style.setProperty('--panel2',t[2]);document.documentElement.style.setProperty('--accent',t[3]);document.documentElement.style.setProperty('--accent2',t[3]);
+ document.documentElement.dataset.dlimansTheme=key;
+ if(state?.settings)state.settings.theme=key;
+ const sel=document.getElementById('themeSelect');if(sel&&sel.value!==key)sel.value=key;
+ if(saveIt)save();
 }
 function toggleBlink(on){state.settings.blink=!!on;save();document.querySelector('.login-box')?.classList.toggle('login-blink',!!on);}
 function toggleSidebarBlink(on){state.settings.blinkSidebar=!!on;save();buildSidebar();toast(on?'Sidebar icon blinking enabled':'Sidebar icon blinking disabled');}
@@ -2306,7 +2311,7 @@ function startVoice(){
  }
  try{
    voiceRec=new SR();
-   voiceRec.lang='en-US';
+   voiceRec.lang=(navigator.language&&/^en-(NG|GB|US)$/i.test(navigator.language))?navigator.language:'en-US';
    voiceRec.continuous=false;
    voiceRec.interimResults=false;
    voiceRec.maxAlternatives=1;
@@ -2632,6 +2637,19 @@ async function finishFirebaseConnect(){
   setSyncStatus('⚠️ '+msg);toast(msg);return false;
  }finally{resetConnectButton()}
 }
+function preserveLocalAppearance(remoteState, localState){
+ const r=normalizeState(remoteState);
+ const l=localState&&localState.settings?localState.settings:{};
+ r.settings.theme=themes&&themes[l.theme]?l.theme:(r.settings.theme||'darkblue');
+ r.settings.noisy=!!l.noisy;
+ r.settings.blink=l.blink!==false;
+ r.settings.blinkSidebar=l.blinkSidebar!==false;
+ if(l.wallpaper)r.settings.wallpaper=l.wallpaper;
+ if(l.businessLogo)r.settings.businessLogo=l.businessLogo;
+ if(l.invoiceLogo)r.settings.invoiceLogo=l.invoiceLogo;
+ return r;
+}
+
 async function finishFirebaseCloudSync(){
  if(!syncUser)throw Error('Firebase authentication is not connected');
  const ref=syncDb.collection('dlimansStores').doc(syncUser.uid);
@@ -2640,7 +2658,7 @@ async function finishFirebaseCloudSync(){
  if(snap.exists&&snap.data()?.state){
   const remote=snap.data().state;
   if(remote&&Array.isArray(remote.products)&&Array.isArray(remote.sales)){
-   state=normalizeState(remote);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
+   state=preserveLocalAppearance(remote,state);localStorage.setItem(KEY,JSON.stringify(state));safeRefresh();
   }
  }else{
   await ref.set({businessId:syncUser.uid,businessName:state.settings.business||'Dlimans Supermarket',email:syncUser.email||'',state:state,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
@@ -3523,8 +3541,8 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     if($('dcuStyle'))return;
     const st=document.createElement('style');st.id='dcuStyle';st.textContent=`
       #dcuPanel{position:fixed;inset:0;z-index:9999;background:#000b;display:none;align-items:center;justify-content:center;padding:12px}
-      #dcuPanel.show{display:flex}.dcu-box{width:min(1100px,100%);height:min(760px,94vh);background:#0b1727;color:#f7fafc;border:1px solid #263b55;border-radius:18px;overflow:hidden;display:grid;grid-template-columns:240px 1fr 290px;box-shadow:0 25px 80px #0009}
-      .dcu-side,.dcu-right{background:#091523;padding:12px;overflow:auto}.dcu-side{border-right:1px solid #263b55}.dcu-right{border-left:1px solid #263b55}.dcu-head{padding:12px;border-bottom:1px solid #263b55;display:flex;gap:8px;align-items:center}.dcu-head strong{flex:1}.dcu-users button{width:100%;text-align:left;border:1px solid transparent;background:#ffffff06;color:#fff;border-radius:10px;padding:9px;margin:4px 0}.dcu-users button.active{border-color:#00e67655;background:#00e67612}.dcu-chat{display:grid;grid-template-rows:auto 1fr auto;min-width:0}.dcu-msgs{overflow:auto;padding:14px}.dcu-msg{max-width:78%;padding:9px 11px;border:1px solid #263b55;border-radius:12px;margin:6px 0;background:#ffffff08}.dcu-msg.mine{margin-left:auto;background:#00e67616;border-color:#00e67644}.dcu-time{font-size:9px;color:#94a3b8;text-align:right;margin-top:4px}.dcu-compose{display:flex;gap:7px;padding:10px;border-top:1px solid #263b55}.dcu-compose textarea{min-height:44px;max-height:120px;resize:vertical}.dcu-btn{border:1px solid #30445d;background:#15263c;color:#fff;border-radius:9px;padding:8px 10px;font-weight:700}.dcu-btn.primary{background:#00e676;color:#03140b;border-color:#00e676}.dcu-btn.danger{background:#681827;border-color:#8d2234}.dcu-videos{position:relative;aspect-ratio:16/10;background:#02060b;border-radius:10px;overflow:hidden;border:1px solid #263b55}.dcu-videos video{width:100%;height:100%;object-fit:cover}.dcu-local{position:absolute;right:7px;bottom:7px;width:105px;aspect-ratio:16/10;border:1px solid #fff5;border-radius:8px;overflow:hidden}.dcu-local video{width:100%;height:100%;object-fit:cover}.dcu-pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#ffffff10;font-size:10px}.dcu-ok{color:#70ffb0}.dcu-warn{color:#ffc45c}
+      #dcuPanel.show{display:flex}.dcu-box{width:min(1100px,100%);height:min(760px,94vh);background:linear-gradient(145deg,var(--card),var(--panel));color:var(--text);border:1px solid var(--border);border-radius:18px;overflow:hidden;display:grid;grid-template-columns:240px 1fr 290px;box-shadow:var(--shadow)}
+      .dcu-side,.dcu-right{background:var(--panel);padding:12px;overflow:auto}.dcu-side{border-right:1px solid var(--border)}.dcu-right{border-left:1px solid var(--border)}.dcu-head{padding:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center}.dcu-head strong{flex:1}.dcu-users button{width:100%;text-align:left;border:1px solid transparent;background:var(--panel2);color:var(--text);border-radius:10px;padding:9px;margin:4px 0}.dcu-users button.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.dcu-chat{display:grid;grid-template-rows:auto 1fr auto;min-width:0}.dcu-msgs{overflow:auto;padding:14px}.dcu-msg{max-width:78%;padding:9px 11px;border:1px solid var(--border);border-radius:12px;margin:6px 0;background:var(--panel2)}.dcu-msg.mine{margin-left:auto;background:color-mix(in srgb,var(--accent) 12%,transparent);border-color:var(--accent)}.dcu-time{font-size:9px;color:var(--muted);text-align:right;margin-top:4px}.dcu-compose{display:flex;gap:7px;padding:10px;border-top:1px solid var(--border)}.dcu-compose textarea{min-height:44px;max-height:120px;resize:vertical}.dcu-btn{border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:9px;padding:8px 10px;font-weight:700}.dcu-btn.primary{background:var(--accent);color:#03140b;border-color:var(--accent)}.dcu-btn.danger{background:#681827;border-color:#8d2234}.dcu-videos{position:relative;aspect-ratio:16/10;background:#02060b;border-radius:10px;overflow:hidden;border:1px solid var(--border)}.dcu-videos video{width:100%;height:100%;object-fit:cover}.dcu-local{position:absolute;right:7px;bottom:7px;width:105px;aspect-ratio:16/10;border:1px solid #fff5;border-radius:8px;overflow:hidden}.dcu-local video{width:100%;height:100%;object-fit:cover}.dcu-pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#ffffff10;font-size:10px}.dcu-ok{color:#70ffb0}.dcu-warn{color:#ffc45c}
       #dcuStaffSelect{display:none;max-width:130px;background:#15263c;color:#fff;border:1px solid #30445d;border-radius:8px;padding:7px}.dcu-btn:disabled{opacity:.45}@media(max-width:850px){.dcu-box{grid-template-columns:210px 1fr}.dcu-right{display:none}.dcu-head .dcu-btn{padding:7px 8px}}@media(max-width:650px){.dcu-box{grid-template-columns:1fr;height:96vh;border-radius:14px}.dcu-side{display:none}#dcuStaffSelect{display:block}.dcu-head{padding:8px;gap:5px}.dcu-head strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dcu-head .dcu-btn{padding:7px 7px;font-size:12px}.dcu-head #dcuStatus{display:none}.dcu-compose{padding:8px}.dcu-compose textarea{min-height:42px}}
     `;document.head.appendChild(st);
     const p=document.createElement('div');p.id='dcuPanel';p.innerHTML=`<div class="dcu-box">
@@ -3686,16 +3704,14 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
       window.__dlimansUnifiedShowView=true;
       window.showView=function(name,...args){
         const result=originalShowView.call(this,name,...args);
-        if(name==='communication')setTimeout(open,60);
+        /* Communication page stays visible; open the center only when the user taps a Communication action. */
         return result;
       };
     }
     const vb=document.getElementById('voiceBtn');
-    if(vb){vb.textContent='💬 Communication';vb.title='Chat • Voice Call • Video Call';vb.addEventListener('click',e=>{e.preventDefault();window.dcuOpen()},{capture:true});}
-    const vc=document.getElementById('view-communication');
-    if(vc&&!vc.querySelector('[data-dcu-open]')){
-      const b=document.createElement('button');b.className='btn primary';b.dataset.dcuOpen='1';b.textContent='💬 Open Communication Center';b.onclick=open;vc.prepend(b);
-    }
+    if(vb){vb.title='General Voice Commands';}
+    const tb=document.getElementById('topCommunicationBtn');
+    if(tb){tb.title='Chat • Voice Call • Video Call';}
   });window.dcuSelect=select;window.dcuSend=send;window.dcuKey=key;window.dcuCall=call;window.dcuAccept=accept;window.dcuHangup=hangup;window.dcuMute=mute;window.dcuCamera=camera;
   document.addEventListener('click',e=>{const b=e.target.closest?.('[data-dlimans-communication]');if(b){e.preventDefault();open()}});
   window.addEventListener('load',()=>{if($('view-communication'))renderStaff().catch(()=>{});setTimeout(()=>{if(cloudUser()&&db())startIncomingListener()},1200)});

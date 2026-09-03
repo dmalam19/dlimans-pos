@@ -4101,5 +4101,32 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
   }catch(e){console.warn('Communication view guard:',e)}
 })();
 </script>
-</body>
+<style id="dlimans-final-interaction-patch">#permissionBox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}#permissionBox .permission-item{user-select:none;-webkit-user-select:none}#permissionBox .permission-item:hover{background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:8px;padding-left:6px!important}.permission-toolbar{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}.permission-toolbar .btn{font-size:12px;padding:7px 10px}@media(max-width:520px){#permissionBox{grid-template-columns:1fr}}.product-tile,.side-item,.dash-action,.admin-tool,.purchase-tab,.btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}</style><script>
+(function(){
+ 'use strict';
+ if(window.__dlimansInteractionPatch)return;
+ window.__dlimansInteractionPatch=true;
+ var permissionDefaults={dashboard:true,pos:true,held:true,drafts:true,quotations:true,shipments:true,discounts:true,importSales:false,products:true,inventory:true,stockTransfer:false,sales:true,returns:true,purchases:false,customers:true,contacts:true,communication:true,expenses:false,reports:false,accounting:false,branches:false,printer:true,invoice:true,users:false,control:false,settings:false};
+ var permissionLabels={dashboard:'Dashboard',pos:'POS / New Sale',held:'Hold Sales',drafts:'Draft Sales',quotations:'Quotations',shipments:'Shipments',discounts:'Discounts',importSales:'Import Sales',products:'Products',inventory:'Inventory',stockTransfer:'Stock Transfer',sales:'Sales',returns:'Sales Check-up',purchases:'Purchases',customers:'Customers',contacts:'Contacts',communication:'Communication',expenses:'Expenses',reports:'Reports',accounting:'Accounting',branches:'Branches',printer:'Printer / Receipt',invoice:'Invoice',settings:'Settings / Customize'};
+ try{state.permissions=state.permissions||{};state.permissions.cashier=Object.assign({},permissionDefaults,state.permissions.cashier||{});save()}catch(e){console.warn('Permission normalization:',e)}
+ window.renderPermissions=function(){
+   var box=document.getElementById('permissionBox');if(!box)return;
+   var keys=builtInNav.map(function(x){return x[0]}).filter(function(k){return k!=='users'&&k!=='control'});
+   var html='<div class="permission-toolbar"><button type="button" class="btn sm" id="permSelectAll">✓ Enable All</button><button type="button" class="btn sm" id="permSelectNone">○ Disable All</button></div>';
+   keys.forEach(function(k){html+='<label class="permission-item"><input id="perm_'+k+'" type="checkbox" data-perm="'+k+'" '+(state.permissions.cashier[k]===true?'checked':'')+'><span>'+escapeHTML(permissionLabels[k]||k)+'</span></label>'});
+   box.innerHTML=html;
+   var all=document.getElementById('permSelectAll'),none=document.getElementById('permSelectNone');
+   if(all)all.onclick=function(){if(!isAdmin()){toast('Admin only');return}box.querySelectorAll('[data-perm]').forEach(function(x){x.checked=true})};
+   if(none)none.onclick=function(){if(!isAdmin()){toast('Admin only');return}box.querySelectorAll('[data-perm]').forEach(function(x){x.checked=false})};
+   box.querySelectorAll('[data-perm]').forEach(function(x){x.onchange=function(){if(!isAdmin()){this.checked=!this.checked;toast('Admin only');return}state.permissions.cashier[this.dataset.perm]=!!this.checked}});
+ };
+ window.savePermissions=function(){if(!isAdmin()){toast('Admin only');return}var box=document.getElementById('permissionBox');if(box)box.querySelectorAll('[data-perm]').forEach(function(x){state.permissions.cashier[x.dataset.perm]=!!x.checked});save();buildSidebar();renderPermissions();toast('Cashier permissions saved')};
+ document.addEventListener('click',function(e){var item=e.target.closest&&e.target.closest('.sidebar .side-item[data-view]');if(!item)return;e.preventDefault();e.stopPropagation();var view=item.dataset.view;if(view)showView(view)},true);
+ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.product-tile,.btn.primary');if(!b)return;if(b.__dlimansBusy){e.preventDefault();e.stopImmediatePropagation();return}b.__dlimansBusy=true;setTimeout(function(){b.__dlimansBusy=false},700)},true);
+ var oldApplyTheme=window.applyTheme;window.applyTheme=function(name,saveIt){var r=oldApplyTheme.call(this,name,saveIt===undefined?true:saveIt);try{document.body.dataset.dlimansTheme=document.documentElement.dataset.dlimansTheme||name}catch(e){}return r};
+ var oldClose=window.closeMobileSidebar;window.closeMobileSidebar=function(){try{oldClose.call(this)}catch(e){}document.querySelectorAll('.mobile-sidebar-backdrop').forEach(function(x){x.style.pointerEvents='none';setTimeout(function(){x.style.pointerEvents=''},220)})};
+ var oldShowView=window.showView;window.showView=function(name,force){if(!force&&currentUser&&currentUser.role!=='Admin'&&!allowed(name)){toast(permissionMessage(name));return false}return oldShowView.call(this,name,force)};
+ window.addEventListener('load',function(){try{state.permissions.cashier=Object.assign({},permissionDefaults,state.permissions.cashier||{});renderPermissions();buildSidebar();applyTheme(state.settings.theme||'darkblue',false)}catch(e){console.warn('Final interaction patch init:',e)}});
+})();
+</script></body>
 </html>

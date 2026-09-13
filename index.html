@@ -4831,8 +4831,13 @@ button{min-height:38px}
   }
   function n(v){const x=Number(v);return Number.isFinite(x)?x:0}
   function getCart(){
-    return Array.isArray(window.state?.cart)?window.state.cart:
-           Array.isArray(window.cart)?window.cart:[];
+    /* Dlimans' real POS cart is the global `cart` array.
+       The professional UI must use that same live cart, otherwise a product
+       can be added successfully but appear to stay empty in the new panel. */
+    if(Array.isArray(window.cart))return window.cart;
+    if(typeof cart!=='undefined' && Array.isArray(cart))return cart;
+    if(Array.isArray(window.state?.cart))return window.state.cart;
+    return [];
   }
   function productId(p){return String(p?.id??p?.sku??p?.barcode??'')}
   function productName(p){return p?.name||p?.productName||'Product'}
@@ -4873,7 +4878,12 @@ button{min-height:38px}
     const p=(state.products||[]).find(x=>productId(x)===String(id));
     if(!p)return;
     try{
-      if(typeof addToCart==='function'){addToCart(p.id);renderProfessionalPOS();return}
+      if(typeof addToCart==='function'){
+        addToCart(p.id);
+        try{renderCart()}catch(e){}
+        setTimeout(renderProfessionalPOS,0);
+        return
+      }
       if(typeof addProductToCart==='function'){addProductToCart(p.id);renderProfessionalPOS();return}
       if(typeof addProduct==='function'){addProduct(p.id);renderProfessionalPOS();return}
     }catch(e){console.warn('Professional POS add:',e)}
@@ -4926,7 +4936,7 @@ button{min-height:38px}
       const id=c.id??c.productId??c.sku;
       if(typeof removeFromCart==='function'){removeFromCart(id);renderProfessionalPOS();return}
       if(typeof removeCartItem==='function'){removeCartItem(id);renderProfessionalPOS();return}
-      getCart().splice(i,1);if(typeof save==='function')save();renderProfessionalPOS();
+      getCart().splice(i,1);try{if(typeof save==='function')save()}catch(e){};try{renderCart()}catch(e){};renderProfessionalPOS();
     }catch(e){console.warn('Cart remove:',e)}
   };
 

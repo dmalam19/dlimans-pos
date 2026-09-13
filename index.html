@@ -801,7 +801,7 @@ body.has-wallpaper #app{position:relative;z-index:1}
 <style id="dlimans-pos-reference-v4">
 #view-pos .dlimans-pos-reference-layout{
   display:grid!important;
-  grid-template-columns:minmax(0,1.58fr) minmax(340px,.92fr);
+  grid-template-columns:minmax(0,1.68fr) minmax(390px,.92fr);
   grid-template-rows:minmax(0,1fr) auto;
   gap:9px;
   align-items:stretch;
@@ -836,7 +836,7 @@ body.has-wallpaper #app{position:relative;z-index:1}
 #view-pos .dlimans-brand-grid .product-tile .small{font-size:7px!important}
 #view-pos .dlimans-brand-grid .product-tile b{font-size:9px!important}
 #view-pos .dlimans-recent-block{border-top:1px solid var(--border);margin-top:auto}
-#view-pos .dlimans-recent-list{max-height:170px;overflow:auto;padding:6px}
+#view-pos .dlimans-recent-list{max-height:205px;overflow:auto;padding:6px}
 #view-pos .dlimans-recent-item{display:grid;grid-template-columns:1fr auto;gap:6px;padding:6px;border:1px solid var(--border);border-radius:7px;background:var(--panel);margin-bottom:4px}
 #view-pos .dlimans-recent-item strong{display:block;color:var(--accent);font-size:10px}
 #view-pos .dlimans-recent-item .pos-pro-recent-meta{font-size:8px}
@@ -986,6 +986,7 @@ body.has-wallpaper #app{position:relative;z-index:1}
           <option value="">Walk-in Customer</option>
         </select>
         <button class="btn sm" type="button" onclick="showView('customers')">＋</button>
+        <button class="btn primary sm" type="button" onclick="dlimansBarcodeScan()" title="Scan barcode">▣ Scan</button>
       </div>
       <div class="dlimans-invoice-chip" id="proInvoiceChip">New Sale</div>
     </div>
@@ -2785,6 +2786,41 @@ button *,
 
 
 
+
+<script id="dlimans-pos-barcode-v1">
+(function(){
+  window.dlimansBarcodeScan=function(){
+    try{
+      if(typeof scanBarcode==='function' && scanBarcode!==window.dlimansBarcodeScan){
+        return scanBarcode();
+      }
+    }catch(e){}
+    const input=document.getElementById('proProductSearch');
+    if(input){
+      input.focus();
+      input.placeholder='Scan / enter barcode, SKU or product name';
+      if(typeof toast==='function')toast('Ready: scan barcode into the product search box.');
+    }
+  };
+})();
+</script>
+
+
+<script id="dlimans-pos-sync-v2">
+(function(){
+  const orig=window.renderCart;
+  if(typeof orig==='function' && !orig.__dlimansProWrapped){
+    const w=function(){
+      const r=orig.apply(this,arguments);
+      try{setTimeout(window.renderProfessionalPOS,0)}catch(e){}
+      return r;
+    };
+    w.__dlimansProWrapped=true;
+    window.renderCart=w;
+  }
+})();
+</script>
+
 </body></html>`);
  win.document.close()
 }
@@ -4128,7 +4164,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     }).sort((x,y)=>time(x.createdAt)-time(y.createdAt));
     box.innerHTML=a.length?a.map(m=>{
       const mine=String(m.senderId||'')===me();
-      const status=m.__pending?'⏳ Sending…':(m.readAt?'✓✓ Read':(m.deliveredAt?'✓✓ Delivered':'✓ Sent'));
+      const status=m.__failed?'⚠️ Not sent':(m.__pending?'⏳ Sending…':(m.readAt?'✓✓ Read':(m.deliveredAt?'✓✓ Delivered':'✓ Sent'));
       return `<div class="dcu-msg ${mine?'mine':''}">
         ${esc(m.text||'')}
         <div class="dcu-time">${new Date(time(m.createdAt)||Date.now()).toLocaleString()} · ${status}</div>
@@ -4191,7 +4227,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Sending…';}
 
     try{
-      const writePromise=r.collection('chatMessages').add({
+      const payload={
         clientId,
         conversationId:pair(me(),currentPartner.id),
         type:'direct',
@@ -4204,17 +4240,34 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
         createdAt:now(),
         deliveredAt:now(),
         readAt:null
-      });
-      const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Message send timed out. Check the cloud connection.')),7000));
-      await Promise.race([writePromise,timeout]);
+      };
+      let lastErr=null, saved=false;
+      for(let attempt=1;attempt<=3 && !saved;attempt++){
+        try{
+          await r.collection('chatMessages').add(payload);
+          saved=true;
+        }catch(err){
+          lastErr=err;
+          const transient=err?.code==='unavailable'||err?.code==='deadline-exceeded'||err?.code==='failed-precondition';
+          if(!transient)break;
+          await new Promise(res=>setTimeout(res,400*attempt));
+        }
+      }
+      if(!saved)throw(lastErr||new Error('Message could not be saved'));
       dcuPendingMessages=dcuPendingMessages.filter(m=>m.clientId!==clientId);
       dcuRenderMessages([]);
       if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send';}
     }catch(e){
       if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send';}
-      dcuPendingMessages=dcuPendingMessages.filter(m=>m.clientId!==clientId);
+      /* Keep the optimistic message visible as a failed/pending item so the
+         user does not think the text vanished. */
+      const pending=dcuPendingMessages.find(m=>m.clientId===clientId);
+      if(pending){pending.__pending=false;pending.__failed=true;pending.error=e?.code||e?.message||'send failed';}
       dcuRenderMessages([]);
-      toastMsg('Chat failed: '+(e.message||e));
+      const code=e?.code||'';
+      toastMsg(code==='permission-denied'
+        ? 'Chat write permission was denied by Firebase.'
+        : 'Chat failed: '+(e?.message||e));
     }
   }
   function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
@@ -4924,18 +4977,28 @@ button{min-height:38px}
   };
 
   window.professionalAddProduct=function(id){
-    const p=(state.products||[]).find(x=>productId(x)===String(id));
+    const p=(state.products||[]).find(x=>String(x.id)===String(id)||productId(x)===String(id));
     if(!p)return;
     try{
-      if(typeof addToCart==='function'){
-        addToCart(p.id);
-        try{renderCart()}catch(e){}
-        setTimeout(renderProfessionalPOS,0);
-        return
+      /* Prefer the existing business logic. Then verify that the live cart
+         actually changed; if a legacy ID-type mismatch prevented it, use the
+         same cart structure directly. */
+      const before=getCart().length;
+      if(typeof addToCart==='function') addToCart(p.id);
+      else if(typeof addProductToCart==='function') addProductToCart(p.id);
+      else if(typeof addProduct==='function') addProduct(p.id);
+
+      const found=getCart().find(x=>String(x.productId??x.id)===String(p.id));
+      if(!found){
+        const live=getCart();
+        const existing=live.find(x=>String(x.productId)===String(p.id));
+        if(existing) existing.qty=Math.max(1,Number(existing.qty||1)+1);
+        else live.push({productId:p.id,qty:1,price:Number(p.price||0)});
+        try{if(typeof save==='function')save()}catch(e){}
       }
-      if(typeof addProductToCart==='function'){addProductToCart(p.id);renderProfessionalPOS();return}
-      if(typeof addProduct==='function'){addProduct(p.id);renderProfessionalPOS();return}
-    }catch(e){console.warn('Professional POS add:',e)}
+      try{renderCart()}catch(e){}
+      setTimeout(renderProfessionalPOS,0);
+    }catch(e){console.warn('Professional POS add:',e);if(typeof toast==='function')toast('Could not add product');}
   };
 
   window.renderProfessionalCart=function(){

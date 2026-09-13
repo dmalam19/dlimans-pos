@@ -810,10 +810,11 @@ body.has-wallpaper #app{position:relative;z-index:1}
 </style>
 
 
-<style id="dlimans-hide-legacy-pos-layout-v1">
-/* The professional POS shell replaces the old POS workspace.
-   Hide the legacy workspace so Cart/Products/Recent Transactions are not duplicated. */
-#view-pos > .pos-layout{display:none!important}
+
+<style id="dlimans-hide-legacy-pos-cards-v2">
+/* Keep the POS container alive; hide only the old duplicated cards. */
+#view-pos > .pos-layout > .card{display:none!important}
+#view-pos > .pos-layout > #dlimansProfessionalPOS{display:grid!important}
 </style>
 
 </head>

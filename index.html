@@ -2740,19 +2740,6 @@ button *,
 
 
 
-<script id="dlimans-pos-live-fields-v1">
-(function(){
-  function bind(){
-    ['proDiscountInput','proPaidInput','proPaymentMethod'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el&&!el.__proBound){el.__proBound=true;el.addEventListener('input',()=>{try{renderProfessionalPOS()}catch(e){}});el.addEventListener('change',()=>{try{renderProfessionalPOS()}catch(e){}})}
-    });
-  }
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,100));
-  window.addEventListener('load',()=>setTimeout(bind,300));
-})();
-</script>
-
 </body></html>`);
  win.document.close()
 }
@@ -5040,6 +5027,21 @@ button{min-height:38px}
   }
   window.addEventListener('load',function(){setTimeout(fix,150)});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fix,60)});
+})();
+</script>
+
+
+
+<script id="dlimans-pos-live-fields-v1">
+(function(){
+  function bind(){
+    ['proDiscountInput','proPaidInput','proPaymentMethod'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&!el.__proBound){el.__proBound=true;el.addEventListener('input',()=>{try{renderProfessionalPOS()}catch(e){}});el.addEventListener('change',()=>{try{renderProfessionalPOS()}catch(e){}})}
+    });
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,100));
+  window.addEventListener('load',()=>setTimeout(bind,300));
 })();
 </script>
 

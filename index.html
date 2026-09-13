@@ -753,6 +753,62 @@ body.has-wallpaper #app{position:relative;z-index:1}
 #view-pos > .card.products,#view-pos > .card.cart{display:none!important}
 </style>
 
+
+<style id="dlimans-pos-pc-compact-v2">
+/* PC: compact POS workspace, closer to a real cashier terminal */
+@media(min-width:1101px){
+  #view-pos{padding-top:6px!important}
+  #view-pos .pos-pro-shell{
+    grid-template-columns:minmax(255px,.92fr) minmax(330px,1.15fr) minmax(245px,.82fr);
+    gap:8px;
+    min-height:0;
+  }
+  #view-pos .pos-pro-card{border-radius:10px}
+  #view-pos .pos-pro-head{padding:7px 9px}
+  #view-pos .pos-pro-head h3{font-size:12px}
+  #view-pos .pos-pro-body{padding:7px}
+  #view-pos .pos-pro-search{margin-bottom:6px;gap:5px}
+  #view-pos .pos-pro-products{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:5px;
+    max-height:405px;
+  }
+  #view-pos .pos-pro-products .product-tile{
+    padding:6px!important;
+    min-height:112px;
+    border-radius:8px!important;
+  }
+  #view-pos .pos-pro-products .product-img{
+    width:38px!important;height:38px!important;
+    min-height:38px!important;
+    margin:auto;
+  }
+  #view-pos .pos-pro-products strong{
+    font-size:10px!important;
+    line-height:1.15!important;
+  }
+  #view-pos .pos-pro-products .small{font-size:8px!important}
+  #view-pos .pos-pro-products b{font-size:10px!important}
+  #view-pos .pos-pro-cart{min-height:230px;max-height:315px}
+  #view-pos .pos-pro-recent{max-height:405px}
+  #view-pos .pos-pro-recent-item{padding:7px 8px;margin-bottom:5px}
+  #view-pos .pos-pro-recent-meta{font-size:9px}
+  #view-pos .pos-pro-total{font-size:18px}
+  #view-pos .pos-pro-actions{margin-top:6px;gap:5px}
+  #view-pos .pos-pro-actions .btn{min-height:36px;padding:6px 8px}
+  #view-pos .pos-pro-paybar{gap:5px;margin-top:6px}
+}
+</style>
+
+
+<style id="dlimans-pos-laptop-v1">
+@media(min-width:701px) and (max-width:1100px){
+  #view-pos .pos-pro-products{grid-template-columns:repeat(3,minmax(0,1fr));max-height:390px}
+  #view-pos .pos-pro-cart{max-height:330px}
+  #view-pos .pos-pro-recent{max-height:390px}
+}
+</style>
+
 </head>
 <body>
 

@@ -450,6 +450,25 @@ body.noisy-theme::after{pointer-events:none!important;
 .dlimans-chat-compose{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
 @media(max-width:520px){.dlimans-chat-compose{grid-template-columns:1fr}.dlimans-chat-card{grid-column:auto}}
 
+.pos-recent-transactions-card{overflow:hidden}
+.pos-recent-transactions{display:flex;flex-direction:column;gap:7px;max-height:310px;overflow:auto}
+.pos-recent-item{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;
+  padding:10px 11px;border:1px solid var(--border-theme,var(--border));border-radius:11px;
+  background:linear-gradient(145deg,var(--product-bg,#ffffff08),var(--panel));
+}
+.pos-recent-main{min-width:0}
+.pos-recent-invoice{font-weight:900;color:var(--text-strong,var(--text));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-recent-meta{font-size:11px;color:var(--muted-theme,var(--muted));margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-recent-amount{text-align:right;white-space:nowrap}
+.pos-recent-amount strong{display:block;color:var(--accent);font-size:14px}
+.pos-recent-amount span{font-size:10px;color:var(--muted-theme,var(--muted))}
+.pos-recent-empty{text-align:center;padding:28px 10px;color:var(--muted-theme,var(--muted))}
+@media(max-width:800px){
+  .pos-recent-transactions{max-height:260px}
+}
+
+
 /* Dlimans Voice Communication UI */
 .voice-person{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px;border:1px solid var(--border);border-radius:12px;background:var(--panel2);margin-top:8px}
 .voice-person .presence-dot{width:10px;height:10px;border-radius:50%;background:#68798d;display:inline-block;margin-right:7px}
@@ -666,6 +685,25 @@ html[data-dlimans-light="1"][data-dlimans-transparent="1"] .topbar{background:rg
   .login-box{box-shadow:0 8px 24px #0006!important;}
 }
 </style>
+
+<style id="dlimans-recent-wallpaper-fix">
+.pos-recent-transactions-card{overflow:hidden}
+.pos-recent-transactions-card.pos-recent-collapsed #posRecentTransactionsWrap{display:none!important}
+.pos-recent-transactions-card.pos-recent-collapsed{padding-bottom:10px}
+body.has-wallpaper{position:relative}
+body.has-wallpaper::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:var(--dlimans-wallpaper);
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  background-attachment:fixed;
+}
+body.has-wallpaper::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(#07111f55,#07111f55);
+}
+body.has-wallpaper #app{position:relative;z-index:1}
+</style>
+
 </head>
 <body>
 
@@ -786,6 +824,21 @@ html[data-dlimans-light="1"][data-dlimans-transparent="1"] .topbar{background:rg
             </div>
             <div style="height:10px"></div>
             <div class="product-grid" id="posProducts"></div>
+          </div>
+          <div class="card pos-recent-transactions-card" style="margin-top:12px">
+            <div class="section-title">
+              <div>
+                <h3>🧾 Recent Transactions</h3>
+                <div class="small">Latest completed sales</div>
+              </div>
+              <div class="row" style="gap:6px">
+                <button id="posRecentToggle" class="btn sm" type="button" onclick="togglePOSRecentTransactions()" aria-expanded="true">⌃ Collapse</button>
+                <button class="btn sm" type="button" onclick="showView('sales')">View All</button>
+              </div>
+            </div>
+            <div id="posRecentTransactionsWrap">
+              <div id="posRecentTransactions" class="pos-recent-transactions"></div>
+            </div>
           </div>
           <div class="card cart">
             <div class="section-title"><h3>Current Cart</h3><button class="btn sm danger" onclick="clearCart()">Clear</button></div>
@@ -1160,7 +1213,7 @@ const defaultState={
  settings:{
   business:'Dlimans Supermarket',phone:'08063756515',address:'Nigeria',currency:'₦',
   thanks:'Thank you for shopping with Dlimans Supermarket!',businessLogo:'',invoiceLogo:'',wallpaper:'',theme:'darkblue',blink:true,blinkSidebar:true,noisy:false,
-  paper:'58mm',autoPrint:false,
+  paper:'58mm',autoPrint:false,posRecentCollapsed:false,
   invoice:{prefix:'INV-',nextNumber:1,title:'INVOICE',footer:'Thank you for shopping with Dlimans Supermarket!',showCustomerNote:true,showDue:true,showPaid:true,showLogo:false}
  },
  users:[
@@ -2213,7 +2266,18 @@ function renderBrandingPreviews(){
  show('businessLogoPreview',state.settings.businessLogo,'business-brand-logo');show('invoiceLogoPreview',state.settings.invoiceLogo);const w=document.getElementById('wallpaperPreview');if(w){w.style.backgroundImage=state.settings.wallpaper?`url("${state.settings.wallpaper}")`:'none';w.innerHTML=state.settings.wallpaper?'':'<span class="small">No wallpaper selected</span>'}
 }
 function applyBranding(){
- const body=document.body; if(state.settings.wallpaper){body.classList.add('has-wallpaper');body.style.backgroundImage=`linear-gradient(#07111f99,#07111f99),url("${state.settings.wallpaper}")`;body.style.backgroundSize='cover';body.style.backgroundPosition='center';body.style.backgroundAttachment='fixed'}else{body.classList.remove('has-wallpaper');body.style.backgroundImage='';body.style.backgroundSize='';body.style.backgroundPosition='';body.style.backgroundAttachment=''}
+ const body=document.body;
+ const wp=state?.settings?.wallpaper||'';
+ if(wp){
+   body.classList.add('has-wallpaper');
+   try{document.documentElement.style.setProperty('--dlimans-wallpaper','url("'+String(wp).replace(/"/g,'\\\"')+'")')}catch(e){}
+   body.style.backgroundImage='none';
+   body.style.backgroundSize='cover';body.style.backgroundPosition='center';body.style.backgroundAttachment='fixed';
+ }else{
+   body.classList.remove('has-wallpaper');
+   try{document.documentElement.style.removeProperty('--dlimans-wallpaper')}catch(e){}
+   body.style.backgroundImage='';body.style.backgroundSize='';body.style.backgroundPosition='';body.style.backgroundAttachment='';
+ }
  const logo=state.settings.businessLogo;const login=document.getElementById('loginLogo');if(login){login.innerHTML=logo?`<img src="${logo}" alt="Business logo" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">`:(state.settings.business||'D').trim().charAt(0).toUpperCase()}
  const top=document.getElementById('topBusiness');if(top){top.innerHTML=(logo?`<img class="business-brand-logo" src="${logo}" alt="">`:'')+escapeHTML(state.settings.business)}
 }
@@ -2336,6 +2400,47 @@ function loadControl(){
  check('invShowNote',inv.showCustomerNote);check('invShowDue',inv.showDue);check('invShowPaid',inv.showPaid);check('invShowLogo',inv.showLogo);
  set('paperSize',['58mm','80mm','A4'].includes(state.settings.paper)?state.settings.paper:'58mm');check('autoPrint',state.settings.autoPrint);check('blinkTheme',state.settings.blink);check('blinkSidebar',state.settings.blinkSidebar);
 }
+function togglePOSRecentTransactions(force){
+  const card=document.querySelector('.pos-recent-transactions-card');
+  const btn=document.getElementById('posRecentToggle');
+  if(!card)return;
+  const collapsed=typeof force==='boolean'?force:!card.classList.contains('pos-recent-collapsed');
+  card.classList.toggle('pos-recent-collapsed',collapsed);
+  if(btn){
+    btn.textContent=collapsed?'⌄ Expand':'⌃ Collapse';
+    btn.setAttribute('aria-expanded',collapsed?'false':'true');
+  }
+  try{if(state?.settings){state.settings.posRecentCollapsed=collapsed;save()}}catch(e){}
+}
+function renderPOSRecentTransactions(){
+  const box=document.getElementById('posRecentTransactions');
+  if(!box)return;
+  const arr=Array.isArray(state.sales)?state.sales.slice().reverse().slice(0,8):[];
+  box.innerHTML=arr.length?arr.map(s=>{
+    const customer=escapeHTML(s.customer||'Walk-in');
+    const invoice=escapeHTML(s.invoice||'Sale');
+    const payment=escapeHTML(s.payment||'Cash');
+    const date=escapeHTML(fmtDate(s.date));
+    return `<div class="pos-recent-item">
+      <div class="pos-recent-main">
+        <div class="pos-recent-invoice">${invoice}</div>
+        <div class="pos-recent-meta">${customer} · ${date}</div>
+      </div>
+      <div class="pos-recent-amount"><strong>${money(s.total)}</strong><span>${payment}</span></div>
+    </div>`;
+  }).join(''):'<div class="pos-recent-empty">🧾 No transactions yet.<br>Completed sales will appear here.</div>';
+  const card=document.querySelector('.pos-recent-transactions-card');
+  if(card){
+    const collapsed=!!state?.settings?.posRecentCollapsed;
+    card.classList.toggle('pos-recent-collapsed',collapsed);
+    const btn=document.getElementById('posRecentToggle');
+    if(btn){
+      btn.textContent=collapsed?'⌄ Expand':'⌃ Collapse';
+      btn.setAttribute('aria-expanded',collapsed?'false':'true');
+    }
+  }
+}
+
 function renderDashboard(){
  const dayKey=new Date().toISOString().slice(0,10);
  const todaySales=state.sales.filter(s=>String(s.date||'').slice(0,10)===dayKey);
@@ -2456,6 +2561,8 @@ button *,
  <div class="total">Total: ${money(s.total)}</div><div style="text-align:right">${paid}${due}</div>${note}
  <div class="line"></div><div class="thanks">${escapeHTML(inv.footer||state.settings.thanks)}</div>
  
+
+
 
 
 </body></html>`);
@@ -2748,6 +2855,7 @@ function addStockTransfer(){if(!isAdmin()){toast('Admin only');return}const prod
 function deleteStockTransfer(id){if(!isAdmin()){toast('Admin only');return}state.stockTransfers=state.stockTransfers.filter(x=>x.id!==id);save();renderStockTransfers()}
 function refreshAll(){
  safeRefresh(true);
+ try{renderPOSRecentTransactions()}catch(e){console.warn('POS recent transactions refresh:',e)}
  try{const active=document.querySelector('.view.active')?.id?.replace('view-','');if(active!=='drafts')renderDrafts();if(active!=='quotations')renderQuotations()}catch(e){console.warn('Draft/quotation refresh:',e)}
 }
 /* Sidebar safety repair: protects against old/corrupt localStorage data. */
@@ -3659,6 +3767,7 @@ async function startDlimansChat(){
   if(typeof originalShowView==='function'){
     window.showView=function(name,...args){
       const result=originalShowView.call(this,name,...args);
+      if(name==='pos')setTimeout(()=>{try{renderPOSRecentTransactions()}catch(e){}},30);
       if(name==='communication')setTimeout(()=>{try{startDlimansChat()}catch(e){}},80);
       return result;
     };
@@ -3707,7 +3816,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     `;document.head.appendChild(st);
     const p=document.createElement('div');p.id='dcuPanel';p.innerHTML=`<div class="dcu-box">
       <aside class="dcu-side"><div class="dcu-head"><strong>Admin / Cashier</strong><button class="dcu-btn" onclick="dcuClose()">✕</button></div><input id="dcuSearch" placeholder="Search staff" style="margin:9px 0"><div id="dcuUsers" class="dcu-users"></div></aside>
-      <section class="dcu-chat"><div class="dcu-head"><div id="dcuAvatar" class="dcu-pill">?</div><strong id="dcuPartner">Select staff</strong><select id="dcuStaffSelect" aria-label="Select Admin or Cashier" onchange="dcuSelectFromMobile(this.value)"><option value="">Staff…</option></select><span id="dcuStatus" class="dcu-pill">Ready</span><button class="dcu-btn" onclick="dcuCall('voice')">📞</button><button class="dcu-btn primary" onclick="dcuCall('video')">📹</button><button class="dcu-btn" onclick="dcuMute()">🎙️</button><button class="dcu-btn" onclick="dcuCamera()">📷</button><button class="dcu-btn danger" onclick="dcuHangup()">End</button></div><div id="dcuMsgs" class="dcu-msgs"><div class="dcu-warn">Select an Admin or Cashier.</div></div><div class="dcu-compose"><textarea id="dcuInput" placeholder="Write a message..." onkeydown="dcuKey(event)"></textarea><button class="dcu-btn primary" onclick="dcuSend()">Send</button></div></section>
+      <section class="dcu-chat"><div class="dcu-head"><div id="dcuAvatar" class="dcu-pill">?</div><strong id="dcuPartner">Select staff</strong><select id="dcuStaffSelect" aria-label="Select Admin or Cashier" onchange="dcuSelectFromMobile(this.value)"><option value="">Staff…</option></select><span id="dcuStatus" class="dcu-pill">Ready</span><button class="dcu-btn" onclick="dcuCall('voice')">📞</button><button class="dcu-btn primary" onclick="dcuCall('video')">📹</button><button class="dcu-btn" onclick="dcuMute()">🎙️</button><button class="dcu-btn" onclick="dcuCamera()">📷</button><button class="dcu-btn danger" onclick="dcuHangup()">End</button></div><div id="dcuMsgs" class="dcu-msgs"><div class="dcu-warn">Select an Admin or Cashier.</div></div><div class="dcu-compose"><textarea id="dcuInput" placeholder="Write a message..." onkeydown="dcuKey(event)"></textarea><button id="dcuSendBtn" class="dcu-btn primary" type="button" onclick="dcuSend()">Send</button></div></section>
       <aside class="dcu-right"><div class="dcu-head"><strong>Current Call</strong></div><div class="dcu-videos"><video id="dcuRemote" autoplay playsinline></video><div class="dcu-local"><video id="dcuLocal" autoplay muted playsinline></video></div></div><div style="display:flex;gap:6px;margin-top:8px"><button class="dcu-btn" onclick="dcuMute()">🎙️</button><button class="dcu-btn" onclick="dcuCamera()">📷</button><button class="dcu-btn danger" onclick="dcuHangup()">End</button></div><p id="dcuCallStatus" class="dcu-warn">No active call.</p></aside>
     </div>`;document.body.appendChild(p);
   }
@@ -3786,13 +3895,103 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
   async function select(id,name,role){
     currentPartner={id,name,role};$('dcuPartner').textContent=name;$('dcuAvatar').textContent=(name||role||'?').charAt(0).toUpperCase();await renderStaff();subscribeMessages();
   }
-  function subscribeMessages(){
-    if(msgUnsub)msgUnsub();if(!currentPartner||!root())return;
-    const ref=root().collection('chatMessages');const cid=pair(me(),currentPartner.id);
-    msgUnsub=ref.where('conversationId','==',cid).limitToLast(150).onSnapshot(s=>{const a=s.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>time(x.createdAt)-time(y.createdAt));$('dcuMsgs').innerHTML=a.length?a.map(m=>`<div class="dcu-msg ${String(m.senderId)===me()?'mine':''}">${esc(m.text||'')}<div class="dcu-time">${new Date(time(m.createdAt)||Date.now()).toLocaleString()}</div></div>`).join(''):'<div class="dcu-warn">No messages yet.</div>';$('dcuMsgs').scrollTop=$('dcuMsgs').scrollHeight},e=>{$('dcuStatus').textContent='Chat error';console.warn(e)});
-  }
   const time=v=>v?.toMillis?v.toMillis():v?.seconds?v.seconds*1000:new Date(v||0).getTime()||0;
-  async function send(){const input=$('dcuInput');const text=(input?.value||'').trim();if(!text||!currentPartner)return;if(!root())return toastMsg('Cloud is not connected');try{await root().collection('chatMessages').add({conversationId:pair(me(),currentPartner.id),type:'direct',senderId:me(),senderName:myName(),senderRole:currentUser?.role||'',recipientId:currentPartner.id,text,createdAt:now()});input.value=''}catch(e){toastMsg('Chat failed: '+(e.message||e))}}
+  let dcuPendingMessages=[];
+
+  function dcuRenderMessages(items){
+    const box=$('dcuMsgs'); if(!box)return;
+    const merged=(items||[]).concat(dcuPendingMessages||[]);
+    const seen=new Set();
+    const a=merged.filter(m=>{
+      const k=String(m.id||m.clientId||'')+'|'+String(m.senderId||'')+'|'+String(m.text||'');
+      if(seen.has(k))return false; seen.add(k); return true;
+    }).sort((x,y)=>time(x.createdAt)-time(y.createdAt));
+    box.innerHTML=a.length?a.map(m=>{
+      const mine=String(m.senderId||'')===me();
+      const status=m.__pending?'⏳ Sending…':(m.readAt?'✓✓ Read':(m.deliveredAt?'✓✓ Delivered':'✓ Sent'));
+      return `<div class="dcu-msg ${mine?'mine':''}">
+        ${esc(m.text||'')}
+        <div class="dcu-time">${new Date(time(m.createdAt)||Date.now()).toLocaleString()} · ${status}</div>
+      </div>`;
+    }).join(''):'<div class="dcu-warn">No messages yet.</div>';
+    box.scrollTop=box.scrollHeight;
+  }
+
+  function subscribeMessages(){
+    if(msgUnsub)try{msgUnsub()}catch(e){}
+    msgUnsub=null;
+    dcuPendingMessages=[];
+    if(!currentPartner||!root())return;
+
+    const ref=root().collection('chatMessages');
+    const cid=pair(me(),currentPartner.id);
+
+    const handle=s=>{
+      const remote=s.docs.map(d=>({id:d.id,...d.data()}))
+        .filter(m=>m.type!=='broadcast')
+        .sort((x,y)=>time(x.createdAt)-time(y.createdAt));
+      /* Remove optimistic copies once Firestore has acknowledged them. */
+      dcuPendingMessages=dcuPendingMessages.filter(p=>!remote.some(r=>
+        (p.clientId&&r.clientId===p.clientId) ||
+        (String(r.senderId)===String(p.senderId)&&String(r.text)===String(p.text)&&Math.abs(time(r.createdAt)-time(p.createdAt))<120000)
+      ));
+      dcuRenderMessages(remote.slice(-150));
+      if($('dcuStatus'))$('dcuStatus').textContent='🟢 Chat connected';
+    };
+
+    const onError=e=>{
+      console.warn('Dlimans chat listener:',e);
+      if($('dcuStatus'))$('dcuStatus').textContent='⚠️ Chat connection error';
+      /* The send path still works if Firestore is reachable; avoid losing the UI. */
+      dcuRenderMessages(dcuPendingMessages);
+    };
+
+    msgUnsub=ref.where('conversationId','==',cid).limitToLast(150).onSnapshot(handle,onError);
+  }
+
+  async function send(){
+    const input=$('dcuInput');
+    const sendBtn=$('dcuSendBtn');
+    const text=(input?.value||'').trim();
+    if(!text||!currentPartner)return;
+    const r=root();
+    if(!r)return toastMsg('Cloud is not connected');
+
+    const clientId=(crypto.randomUUID?crypto.randomUUID():('msg-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
+    const optimistic={
+      id:'pending-'+clientId,clientId,text,type:'direct',
+      conversationId:pair(me(),currentPartner.id),
+      senderId:me(),senderName:myName(),senderRole:currentUser?.role||'',
+      recipientId:String(currentPartner.id),createdAt:Date.now(),__pending:true
+    };
+    dcuPendingMessages.push(optimistic);
+    dcuRenderMessages([]);
+    input.value='';input.focus();
+    if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Sending…';}
+
+    try{
+      await r.collection('chatMessages').add({
+        clientId,
+        conversationId:pair(me(),currentPartner.id),
+        type:'direct',
+        senderId:me(),
+        senderName:myName(),
+        senderRole:currentUser?.role||'',
+        recipientId:String(currentPartner.id),
+        recipientName:currentPartner.name||currentPartner.role||'User',
+        text,
+        createdAt:now(),
+        deliveredAt:now(),
+        readAt:null
+      });
+      if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send';}
+    }catch(e){
+      if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send';}
+      dcuPendingMessages=dcuPendingMessages.filter(m=>m.clientId!==clientId);
+      dcuRenderMessages([]);
+      toastMsg('Chat failed: '+(e.message||e));
+    }
+  }
   function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
 
   async function call(kind){
@@ -4442,6 +4641,17 @@ button{min-height:38px}
   window.addEventListener('orientationchange',function(){setTimeout(normalizeDrawer,100)},{passive:true});
   window.addEventListener('load',function(){setTimeout(function(){syncVisualState();normalizeDrawer()},80)});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(syncVisualState,30)});
+})();
+</script>
+
+<script id="dlimans-final-recent-wallpaper">
+(function(){
+  function fix(){
+    try{if(typeof applyBranding==='function'&&typeof state!=='undefined')applyBranding()}catch(e){}
+    try{if(typeof renderPOSRecentTransactions==='function')renderPOSRecentTransactions()}catch(e){}
+  }
+  window.addEventListener('load',function(){setTimeout(fix,150)});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fix,60)});
 })();
 </script>
 

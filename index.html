@@ -811,8 +811,8 @@ body.has-wallpaper #app{position:relative;z-index:1}
   border-radius:10px;
 }
 #view-pos .dlimans-pos-sale-panel{display:flex;flex-direction:column}
-#view-pos .dlimans-pos-sale-top{display:grid;grid-template-columns:1fr auto;gap:7px;padding:7px 8px;border-bottom:1px solid var(--border)}
-#view-pos .dlimans-customer-row{display:grid;grid-template-columns:1fr auto;gap:5px}
+#view-pos .dlimans-pos-sale-top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px;padding:7px 8px;border-bottom:1px solid var(--border)}
+#view-pos .dlimans-customer-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px}
 #view-pos .dlimans-invoice-chip{display:flex;align-items:center;padding:0 10px;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:10px;white-space:nowrap}
 #view-pos .dlimans-pos-table-head{display:grid;grid-template-columns:minmax(0,1.4fr) 120px 105px 30px;gap:5px;padding:7px 8px;font-weight:800;font-size:10px;border-bottom:1px solid var(--border);color:var(--muted)}
 #view-pos .dlimans-pos-cart{flex:1;min-height:220px;max-height:420px;overflow:auto;padding:5px 7px}
@@ -986,8 +986,8 @@ body.has-wallpaper #app{position:relative;z-index:1}
           <option value="">Walk-in Customer</option>
         </select>
         <button class="btn sm" type="button" onclick="showView('customers')">＋</button>
-        <button class="btn primary sm" type="button" onclick="dlimansBarcodeScan()" title="Scan barcode">▣ Scan</button>
       </div>
+      <button class="btn primary sm dlimans-top-scan" type="button" onclick="dlimansBarcodeScan()" title="Scan barcode">🔍 Scan</button>
       <div class="dlimans-invoice-chip" id="proInvoiceChip">New Sale</div>
     </div>
 
@@ -1037,8 +1037,7 @@ body.has-wallpaper #app{position:relative;z-index:1}
         <h3>Products / Brands</h3>
         <div class="small">Search product name, SKU or barcode</div>
       </div>
-      <button class="btn sm" type="button" onclick="scanBarcode()">▣ Scan</button>
-    </div>
+      </div>
 
     <div class="dlimans-product-search">
       <input id="proProductSearch" class="input" placeholder="Enter Product name / SKU / Scan bar code" oninput="renderProfessionalProducts()">
@@ -2050,25 +2049,78 @@ function finalizeSale(){
  if(!cart.length){toast('Cart is empty');closeModal();return}
  __dlimansSaleBusy=true;
  try{
-  const total=cartTotal(),paidInput=document.getElementById('paidAmount')?.value;
-  const paid=paidInput===''||paidInput==null?total:Number(paidInput);
+  const proDiscountEl=document.getElementById('proDiscountInput');
+  const proPaidEl=document.getElementById('proPaidInput');
+  const proDueMode=document.getElementById('proDueMode');
+  const proCustomer=document.getElementById('proCustomerName');
+  const proNote=document.getElementById('proCustomerNote');
+  const proPayment=document.getElementById('proPaymentMethod');
+  const legacyPaid=document.getElementById('paidAmount');
+  const legacyCustomer=document.getElementById('customerName');
+  const legacyNote=document.getElementById('customerNote');
+  const legacyPayment=document.getElementById('paymentMethod');
+
+  const subtotal=cartTotal();
+  const discount=Math.max(0,Number(proDiscountEl?.value||0));
+  if(discount>subtotal){toast('Discount cannot exceed the subtotal');return}
+  const total=Math.max(0,subtotal-discount);
+  let paid;
+  if(proPaidEl && proPaidEl.value!=='') paid=Number(proPaidEl.value);
+  else if(proDueMode?.value==='Due') paid=0;
+  else paid=total;
   if(!Number.isFinite(paid)||paid<0||paid>total){toast('Invalid paid amount');return}
+
   const items=typeof structuredClone==='function'?structuredClone(cart):JSON.parse(JSON.stringify(cart));
   const invoice=nextUniqueInvoiceNumber();
-  const sale={id:uid(),invoice,date:today(),customer:document.getElementById('customerName')?.value.trim()||'Walk-in',note:document.getElementById('customerNote')?.value.trim()||'',payment:document.getElementById('paymentMethod')?.value||'Cash',items,total,paid,due:Math.max(0,total-paid),deleted:false,user:currentUser?.username||'Unknown'};
-  for(const i of items){const p=state.products.find(x=>x.id===i.productId);if(!p){toast('A product in the cart no longer exists');return}if(Number(p.stock)<Number(i.qty)){toast('Not enough stock for '+p.name);return}}
-  advanceInvoiceNumber();state.sales.push(sale);
-  items.forEach(i=>{const p=state.products.find(x=>x.id===i.productId);if(p)p.stock=Math.max(0,Number(p.stock||0)-Number(i.qty||0))});
+  const customer=(proCustomer?.value.trim()||legacyCustomer?.value.trim()||'Walk-in');
+  const note=(proNote?.value.trim()||legacyNote?.value.trim()||'');
+  const payment=(proPayment?.value||legacyPayment?.value||'Cash');
+  const sale={
+    id:uid(),invoice,date:today(),customer,note,payment,items,
+    subtotal,discount,total,paid,due:Math.max(0,total-paid),deleted:false,
+    user:currentUser?.username||'Unknown'
+  };
+  for(const i of items){
+    const p=state.products.find(x=>String(x.id)===String(i.productId));
+    if(!p){toast('A product in the cart no longer exists');return}
+    if(Number(p.stock)<Number(i.qty)){toast('Not enough stock for '+p.name);return}
+  }
+
+  /* Commit the complete sale atomically at the application-state level before
+     clearing the cart. If save fails, the cart remains available for retry. */
+  state.sales.push(sale);
+  advanceInvoiceNumber();
+  items.forEach(i=>{
+    const p=state.products.find(x=>String(x.id)===String(i.productId));
+    if(p)p.stock=Math.max(0,Number(p.stock||0)-Number(i.qty||0));
+  });
   const cn=sale.customer;
-  if(cn!=='Walk-in'){let c=state.customers.find(x=>String(x.name||'').toLowerCase()===cn.toLowerCase());if(!c){c={id:uid(),name:cn,phone:'',address:'',due:0};state.customers.push(c)}c.due=(Number(c.due)||0)+sale.due}
-  save();cart=[];
-  const a=document.getElementById('customerName'),b=document.getElementById('customerNote'),c=document.getElementById('paidAmount');if(a)a.value='';if(b)b.value='';if(c)c.value='';
-  closeModal();renderCart();refreshAll();toast('Sale confirmed successfully');if(state.settings.autoPrint)receiptPrint(sale);
- }catch(e){console.error('Finalize sale error:',e);toast('Sale could not be completed. Your cart was kept safe')}finally{__dlimansSaleBusy=false}
+  if(cn!=='Walk-in'){
+    let c=state.customers.find(x=>String(x.name||'').toLowerCase()===cn.toLowerCase());
+    if(!c){c={id:uid(),name:cn,phone:'',address:'',due:0};state.customers.push(c)}
+    c.due=(Number(c.due)||0)+sale.due;
+  }
+  if(save()===false){
+    state.sales=state.sales.filter(x=>x.id!==sale.id);
+    items.forEach(i=>{const p=state.products.find(x=>String(x.id)===String(i.productId));if(p)p.stock=Number(p.stock||0)+Number(i.qty||0)});
+    toast('Sale was not saved. Your cart is still safe.');
+    return;
+  }
+
+  cart=[];
+  [legacyCustomer,legacyNote,legacyPaid,proCustomer,proNote,proDiscountEl,proPaidEl].forEach(el=>{if(el)el.value=''});
+  if(proDueMode)proDueMode.value='Auto Due';
+  if(proPayment)proPayment.value='Cash';
+  closeModal();renderCart();refreshAll();toast('Sale confirmed successfully');
+  if(state.settings.autoPrint)receiptPrint(sale);
+ }catch(e){
+  console.error('Finalize sale error:',e);
+  toast('Sale could not be completed. Your cart was kept safe');
+ }finally{__dlimansSaleBusy=false}
 }
 function holdSale(){
  if(!cart.length){toast('Cart is empty');return}
- state.held.push({id:uid(),date:today(),customer:document.getElementById('customerName').value||'Walk-in',items:structuredClone(cart),total:cartTotal()});
+ state.held.push({id:uid(),date:today(),customer:document.getElementById('proCustomerName')?.value.trim()||document.getElementById('customerName')?.value||'Walk-in',items:structuredClone(cart),total:cartTotal()});
  save();clearCart();toast('Sale held');showView('held')
 }
 function openHeld(){
@@ -4145,7 +4197,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     }).sort((x,y)=>time(x.createdAt)-time(y.createdAt));
     box.innerHTML=a.length?a.map(m=>{
       const mine=String(m.senderId||'')===me();
-      const status=m.__failed?'⚠️ Not sent':(m.__pending?'⏳ Sending…':(m.readAt?'✓✓ Read':(m.deliveredAt?'✓✓ Delivered':'✓ Sent'));
+      const status=m.__failed?'⚠️ Not sent':(m.__pending?'⏳ Sending…':(m.readAt?'✓✓ Read':(m.deliveredAt?'✓✓ Delivered':'✓ Sent')));
       return `<div class="dcu-msg ${mine?'mine':''}">
         ${esc(m.text||'')}
         <div class="dcu-time">${new Date(time(m.createdAt)||Date.now()).toLocaleString()} · ${status}</div>
@@ -4225,7 +4277,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
       let lastErr=null, saved=false;
       for(let attempt=1;attempt<=3 && !saved;attempt++){
         try{
-          await r.collection('chatMessages').add(payload);
+          await Promise.race([r.collection('chatMessages').add(payload),new Promise((_,reject)=>setTimeout(()=>reject(Object.assign(new Error('Message send timed out'),{code:'deadline-exceeded'})),9000))]);
           saved=true;
         }catch(err){
           lastErr=err;
@@ -4248,7 +4300,9 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
       const code=e?.code||'';
       toastMsg(code==='permission-denied'
         ? 'Chat write permission was denied by Firebase.'
-        : 'Chat failed: '+(e?.message||e));
+        : code==='deadline-exceeded'
+          ? 'Chat connection timed out. Message is marked Not sent; try Send again.'
+          : 'Chat failed: '+(e?.message||e));
     }
   }
   function key(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
@@ -5151,11 +5205,15 @@ button{min-height:38px}
 <script id="dlimans-pos-barcode-v1">
 (function(){
   window.dlimansBarcodeScan=function(){
-    try{
-      if(typeof scanBarcode==='function' && scanBarcode!==window.dlimansBarcodeScan){ return scanBarcode(); }
-    }catch(e){}
     const input=document.getElementById('proProductSearch');
-    if(input){ input.focus(); input.placeholder='Scan / enter barcode, SKU or product name'; if(typeof toast==='function')toast('Ready: scan barcode into the product search box.'); }
+    const code=window.prompt('Scan / enter barcode or SKU');
+    if(code===null)return;
+    const value=String(code).trim();
+    if(!value){input?.focus();return}
+    const p=(state.products||[]).find(x=>String(x.barcode||'').trim()===value||String(x.sku||'').trim()===value);
+    if(!p){if(typeof toast==='function')toast('Product not found');input?.focus();return}
+    if(typeof professionalAddProduct==='function')professionalAddProduct(p.id);
+    else if(typeof addToCart==='function')addToCart(p.id);
   };
 })();
 </script>
@@ -5179,6 +5237,21 @@ button{min-height:38px}
     if(method==='Credit Sale'){ const due=document.getElementById('proDueMode'); if(due) due.value='Due'; const paid=document.getElementById('proPaidInput'); if(paid) paid.value='0'; }
     try{renderProfessionalPOS()}catch(e){} setTimeout(function(){try{completeSale()}catch(e){}},20);
   };
+})();
+</script>
+<script id="dlimans-pos-barcode-input-v2">
+(function(){
+  function bind(){
+    const input=document.getElementById('proProductSearch'); if(!input||input.__barcodeBound)return;
+    input.__barcodeBound=true;
+    input.addEventListener('keydown',function(e){
+      if(e.key!=='Enter')return;
+      const value=String(input.value||'').trim(); if(!value)return;
+      const p=(state.products||[]).find(x=>String(x.barcode||'').trim()===value||String(x.sku||'').trim()===value);
+      if(p){e.preventDefault();professionalAddProduct(p.id);input.select();}
+    });
+  }
+  document.addEventListener('DOMContentLoaded',bind);window.addEventListener('load',bind);
 })();
 </script>
 </body>

@@ -754,53 +754,40 @@ body.has-wallpaper #app{position:relative;z-index:1}
 </style>
 
 
-<style id="dlimans-pos-pc-compact-v2">
-/* PC: compact POS workspace, closer to a real cashier terminal */
+<style id="dlimans-pos-pc-balanced-v3">
 @media(min-width:1101px){
-  #view-pos{padding-top:6px!important}
+  #view-pos{padding-top:8px!important}
   #view-pos .pos-pro-shell{
-    grid-template-columns:minmax(255px,.92fr) minmax(330px,1.15fr) minmax(245px,.82fr);
-    gap:8px;
+    grid-template-columns:minmax(330px,1fr) minmax(390px,1.18fr) minmax(310px,.9fr);
+    gap:10px;
     min-height:0;
   }
-  #view-pos .pos-pro-card{border-radius:10px}
-  #view-pos .pos-pro-head{padding:7px 9px}
-  #view-pos .pos-pro-head h3{font-size:12px}
-  #view-pos .pos-pro-body{padding:7px}
-  #view-pos .pos-pro-search{margin-bottom:6px;gap:5px}
+  #view-pos .pos-pro-card{border-radius:12px}
+  #view-pos .pos-pro-head{padding:9px 11px}
+  #view-pos .pos-pro-head h3{font-size:13px}
+  #view-pos .pos-pro-body{padding:9px}
   #view-pos .pos-pro-products{
     grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:5px;
-    max-height:405px;
+    gap:7px;max-height:510px
   }
   #view-pos .pos-pro-products .product-tile{
-    padding:6px!important;
-    min-height:112px;
-    border-radius:8px!important;
+    padding:8px!important;min-height:132px;border-radius:9px!important
   }
   #view-pos .pos-pro-products .product-img{
-    width:38px!important;height:38px!important;
-    min-height:38px!important;
-    margin:auto;
+    width:48px!important;height:48px!important;min-height:48px!important;margin:auto
   }
-  #view-pos .pos-pro-products strong{
-    font-size:10px!important;
-    line-height:1.15!important;
-  }
-  #view-pos .pos-pro-products .small{font-size:8px!important}
-  #view-pos .pos-pro-products b{font-size:10px!important}
-  #view-pos .pos-pro-cart{min-height:230px;max-height:315px}
-  #view-pos .pos-pro-recent{max-height:405px}
-  #view-pos .pos-pro-recent-item{padding:7px 8px;margin-bottom:5px}
-  #view-pos .pos-pro-recent-meta{font-size:9px}
-  #view-pos .pos-pro-total{font-size:18px}
-  #view-pos .pos-pro-actions{margin-top:6px;gap:5px}
-  #view-pos .pos-pro-actions .btn{min-height:36px;padding:6px 8px}
-  #view-pos .pos-pro-paybar{gap:5px;margin-top:6px}
+  #view-pos .pos-pro-products strong{font-size:11px!important;line-height:1.2!important}
+  #view-pos .pos-pro-products .small{font-size:9px!important}
+  #view-pos .pos-pro-products b{font-size:11px!important}
+  #view-pos .pos-pro-cart{min-height:280px;max-height:410px}
+  #view-pos .pos-pro-recent{max-height:510px}
+  #view-pos .pos-pro-recent-item{padding:9px;margin-bottom:6px}
+  #view-pos .pos-pro-recent-meta{font-size:10px}
+  #view-pos .pos-pro-total{font-size:21px}
+  #view-pos .pos-pro-actions{margin-top:8px;gap:7px}
+  #view-pos .pos-pro-actions .btn{min-height:42px;padding:8px 10px}
 }
 </style>
-
-
 <style id="dlimans-pos-laptop-v1">
 @media(min-width:701px) and (max-width:1100px){
   #view-pos .pos-pro-products{grid-template-columns:repeat(3,minmax(0,1fr));max-height:390px}
@@ -967,7 +954,16 @@ body.has-wallpaper #app{position:relative;z-index:1}
           <option>Cash</option><option>Transfer</option><option>Card</option><option>POS</option>
         </select>
       </div>
-      <input id="proCustomerNote" class="input" placeholder="Customer note" style="width:100%;margin-bottom:8px">
+      <div class="pos-pro-customer-grid">
+        <input id="proCustomerNote" class="input" placeholder="Customer note">
+        <input id="proDiscountInput" class="input" type="number" min="0" step="0.01" placeholder="Discount">
+      </div>
+      <div class="pos-pro-customer-grid">
+        <input id="proPaidInput" class="input" type="number" min="0" step="0.01" placeholder="Amount paid">
+        <select id="proDueMode" class="input">
+          <option value="Auto Due">Auto Due</option><option value="Paid">Paid</option><option value="Due">Due</option>
+        </select>
+      </div>
       <div class="pos-pro-cart" id="dlimansProCart">
         <div class="pos-pro-empty">🛒 Cart is empty.<br>Select a product to begin.</div>
       </div>
@@ -975,6 +971,8 @@ body.has-wallpaper #app{position:relative;z-index:1}
         <div class="row" style="justify-content:space-between"><span>Items</span><b id="proItemsCount">0</b></div>
         <div class="row" style="justify-content:space-between"><span>Subtotal</span><b id="proSubtotal">₦0.00</b></div>
         <div class="row" style="justify-content:space-between"><span>Discount</span><b id="proDiscount">₦0.00</b></div>
+        <div class="row" style="justify-content:space-between"><span>Paid</span><b id="proPaid">₦0.00</b></div>
+        <div class="row" style="justify-content:space-between"><span>Due</span><b id="proDue">₦0.00</b></div>
         <div class="pos-pro-total" id="proTotal">₦0.00</div>
         <div class="pos-pro-actions">
           <button class="btn" type="button" onclick="holdSale()">⏸ Hold</button>
@@ -2741,6 +2739,20 @@ button *,
 
 
 
+
+<script id="dlimans-pos-live-fields-v1">
+(function(){
+  function bind(){
+    ['proDiscountInput','proPaidInput','proPaymentMethod'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&!el.__proBound){el.__proBound=true;el.addEventListener('input',()=>{try{renderProfessionalPOS()}catch(e){}});el.addEventListener('change',()=>{try{renderProfessionalPOS()}catch(e){}})}
+    });
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,100));
+  window.addEventListener('load',()=>setTimeout(bind,300));
+})();
+</script>
+
 </body></html>`);
  win.document.close()
 }
@@ -4112,6 +4124,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
         (String(r.senderId)===String(p.senderId)&&String(r.text)===String(p.text)&&Math.abs(time(r.createdAt)-time(p.createdAt))<120000)
       ));
       dcuRenderMessages(remote.slice(-150));
+      if(!remote.length && dcuPendingMessages.length && $('dcuStatus'))$('dcuStatus').textContent='🟡 Message pending…';
       if($('dcuStatus'))$('dcuStatus').textContent='🟢 Chat connected';
     };
 
@@ -4146,7 +4159,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
     if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Sending…';}
 
     try{
-      await r.collection('chatMessages').add({
+      const writePromise=r.collection('chatMessages').add({
         clientId,
         conversationId:pair(me(),currentPartner.id),
         type:'direct',
@@ -4160,6 +4173,10 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
         deliveredAt:now(),
         readAt:null
       });
+      const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Message send timed out. Check the cloud connection.')),7000));
+      await Promise.race([writePromise,timeout]);
+      dcuPendingMessages=dcuPendingMessages.filter(m=>m.clientId!==clientId);
+      dcuRenderMessages([]);
       if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send';}
     }catch(e){
       if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send';}
@@ -4910,19 +4927,25 @@ button{min-height:38px}
       }).join('');
     }
     const subtotal=cart.reduce((a,c)=>a+cartLine(c),0);
-    const discount=n(state?.cartDiscount??state?.discount??0);
+    const discount=n(document.getElementById('proDiscountInput')?.value)||n(state?.cartDiscount??state?.discount??0);
     const total=Math.max(0,subtotal-discount);
-    document.getElementById('proItemsCount').textContent=String(cart.reduce((a,c)=>a+cartQty(c),0));
-    document.getElementById('proSubtotal').textContent=moneySafe(subtotal);
-    document.getElementById('proDiscount').textContent=moneySafe(discount);
-    document.getElementById('proTotal').textContent=moneySafe(total);
+    const paid=n(document.getElementById('proPaidInput')?.value);
+    const due=Math.max(0,total-paid);
+    const ic=document.getElementById('proItemsCount');if(ic)ic.textContent=String(cart.reduce((a,c)=>a+cartQty(c),0));
+    const ps=document.getElementById('proSubtotal');if(ps)ps.textContent=moneySafe(subtotal);
+    const pd=document.getElementById('proDiscount');if(pd)pd.textContent=moneySafe(discount);
+    const pp=document.getElementById('proPaid');if(pp)pp.textContent=moneySafe(paid);
+    const pdu=document.getElementById('proDue');if(pdu)pdu.textContent=moneySafe(due);
+    const pt=document.getElementById('proTotal');if(pt)pt.textContent=moneySafe(total);
   };
 
   window.professionalChangeQty=function(i,delta){
     const c=getCart()[i];if(!c)return;
     try{
       const fn=delta>0?(window.incrementCartItem||window.increaseQty||window.changeQty):(window.decrementCartItem||window.decreaseQty||window.changeQty);
-      if(typeof fn==='function'){fn(c.id??c.productId??c.sku,Math.abs(delta));renderProfessionalPOS();return}
+      if(typeof fn==='function'){
+        try{fn(c.id??c.productId??c.sku,Math.abs(delta))}catch(e){try{fn(i,delta)}catch(e2){}}
+        setTimeout(renderProfessionalPOS,0);return}
       c.qty=Math.max(0,cartQty(c)+delta);
       if(c.qty===0)getCart().splice(i,1);
       if(typeof save==='function')save();

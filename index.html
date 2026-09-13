@@ -4305,5 +4305,145 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
 })();
 </script>
 
+
+<!-- DLIMANS UNIVERSAL MOBILE / TOUCH / THEME STABILITY v5 -->
+<style id="dlimans-universal-v5">
+/* Never let the app's own reduced-motion rule make Admin-selected visual effects disappear. */
+@keyframes dlV5Blink{0%,100%{opacity:1;filter:brightness(1)}50%{opacity:.62;filter:brightness(1.12)}}
+@keyframes dlV5Glow{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 0%,transparent)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--accent) 22%,transparent)}}
+body.dlimans-v5-blink .blink,
+body.dlimans-v5-blink .login-blink,
+body.dlimans-v5-blink .blink .side-icon,
+body.dlimans-v5-blink .side-item.blink .side-icon{animation:dlV5Blink 1.45s ease-in-out infinite!important}
+body.dlimans-v5-blink .login-box.login-blink{animation:dlV5Glow 1.8s ease-in-out infinite!important}
+body.dlimans-v5-blink .voice-listening,
+body.dlimans-v5-blink .voice-ringing{animation:dlV5Glow 1s ease-in-out infinite!important}
+
+/* Touch responsiveness: remove tap delay and keep controls comfortably tappable. */
+button,a,input,select,textarea,.side-item,.product-tile{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button{min-height:38px}
+
+/* Tablet/mobile layout. The wider breakpoint also handles browsers that expose a
+   larger CSS viewport while running on a phone in desktop-like mode. */
+@media (max-width:900px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  .layout{display:block!important;min-height:calc(100dvh - 58px)!important}
+  .content{width:100%!important;max-width:none!important;padding:10px!important;overflow-x:hidden!important}
+  .sidebar{
+    position:fixed!important;left:0!important;top:58px!important;bottom:0!important;
+    width:min(285px,84vw)!important;max-width:84vw!important;height:calc(100dvh - 58px)!important;
+    flex:0 0 auto!important;transform:translate3d(-110%,0,0)!important;
+    z-index:1001!important;overflow-y:auto!important;overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;transition:transform .18s ease!important;
+  }
+  .sidebar.open{transform:translate3d(0,0,0)!important}
+  .mobile-sidebar-backdrop{z-index:1000!important;inset:58px 0 0 0!important}
+  .topbar{height:58px!important;z-index:1002!important}
+  .topbar .brand{min-width:0!important;max-width:42vw!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .topbar .right{gap:4px!important}
+  .topbar .right .btn{padding:7px 8px!important}
+  .side-item{min-height:44px!important;padding:10px 12px!important}
+  .side-label,.side-group{display:block!important}
+  .dash-kpis{grid-template-columns:1fr 1fr!important}
+  .dash-main-grid{grid-template-columns:1fr!important}
+  .dash-actions{grid-template-columns:1fr 1fr!important}
+  .dash-bottom,.admin-tools{grid-template-columns:1fr!important}
+  .dlimans-chat-layout{grid-template-columns:1fr!important}
+  .dlimans-chat-staff-list{flex-direction:row!important;overflow-x:auto!important;max-height:none!important}
+  .dlimans-chat-staff-item{min-width:190px!important}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr!important}
+  .purchase-kpis{grid-template-columns:1fr 1fr!important}
+  .purchase-nav{position:static!important}
+  .modal{padding:8px!important}
+  .modal-box{width:100%!important;max-width:100%!important;max-height:92dvh!important}
+}
+@media (max-width:520px){
+  .content{padding:8px!important}
+  .topbar .brand{max-width:30vw!important;font-size:11px!important}
+  .topbar .right .btn{font-size:11px!important;padding:7px 6px!important}
+  .topbar .right .btn.danger{font-size:10px!important}
+  .dash-kpis{gap:7px!important}
+  .dash-kpi{min-height:92px!important;padding:11px!important}
+  .dash-kpi .kpi{font-size:18px!important}
+  .dash-actions{gap:7px!important}
+  .product-grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .product-tile{min-height:142px!important;padding:9px!important}
+  .product-tile .product-img{height:65px!important}
+  .purchase-kpis{grid-template-columns:1fr 1fr!important}
+}
+
+/* Strong readable selected-theme treatment. */
+.product-tile:active,.side-item:active,.dash-action:active,.btn:active{transform:scale(.985)!important}
+.product-tile>b,.product-tile>strong,.card h3,.section-title h2{color:var(--text-strong)!important}
+.product-tile>strong{color:var(--accent)!important}
+.theme-active-indicator{outline:2px solid var(--accent)!important;outline-offset:2px}
+</style>
+<script id="dlimans-universal-v5-js">
+(function(){
+  'use strict';
+  if(window.__dlimansUniversalV5)return;
+  window.__dlimansUniversalV5=true;
+
+  function syncVisualState(){
+    try{
+      var on=!!(state&&state.settings&&state.settings.blink);
+      document.body.classList.toggle('dlimans-v5-blink',on);
+      var bt=document.getElementById('blinkTheme'); if(bt)bt.checked=on;
+      var bs=document.getElementById('blinkSidebar'); if(bs)bs.checked=!!(state&&state.settings&&state.settings.blinkSidebar);
+      var nt=document.getElementById('noisyTheme'); if(nt)nt.checked=!!(state&&state.settings&&state.settings.noisy);
+      if(state&&state.settings&&state.settings.noisy)document.body.classList.add('noisy-theme');
+    }catch(e){console.warn('Dlimans visual sync:',e)}
+  }
+  window.dlimansSyncVisualState=syncVisualState;
+
+  /* Make the admin-selected blink state apply consistently after every rebuild/refresh. */
+  try{
+    var oldToggleBlink=window.toggleBlink;
+    window.toggleBlink=function(on){
+      if(typeof oldToggleBlink==='function')oldToggleBlink.call(this,on);
+      syncVisualState();
+    };
+  }catch(e){}
+
+  try{
+    var oldToggleSidebarBlink=window.toggleSidebarBlink;
+    window.toggleSidebarBlink=function(on){
+      if(typeof oldToggleSidebarBlink==='function')oldToggleSidebarBlink.call(this,on);
+      syncVisualState();
+    };
+  }catch(e){}
+
+  /* If a menu item is tapped on a phone/tablet, close the drawer immediately.
+     showView also closes it; this listener covers custom navigation buttons. */
+  document.addEventListener('click',function(ev){
+    try{
+      var item=ev.target.closest&&ev.target.closest('.sidebar .side-item');
+      if(item && window.innerWidth<=900){
+        setTimeout(function(){
+          try{if(typeof closeMobileSidebar==='function')closeMobileSidebar()}catch(e){}
+        },20);
+      }
+    }catch(e){}
+  },true);
+
+  /* Keep the backdrop state correct if orientation/viewport changes. */
+  function normalizeDrawer(){
+    try{
+      var side=document.querySelector('.sidebar');
+      if(!side)return;
+      if(window.innerWidth>900){
+        side.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
+        document.documentElement.classList.remove('sidebar-open');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('resize',normalizeDrawer,{passive:true});
+  window.addEventListener('orientationchange',function(){setTimeout(normalizeDrawer,100)},{passive:true});
+  window.addEventListener('load',function(){setTimeout(function(){syncVisualState();normalizeDrawer()},80)});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(syncVisualState,30)});
+})();
+</script>
+
 </body>
 </html>

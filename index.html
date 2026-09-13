@@ -2458,222 +2458,6 @@ button *,
  
 
 
-
-<script id="dlimans-final-stability-v4">
-/* =========================================================
-   DLIMANS FINAL STABILITY / PERSISTENCE LAYER v4
-   - Refresh-safe local session recovery
-   - Stable shared appearance sync
-   - Instant theme + wallpaper application
-   - Mobile blinking fix
-   - Faster Firebase SDK loading / chat recovery
-   - Voice recognition retry + broader control
-   ========================================================= */
-(function(){
-'use strict';
-
-/* ---------- SESSION: refresh must never force logout ---------- */
-function dlimansRecoverSession(){
-  try{
-    if(currentUser) return true;
-    var raw=null;
-    try{raw=sessionStorage.getItem('DLIMANS_APP_SESSION')}catch(e){}
-    if(!raw)try{raw=localStorage.getItem('DLIMANS_APP_SESSION_PERSISTENT')}catch(e){}
-    var sess=null; try{sess=raw?JSON.parse(raw):null}catch(e){sess=null}
-    if(!sess||!sess.userId||!sess.role)return false;
-    var users=Array.isArray(state?.users)?state.users:[];
-    var u=users.find(function(x){return x&&x.id===sess.userId&&x.active!==false})||
-          users.find(function(x){return x&&x.username===sess.username&&x.role===sess.role&&x.active!==false});
-    if(!u)u={id:sess.userId,username:sess.username||sess.role,password:'',role:sess.role,active:true,cloud:!!sess.businessId,businessId:sess.businessId||''};
-    currentUser=u;
-    var ls=document.getElementById('loginScreen'),app=document.getElementById('app');
-    if(ls)ls.style.display='none'; if(app)app.style.display='block';
-    var role=document.getElementById('topRole'); if(role)role.textContent=u.role||'';
-    if(typeof buildSidebar==='function')buildSidebar();
-    var view=sess.view||'dashboard';
-    if(typeof showView==='function' && document.getElementById('view-'+view)) showView(view,true);
-    else if(typeof showView==='function')showView('dashboard',true);
-    if(typeof applyTheme==='function')applyTheme(state?.settings?.theme||'darkblue',false);
-    if(typeof applyBranding==='function')applyBranding();
-    if(typeof restoreSavedModal==='function')restoreSavedModal(sess);
-    return true;
-  }catch(e){console.warn('Final session recovery:',e);return false}
-}
-
-/* The original variables are lexical globals, so normal function lookup works. */
-setTimeout(dlimansRecoverSession,0);
-window.addEventListener('load',function(){setTimeout(dlimansRecoverSession,40);});
-
-/* ---------- MOBILE BLINKING: the old mobile stability CSS disabled ALL animations ---------- */
-var style=document.createElement('style');
-style.id='dlimans-final-stability-css';
-style.textContent=`
-@media(max-width:800px){
-  .blink,.login-blink,.voice-listening,.voice-ringing{animation-duration:1.5s!important;animation-iteration-count:infinite!important;}
-  .blink{animation-name:blink!important;}
-  .login-blink{animation-name:loginPulse!important;}
-  .voice-listening,.voice-ringing{animation-name:pulse!important;}
-}
-body.has-wallpaper{background-image:linear-gradient(#07111f88,#07111f88),var(--dlimans-wallpaper)!important;background-size:cover!important;background-position:center!important;background-attachment:fixed!important;}
-`;
-document.head.appendChild(style);
-
-/* ---------- APPEARANCE: never let CSS override the business wallpaper ---------- */
-var originalApplyBranding=window.applyBranding;
-window.applyBranding=function(){
-  try{if(originalApplyBranding)originalApplyBranding();}catch(e){console.warn(e)}
-  try{
-    var w=state?.settings?.wallpaper||'';
-    if(w){
-      document.body.classList.add('has-wallpaper');
-      document.documentElement.style.setProperty('--dlimans-wallpaper','url("'+String(w).replace(/"/g,'\\"')+'")');
-    }else{
-      document.body.classList.remove('has-wallpaper');
-      document.documentElement.style.removeProperty('--dlimans-wallpaper');
-    }
-  }catch(e){console.warn('Wallpaper apply:',e)}
-};
-
-/* ---------- THEME: immediate local application + cloud appearance timestamp ---------- */
-var originalApplyTheme=window.applyTheme;
-window.applyTheme=function(name,saveIt){
-  var result;
-  try{result=originalApplyTheme?originalApplyTheme(name,saveIt===undefined?true:saveIt):undefined}catch(e){console.warn('Theme:',e)}
-  try{
-    if(state?.settings){
-      state.settings.theme=document.documentElement.dataset.dlimansTheme||name||'darkblue';
-      state.settings.themeChangedAt=Date.now();
-      if(saveIt!==false && typeof save==='function')save();
-    }
-    if(typeof applyBranding==='function')applyBranding();
-  }catch(e){console.warn('Theme persistence:',e)}
-  return result;
-};
-
-/* ---------- STABLE APPEARANCE CLOUD WRITE ---------- */
-window.dlimansPushAppearance=function(){
-  try{
-    var ref=window.__dlimansSyncRef;
-    if(!ref||!navigator.onLine||!state)return Promise.resolve(false);
-    var s=state.settings||{};
-    var version=Number(s.themeChangedAt||s.appearanceChangedAt||Date.now());
-    return ref.set({appearance:{theme:s.theme||'darkblue',noisy:!!s.noisy,blink:s.blink!==false,blinkSidebar:s.blinkSidebar!==false,wallpaper:s.wallpaper||'',businessLogo:s.businessLogo||'',invoiceLogo:s.invoiceLogo||'',version:version,updatedAt:version}},{merge:true}).then(function(){return true}).catch(function(e){console.warn('Appearance cloud write:',e);return false});
-  }catch(e){return Promise.resolve(false)}
-};
-
-/* Patch save so a theme/branding change is sent promptly, but only once per short burst. */
-var originalSave=window.save;
-window.save=function(){
-  var ok=true;try{if(originalSave)ok=originalSave.apply(this,arguments)}catch(e){console.warn(e);ok=false}
-  try{
-    clearTimeout(window.__dlimansAppearanceTimer);
-    window.__dlimansAppearanceTimer=setTimeout(function(){window.dlimansPushAppearance&&window.dlimansPushAppearance()},220);
-  }catch(e){}
-  return ok;
-};
-
-/* ---------- FIREBASE SDK: prevent repeated slow sequential downloads ---------- */
-var sdkPromise=null;
-var originalLoadFirebaseSDK=window.loadFirebaseSDK;
-window.loadFirebaseSDK=function(){
-  if(window.firebase&&firebase.firestore&&firebase.auth)return Promise.resolve();
-  if(sdkPromise)return sdkPromise;
-  sdkPromise=new Promise(function(resolve,reject){
-    var urls=[
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js',
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js',
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js'
-    ];
-    var left=urls.length,failed=false;
-    urls.forEach(function(src){
-      var existing=document.querySelector('script[src="'+src+'"]');
-      if(existing){existing.addEventListener('load',done,{once:true});existing.addEventListener('error',fail,{once:true});return;}
-      var sc=document.createElement('script');sc.src=src;sc.async=true;sc.onload=done;sc.onerror=fail;document.head.appendChild(sc);
-    });
-    function done(){if(failed)return;if(--left<=0)resolve()}
-    function fail(){if(failed)return;failed=true;sdkPromise=null;reject(Error('Firebase SDK unavailable'))}
-  });
-  return sdkPromise;
-};
-
-/* ---------- CLOUD AUTH RESTORE: if Firebase already persisted the session, reconnect automatically ---------- */
-window.dlimansEnsureCloud=function(){
-  return (async function(){
-    try{
-      if(!navigator.onLine)return false;
-      await window.loadFirebaseSDK();
-      var c=typeof getSyncConfig==='function'?getSyncConfig():null;
-      if(!c)return false;
-      if(!syncFirebaseApp){
-        syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
-        syncDb=syncFirebaseApp.firestore();
-        syncAuth=syncFirebaseApp.auth();
-      }
-      try{await syncAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
-      if(!syncUser && syncAuth.currentUser)syncUser=syncAuth.currentUser;
-      if(syncUser && syncDb && typeof finishFirebaseCloudSync==='function'){
-        await finishFirebaseCloudSync();
-        if(typeof startDlimansChat==='function')setTimeout(startDlimansChat,100);
-        return true;
-      }
-    }catch(e){console.warn('Cloud restore:',e)}
-    return false;
-  })();
-};
-
-/* ---------- CHAT: connect without waiting for Firestore order/index fallback ---------- */
-var originalConnectDlimansChat=window.connectDlimansChat;
-window.connectDlimansChat=async function(){
-  try{
-    if(!syncUser||!syncDb){
-      if(window.dlimansEnsureCloud)await window.dlimansEnsureCloud();
-    }
-  }catch(e){}
-  try{
-    if(!syncUser||!syncDb){
-      if(typeof dlimansChatSetStatus==='function')dlimansChatSetStatus('☁️ Cloud not connected');
-      return false;
-    }
-  }catch(e){return false}
-  /* Use original implementation after the session is definitely ready. */
-  try{return originalConnectDlimansChat?await originalConnectDlimansChat():false}catch(e){console.warn('Chat:',e);return false}
-};
-
-/* Start communication after Firebase auth restoration, not only after a manual second click. */
-window.addEventListener('load',function(){
-  setTimeout(function(){
-    if(currentUser && navigator.onLine){window.dlimansEnsureCloud&&window.dlimansEnsureCloud().catch(function(){});}
-  },350);
-});
-
-/* ---------- VOICE: allow repeated commands while listening and avoid one-shot feeling ---------- */
-var voiceActive=false;
-var originalStartVoice=window.startVoice;
-window.startVoice=function(){
-  /* Keep browser compatibility; the original function handles permission/errors. */
-  voiceActive=true;
-  try{return originalStartVoice?originalStartVoice.apply(this,arguments):undefined}catch(e){console.warn('Voice:',e)}
-};
-window.addEventListener('keydown',function(e){
-  if(e.key==='Escape' && voiceActive){voiceActive=false;try{if(window.voiceRec)voiceRec.abort()}catch(_){} }
-});
-
-/* Make the control center's theme/wallpaper state immediately consistent after any view render. */
-var originalShowView=window.showView;
-window.showView=function(name){
-  var args=arguments,result;
-  try{result=originalShowView?originalShowView.apply(this,args):undefined}catch(e){console.warn(e);return false}
-  if(name==='control'||name==='settings')setTimeout(function(){
-    try{if(typeof loadControl==='function')loadControl();}catch(e){}
-    try{if(typeof loadSettings==='function' && name==='settings')loadSettings();}catch(e){}
-    try{if(typeof applyBranding==='function')applyBranding();}catch(e){}
-  },0);
-  if(name==='communication')setTimeout(function(){try{window.dlimansEnsureCloud&&window.dlimansEnsureCloud().then(function(){if(typeof startDlimansChat==='function')startDlimansChat()})}catch(e){}},0);
-  return result;
-};
-
-})();
-</script>
 </body></html>`);
  win.document.close()
 }
@@ -2947,223 +2731,7 @@ function loadQuotation(id){
 function printQuotation(id){
  const q=state.quotations.find(x=>x.id===id);if(!q)return;
  const rows=(q.items||[]).map(i=>`<tr><td>${escapeHTML(i.name||'')}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money((i.qty||0)*(i.price||0))}</td></tr>`).join('');
- const w=window.open('','_blank');if(!w){toast('Please allow popups to print');return}w.document.write(`<html><head><title>${escapeHTML(q.number)}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}</style></head><body><h2>${escapeHTML(state.settings.business)}</h2><h3>QUOTATION ${escapeHTML(q.number)}</h3><p>Customer: ${escapeHTML(q.customer||'Walk-in')}<br>Date: ${escapeHTML(fmtDate(q.date))}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><h3>Total: ${money(q.total)}</h3><p>${escapeHTML(q.note||'')}</p>
-<script id="dlimans-final-stability-v4">
-/* =========================================================
-   DLIMANS FINAL STABILITY / PERSISTENCE LAYER v4
-   - Refresh-safe local session recovery
-   - Stable shared appearance sync
-   - Instant theme + wallpaper application
-   - Mobile blinking fix
-   - Faster Firebase SDK loading / chat recovery
-   - Voice recognition retry + broader control
-   ========================================================= */
-(function(){
-'use strict';
-
-/* ---------- SESSION: refresh must never force logout ---------- */
-function dlimansRecoverSession(){
-  try{
-    if(currentUser) return true;
-    var raw=null;
-    try{raw=sessionStorage.getItem('DLIMANS_APP_SESSION')}catch(e){}
-    if(!raw)try{raw=localStorage.getItem('DLIMANS_APP_SESSION_PERSISTENT')}catch(e){}
-    var sess=null; try{sess=raw?JSON.parse(raw):null}catch(e){sess=null}
-    if(!sess||!sess.userId||!sess.role)return false;
-    var users=Array.isArray(state?.users)?state.users:[];
-    var u=users.find(function(x){return x&&x.id===sess.userId&&x.active!==false})||
-          users.find(function(x){return x&&x.username===sess.username&&x.role===sess.role&&x.active!==false});
-    if(!u)u={id:sess.userId,username:sess.username||sess.role,password:'',role:sess.role,active:true,cloud:!!sess.businessId,businessId:sess.businessId||''};
-    currentUser=u;
-    var ls=document.getElementById('loginScreen'),app=document.getElementById('app');
-    if(ls)ls.style.display='none'; if(app)app.style.display='block';
-    var role=document.getElementById('topRole'); if(role)role.textContent=u.role||'';
-    if(typeof buildSidebar==='function')buildSidebar();
-    var view=sess.view||'dashboard';
-    if(typeof showView==='function' && document.getElementById('view-'+view)) showView(view,true);
-    else if(typeof showView==='function')showView('dashboard',true);
-    if(typeof applyTheme==='function')applyTheme(state?.settings?.theme||'darkblue',false);
-    if(typeof applyBranding==='function')applyBranding();
-    if(typeof restoreSavedModal==='function')restoreSavedModal(sess);
-    return true;
-  }catch(e){console.warn('Final session recovery:',e);return false}
-}
-
-/* The original variables are lexical globals, so normal function lookup works. */
-setTimeout(dlimansRecoverSession,0);
-window.addEventListener('load',function(){setTimeout(dlimansRecoverSession,40);});
-
-/* ---------- MOBILE BLINKING: the old mobile stability CSS disabled ALL animations ---------- */
-var style=document.createElement('style');
-style.id='dlimans-final-stability-css';
-style.textContent=`
-@media(max-width:800px){
-  .blink,.login-blink,.voice-listening,.voice-ringing{animation-duration:1.5s!important;animation-iteration-count:infinite!important;}
-  .blink{animation-name:blink!important;}
-  .login-blink{animation-name:loginPulse!important;}
-  .voice-listening,.voice-ringing{animation-name:pulse!important;}
-}
-body.has-wallpaper{background-image:linear-gradient(#07111f88,#07111f88),var(--dlimans-wallpaper)!important;background-size:cover!important;background-position:center!important;background-attachment:fixed!important;}
-`;
-document.head.appendChild(style);
-
-/* ---------- APPEARANCE: never let CSS override the business wallpaper ---------- */
-var originalApplyBranding=window.applyBranding;
-window.applyBranding=function(){
-  try{if(originalApplyBranding)originalApplyBranding();}catch(e){console.warn(e)}
-  try{
-    var w=state?.settings?.wallpaper||'';
-    if(w){
-      document.body.classList.add('has-wallpaper');
-      document.documentElement.style.setProperty('--dlimans-wallpaper','url("'+String(w).replace(/"/g,'\\"')+'")');
-    }else{
-      document.body.classList.remove('has-wallpaper');
-      document.documentElement.style.removeProperty('--dlimans-wallpaper');
-    }
-  }catch(e){console.warn('Wallpaper apply:',e)}
-};
-
-/* ---------- THEME: immediate local application + cloud appearance timestamp ---------- */
-var originalApplyTheme=window.applyTheme;
-window.applyTheme=function(name,saveIt){
-  var result;
-  try{result=originalApplyTheme?originalApplyTheme(name,saveIt===undefined?true:saveIt):undefined}catch(e){console.warn('Theme:',e)}
-  try{
-    if(state?.settings){
-      state.settings.theme=document.documentElement.dataset.dlimansTheme||name||'darkblue';
-      state.settings.themeChangedAt=Date.now();
-      if(saveIt!==false && typeof save==='function')save();
-    }
-    if(typeof applyBranding==='function')applyBranding();
-  }catch(e){console.warn('Theme persistence:',e)}
-  return result;
-};
-
-/* ---------- STABLE APPEARANCE CLOUD WRITE ---------- */
-window.dlimansPushAppearance=function(){
-  try{
-    var ref=window.__dlimansSyncRef;
-    if(!ref||!navigator.onLine||!state)return Promise.resolve(false);
-    var s=state.settings||{};
-    var version=Number(s.themeChangedAt||s.appearanceChangedAt||Date.now());
-    return ref.set({appearance:{theme:s.theme||'darkblue',noisy:!!s.noisy,blink:s.blink!==false,blinkSidebar:s.blinkSidebar!==false,wallpaper:s.wallpaper||'',businessLogo:s.businessLogo||'',invoiceLogo:s.invoiceLogo||'',version:version,updatedAt:version}},{merge:true}).then(function(){return true}).catch(function(e){console.warn('Appearance cloud write:',e);return false});
-  }catch(e){return Promise.resolve(false)}
-};
-
-/* Patch save so a theme/branding change is sent promptly, but only once per short burst. */
-var originalSave=window.save;
-window.save=function(){
-  var ok=true;try{if(originalSave)ok=originalSave.apply(this,arguments)}catch(e){console.warn(e);ok=false}
-  try{
-    clearTimeout(window.__dlimansAppearanceTimer);
-    window.__dlimansAppearanceTimer=setTimeout(function(){window.dlimansPushAppearance&&window.dlimansPushAppearance()},220);
-  }catch(e){}
-  return ok;
-};
-
-/* ---------- FIREBASE SDK: prevent repeated slow sequential downloads ---------- */
-var sdkPromise=null;
-var originalLoadFirebaseSDK=window.loadFirebaseSDK;
-window.loadFirebaseSDK=function(){
-  if(window.firebase&&firebase.firestore&&firebase.auth)return Promise.resolve();
-  if(sdkPromise)return sdkPromise;
-  sdkPromise=new Promise(function(resolve,reject){
-    var urls=[
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js',
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js',
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js'
-    ];
-    var left=urls.length,failed=false;
-    urls.forEach(function(src){
-      var existing=document.querySelector('script[src="'+src+'"]');
-      if(existing){existing.addEventListener('load',done,{once:true});existing.addEventListener('error',fail,{once:true});return;}
-      var sc=document.createElement('script');sc.src=src;sc.async=true;sc.onload=done;sc.onerror=fail;document.head.appendChild(sc);
-    });
-    function done(){if(failed)return;if(--left<=0)resolve()}
-    function fail(){if(failed)return;failed=true;sdkPromise=null;reject(Error('Firebase SDK unavailable'))}
-  });
-  return sdkPromise;
-};
-
-/* ---------- CLOUD AUTH RESTORE: if Firebase already persisted the session, reconnect automatically ---------- */
-window.dlimansEnsureCloud=function(){
-  return (async function(){
-    try{
-      if(!navigator.onLine)return false;
-      await window.loadFirebaseSDK();
-      var c=typeof getSyncConfig==='function'?getSyncConfig():null;
-      if(!c)return false;
-      if(!syncFirebaseApp){
-        syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
-        syncDb=syncFirebaseApp.firestore();
-        syncAuth=syncFirebaseApp.auth();
-      }
-      try{await syncAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
-      if(!syncUser && syncAuth.currentUser)syncUser=syncAuth.currentUser;
-      if(syncUser && syncDb && typeof finishFirebaseCloudSync==='function'){
-        await finishFirebaseCloudSync();
-        if(typeof startDlimansChat==='function')setTimeout(startDlimansChat,100);
-        return true;
-      }
-    }catch(e){console.warn('Cloud restore:',e)}
-    return false;
-  })();
-};
-
-/* ---------- CHAT: connect without waiting for Firestore order/index fallback ---------- */
-var originalConnectDlimansChat=window.connectDlimansChat;
-window.connectDlimansChat=async function(){
-  try{
-    if(!syncUser||!syncDb){
-      if(window.dlimansEnsureCloud)await window.dlimansEnsureCloud();
-    }
-  }catch(e){}
-  try{
-    if(!syncUser||!syncDb){
-      if(typeof dlimansChatSetStatus==='function')dlimansChatSetStatus('☁️ Cloud not connected');
-      return false;
-    }
-  }catch(e){return false}
-  /* Use original implementation after the session is definitely ready. */
-  try{return originalConnectDlimansChat?await originalConnectDlimansChat():false}catch(e){console.warn('Chat:',e);return false}
-};
-
-/* Start communication after Firebase auth restoration, not only after a manual second click. */
-window.addEventListener('load',function(){
-  setTimeout(function(){
-    if(currentUser && navigator.onLine){window.dlimansEnsureCloud&&window.dlimansEnsureCloud().catch(function(){});}
-  },350);
-});
-
-/* ---------- VOICE: allow repeated commands while listening and avoid one-shot feeling ---------- */
-var voiceActive=false;
-var originalStartVoice=window.startVoice;
-window.startVoice=function(){
-  /* Keep browser compatibility; the original function handles permission/errors. */
-  voiceActive=true;
-  try{return originalStartVoice?originalStartVoice.apply(this,arguments):undefined}catch(e){console.warn('Voice:',e)}
-};
-window.addEventListener('keydown',function(e){
-  if(e.key==='Escape' && voiceActive){voiceActive=false;try{if(window.voiceRec)voiceRec.abort()}catch(_){} }
-});
-
-/* Make the control center's theme/wallpaper state immediately consistent after any view render. */
-var originalShowView=window.showView;
-window.showView=function(name){
-  var args=arguments,result;
-  try{result=originalShowView?originalShowView.apply(this,args):undefined}catch(e){console.warn(e);return false}
-  if(name==='control'||name==='settings')setTimeout(function(){
-    try{if(typeof loadControl==='function')loadControl();}catch(e){}
-    try{if(typeof loadSettings==='function' && name==='settings')loadSettings();}catch(e){}
-    try{if(typeof applyBranding==='function')applyBranding();}catch(e){}
-  },0);
-  if(name==='communication')setTimeout(function(){try{window.dlimansEnsureCloud&&window.dlimansEnsureCloud().then(function(){if(typeof startDlimansChat==='function')startDlimansChat()})}catch(e){}},0);
-  return result;
-};
-
-})();
-</script>
-</body></html>`);w.document.close();w.onload=()=>w.print();
+ const w=window.open('','_blank');if(!w){toast('Please allow popups to print');return}w.document.write(`<html><head><title>${escapeHTML(q.number)}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}</style></head><body><h2>${escapeHTML(state.settings.business)}</h2><h3>QUOTATION ${escapeHTML(q.number)}</h3><p>Customer: ${escapeHTML(q.customer||'Walk-in')}<br>Date: ${escapeHTML(fmtDate(q.date))}</p><table><thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><h3>Total: ${money(q.total)}</h3><p>${escapeHTML(q.note||'')}</p></body></html>`);w.document.close();w.onload=()=>w.print();
 }
 function deleteQuotation(id){if(!isAdmin()){toast('Admin only');return}if(!confirm('Delete this quotation?'))return;state.quotations=state.quotations.filter(x=>x.id!==id);save();renderQuotations();}
 
@@ -4116,7 +3684,7 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
 
   const $=id=>document.getElementById(id);
   const esc=v=>typeof escapeHTML==='function'?escapeHTML(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-  const me=()=>String((typeof currentUser!=='undefined'&&currentUser?.id)||currentUser?.id||cloudUser()?.uid||'');
+  const me=()=>String((typeof currentUser!=='undefined'&&currentUser?.id)||window.currentUser?.id||cloudUser()?.uid||'');
   const myName=()=>((typeof currentUser!=='undefined'&&currentUser?.username)||currentUser?.role||'User');
   // IMPORTANT: syncDb/syncAuth/syncUser are top-level `let` variables, not window properties.
   // Reading them directly prevents the Communication Center from falsely reporting
@@ -4610,221 +4178,132 @@ window.addEventListener('beforeunload',()=>{try{stopDlimansChatPresence();clearD
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 
-
-<script id="dlimans-final-stability-v4">
-/* =========================================================
-   DLIMANS FINAL STABILITY / PERSISTENCE LAYER v4
-   - Refresh-safe local session recovery
-   - Stable shared appearance sync
-   - Instant theme + wallpaper application
-   - Mobile blinking fix
-   - Faster Firebase SDK loading / chat recovery
-   - Voice recognition retry + broader control
-   ========================================================= */
-(function(){
-'use strict';
-
-/* ---------- SESSION: refresh must never force logout ---------- */
-function dlimansRecoverSession(){
-  try{
-    if(currentUser) return true;
-    var raw=null;
-    try{raw=sessionStorage.getItem('DLIMANS_APP_SESSION')}catch(e){}
-    if(!raw)try{raw=localStorage.getItem('DLIMANS_APP_SESSION_PERSISTENT')}catch(e){}
-    var sess=null; try{sess=raw?JSON.parse(raw):null}catch(e){sess=null}
-    if(!sess||!sess.userId||!sess.role)return false;
-    var users=Array.isArray(state?.users)?state.users:[];
-    var u=users.find(function(x){return x&&x.id===sess.userId&&x.active!==false})||
-          users.find(function(x){return x&&x.username===sess.username&&x.role===sess.role&&x.active!==false});
-    if(!u)u={id:sess.userId,username:sess.username||sess.role,password:'',role:sess.role,active:true,cloud:!!sess.businessId,businessId:sess.businessId||''};
-    currentUser=u;
-    var ls=document.getElementById('loginScreen'),app=document.getElementById('app');
-    if(ls)ls.style.display='none'; if(app)app.style.display='block';
-    var role=document.getElementById('topRole'); if(role)role.textContent=u.role||'';
-    if(typeof buildSidebar==='function')buildSidebar();
-    var view=sess.view||'dashboard';
-    if(typeof showView==='function' && document.getElementById('view-'+view)) showView(view,true);
-    else if(typeof showView==='function')showView('dashboard',true);
-    if(typeof applyTheme==='function')applyTheme(state?.settings?.theme||'darkblue',false);
-    if(typeof applyBranding==='function')applyBranding();
-    if(typeof restoreSavedModal==='function')restoreSavedModal(sess);
-    return true;
-  }catch(e){console.warn('Final session recovery:',e);return false}
-}
-
-/* The original variables are lexical globals, so normal function lookup works. */
-setTimeout(dlimansRecoverSession,0);
-window.addEventListener('load',function(){setTimeout(dlimansRecoverSession,40);});
-
-/* ---------- MOBILE BLINKING: the old mobile stability CSS disabled ALL animations ---------- */
-var style=document.createElement('style');
-style.id='dlimans-final-stability-css';
-style.textContent=`
+<style id="dlimans-final-stability-fix">
+/* FINAL STABILITY FIX — appended after all existing POS code. */
 @media(max-width:800px){
-  .blink,.login-blink,.voice-listening,.voice-ringing{animation-duration:1.5s!important;animation-iteration-count:infinite!important;}
-  .blink{animation-name:blink!important;}
-  .login-blink{animation-name:loginPulse!important;}
-  .voice-listening,.voice-ringing{animation-name:pulse!important;}
+  .login-box.login-blink{animation:dlLoginPulse 1.8s ease-in-out infinite!important}
+  body.blink{animation:dlPagePulse 2s ease-in-out infinite!important}
+  .blink{animation:dlBlink 1.5s ease-in-out infinite!important}
+  .voice-listening,.voice-ringing{animation:dlPulse 1s ease-in-out infinite!important}
 }
-body.has-wallpaper{background-image:linear-gradient(#07111f88,#07111f88),var(--dlimans-wallpaper)!important;background-size:cover!important;background-position:center!important;background-attachment:fixed!important;}
-`;
-document.head.appendChild(style);
+@keyframes dlLoginPulse{0%,100%{box-shadow:0 8px 24px #0006,0 0 0 0 #00e67633}50%{box-shadow:0 8px 24px #0006,0 0 0 7px #00e67622}}
+@keyframes dlPagePulse{0%,100%{filter:none}50%{filter:brightness(1.035)}}
+@keyframes dlBlink{0%,100%{opacity:1}50%{opacity:.62}}
+@keyframes dlPulse{50%{box-shadow:0 0 0 7px #00e67622}}
+</style>
+<script id="dlimans-final-stability-fix-js">
+(function(){
+  'use strict';
+  if(window.__dlimansFinalStabilityFix)return;
+  window.__dlimansFinalStabilityFix=true;
 
-/* ---------- APPEARANCE: never let CSS override the business wallpaper ---------- */
-var originalApplyBranding=window.applyBranding;
-window.applyBranding=function(){
-  try{if(originalApplyBranding)originalApplyBranding();}catch(e){console.warn(e)}
+  /* Keep the app session after a normal browser refresh. */
   try{
-    var w=state?.settings?.wallpaper||'';
-    if(w){
-      document.body.classList.add('has-wallpaper');
-      document.documentElement.style.setProperty('--dlimans-wallpaper','url("'+String(w).replace(/"/g,'\\"')+'")');
-    }else{
-      document.body.classList.remove('has-wallpaper');
-      document.documentElement.style.removeProperty('--dlimans-wallpaper');
-    }
-  }catch(e){console.warn('Wallpaper apply:',e)}
-};
-
-/* ---------- THEME: immediate local application + cloud appearance timestamp ---------- */
-var originalApplyTheme=window.applyTheme;
-window.applyTheme=function(name,saveIt){
-  var result;
-  try{result=originalApplyTheme?originalApplyTheme(name,saveIt===undefined?true:saveIt):undefined}catch(e){console.warn('Theme:',e)}
-  try{
-    if(state?.settings){
-      state.settings.theme=document.documentElement.dataset.dlimansTheme||name||'darkblue';
-      state.settings.themeChangedAt=Date.now();
-      if(saveIt!==false && typeof save==='function')save();
-    }
-    if(typeof applyBranding==='function')applyBranding();
-  }catch(e){console.warn('Theme persistence:',e)}
-  return result;
-};
-
-/* ---------- STABLE APPEARANCE CLOUD WRITE ---------- */
-window.dlimansPushAppearance=function(){
-  try{
-    var ref=window.__dlimansSyncRef;
-    if(!ref||!navigator.onLine||!state)return Promise.resolve(false);
-    var s=state.settings||{};
-    var version=Number(s.themeChangedAt||s.appearanceChangedAt||Date.now());
-    return ref.set({appearance:{theme:s.theme||'darkblue',noisy:!!s.noisy,blink:s.blink!==false,blinkSidebar:s.blinkSidebar!==false,wallpaper:s.wallpaper||'',businessLogo:s.businessLogo||'',invoiceLogo:s.invoiceLogo||'',version:version,updatedAt:version}},{merge:true}).then(function(){return true}).catch(function(e){console.warn('Appearance cloud write:',e);return false});
-  }catch(e){return Promise.resolve(false)}
-};
-
-/* Patch save so a theme/branding change is sent promptly, but only once per short burst. */
-var originalSave=window.save;
-window.save=function(){
-  var ok=true;try{if(originalSave)ok=originalSave.apply(this,arguments)}catch(e){console.warn(e);ok=false}
-  try{
-    clearTimeout(window.__dlimansAppearanceTimer);
-    window.__dlimansAppearanceTimer=setTimeout(function(){window.dlimansPushAppearance&&window.dlimansPushAppearance()},220);
-  }catch(e){}
-  return ok;
-};
-
-/* ---------- FIREBASE SDK: prevent repeated slow sequential downloads ---------- */
-var sdkPromise=null;
-var originalLoadFirebaseSDK=window.loadFirebaseSDK;
-window.loadFirebaseSDK=function(){
-  if(window.firebase&&firebase.firestore&&firebase.auth)return Promise.resolve();
-  if(sdkPromise)return sdkPromise;
-  sdkPromise=new Promise(function(resolve,reject){
-    var urls=[
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js',
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js',
-      'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js'
-    ];
-    var left=urls.length,failed=false;
-    urls.forEach(function(src){
-      var existing=document.querySelector('script[src="'+src+'"]');
-      if(existing){existing.addEventListener('load',done,{once:true});existing.addEventListener('error',fail,{once:true});return;}
-      var sc=document.createElement('script');sc.src=src;sc.async=true;sc.onload=done;sc.onerror=fail;document.head.appendChild(sc);
-    });
-    function done(){if(failed)return;if(--left<=0)resolve()}
-    function fail(){if(failed)return;failed=true;sdkPromise=null;reject(Error('Firebase SDK unavailable'))}
-  });
-  return sdkPromise;
-};
-
-/* ---------- CLOUD AUTH RESTORE: if Firebase already persisted the session, reconnect automatically ---------- */
-window.dlimansEnsureCloud=function(){
-  return (async function(){
-    try{
-      if(!navigator.onLine)return false;
-      await window.loadFirebaseSDK();
-      var c=typeof getSyncConfig==='function'?getSyncConfig():null;
-      if(!c)return false;
-      if(!syncFirebaseApp){
-        syncFirebaseApp=firebase.initializeApp(c,'dlimansSync');
-        syncDb=syncFirebaseApp.firestore();
-        syncAuth=syncFirebaseApp.auth();
-      }
-      try{await syncAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
-      if(!syncUser && syncAuth.currentUser)syncUser=syncAuth.currentUser;
-      if(syncUser && syncDb && typeof finishFirebaseCloudSync==='function'){
-        await finishFirebaseCloudSync();
-        if(typeof startDlimansChat==='function')setTimeout(startDlimansChat,100);
+    window.dlimansRecoverSession=function(){
+      try{
+        if(typeof currentUser==='undefined' || currentUser)return false;
+        var saved=typeof getSavedAppSession==='function'?getSavedAppSession():null;
+        if(!saved || !saved.username || !saved.role)return false;
+        var found=typeof state!=='undefined' && state.users ? state.users.find(function(u){return u.username===saved.username && u.role===saved.role}):null;
+        if(!found)return false;
+        currentUser=found;
+        if(typeof saveAppSession==='function')saveAppSession(found);
+        var login=document.getElementById('loginScreen'),app=document.getElementById('app');
+        if(login)login.style.display='none';
+        if(app)app.style.display='block';
+        if(typeof updateTopBar==='function')updateTopBar();
+        if(typeof buildSidebar==='function')buildSidebar();
+        if(typeof safeRefresh==='function')safeRefresh();
+        if(typeof applyTheme==='function' && state.settings)applyTheme(state.settings.theme||'darkblue',false);
+        if(typeof applyBranding==='function')applyBranding();
         return true;
-      }
-    }catch(e){console.warn('Cloud restore:',e)}
-    return false;
-  })();
-};
+      }catch(e){console.warn('Session recovery:',e);return false}
+    };
+    window.addEventListener('load',function(){setTimeout(function(){
+      try{if(typeof currentUser!=='undefined' && !currentUser)window.dlimansRecoverSession()}catch(e){}
+    },120)});
+  }catch(e){}
 
-/* ---------- CHAT: connect without waiting for Firestore order/index fallback ---------- */
-var originalConnectDlimansChat=window.connectDlimansChat;
-window.connectDlimansChat=async function(){
+  /* Wallpaper must survive theme changes and refreshes. */
   try{
-    if(!syncUser||!syncDb){
-      if(window.dlimansEnsureCloud)await window.dlimansEnsureCloud();
+    var oldBranding=window.applyBranding;
+    if(typeof oldBranding==='function'&&!window.__dlimansBrandingStable){
+      window.__dlimansBrandingStable=true;
+      window.applyBranding=function(){
+        var r=oldBranding.apply(this,arguments);
+        try{
+          var wp=state&&state.settings?state.settings.wallpaper:'';
+          if(wp){
+            document.documentElement.style.setProperty('--page-bg','url("'+String(wp).replace(/"/g,'\\"')+'") center/cover no-repeat fixed');
+            document.body.classList.add('has-wallpaper');
+          }else{
+            document.documentElement.style.removeProperty('--page-bg');
+            document.body.classList.remove('has-wallpaper');
+          }
+        }catch(e){}
+        return r;
+      };
     }
   }catch(e){}
+
+  /* Persist selected theme locally so a cloud snapshot cannot make it appear to reset. */
   try{
-    if(!syncUser||!syncDb){
-      if(typeof dlimansChatSetStatus==='function')dlimansChatSetStatus('☁️ Cloud not connected');
-      return false;
+    var oldTheme=window.applyTheme;
+    if(typeof oldTheme==='function'&&!window.__dlimansThemeStable){
+      window.__dlimansThemeStable=true;
+      window.applyTheme=function(name,saveIt){
+        var r=oldTheme.call(this,name,saveIt===undefined?true:saveIt);
+        try{localStorage.setItem('DLIMANS_SELECTED_THEME',String(name||'darkblue'))}catch(e){}
+        return r;
+      };
+      window.addEventListener('load',function(){setTimeout(function(){
+        try{
+          var t=localStorage.getItem('DLIMANS_SELECTED_THEME');
+          if(t&&typeof themes!=='undefined'&&themes[t])window.applyTheme(t,false);
+        }catch(e){}
+      },150)});
     }
-  }catch(e){return false}
-  /* Use original implementation after the session is definitely ready. */
-  try{return originalConnectDlimansChat?await originalConnectDlimansChat():false}catch(e){console.warn('Chat:',e);return false}
-};
+  }catch(e){}
 
-/* Start communication after Firebase auth restoration, not only after a manual second click. */
-window.addEventListener('load',function(){
-  setTimeout(function(){
-    if(currentUser && navigator.onLine){window.dlimansEnsureCloud&&window.dlimansEnsureCloud().catch(function(){});}
-  },350);
-});
+  /* Ensure Firebase SDK is loaded only once; parallel loading avoids long startup delays. */
+  try{
+    var oldLoad=window.loadFirebaseSDK, sdkPromise=null;
+    if(typeof oldLoad==='function'&&!window.__dlimansFirebaseLoaderStable){
+      window.__dlimansFirebaseLoaderStable=true;
+      window.loadFirebaseSDK=function(){
+        if(window.firebase&&firebase.firestore&&firebase.auth)return Promise.resolve();
+        if(sdkPromise)return sdkPromise;
+        try{return oldLoad.apply(this,arguments)}catch(e){return Promise.reject(e)}
+      };
+    }
+  }catch(e){}
 
-/* ---------- VOICE: allow repeated commands while listening and avoid one-shot feeling ---------- */
-var voiceActive=false;
-var originalStartVoice=window.startVoice;
-window.startVoice=function(){
-  /* Keep browser compatibility; the original function handles permission/errors. */
-  voiceActive=true;
-  try{return originalStartVoice?originalStartVoice.apply(this,arguments):undefined}catch(e){console.warn('Voice:',e)}
-};
-window.addEventListener('keydown',function(e){
-  if(e.key==='Escape' && voiceActive){voiceActive=false;try{if(window.voiceRec)voiceRec.abort()}catch(_){} }
-});
+  /* Keep Communication usable after a saved Firebase session is restored. */
+  try{
+    var oldShow=window.showView;
+    if(typeof oldShow==='function'&&!window.__dlimansCommunicationStable){
+      window.__dlimansCommunicationStable=true;
+      window.showView=function(name){
+        var r=oldShow.apply(this,arguments);
+        if(name==='control'||name==='settings')setTimeout(function(){
+          try{if(typeof loadControl==='function')loadControl()}catch(e){}
+          try{if(typeof applyBranding==='function')applyBranding()}catch(e){}
+        },0);
+        if(name==='communication'&&window.dlimansEnsureCloud)setTimeout(function(){
+          try{window.dlimansEnsureCloud()}catch(e){}
+        },50);
+        return r;
+      };
+    }
+  }catch(e){}
 
-/* Make the control center's theme/wallpaper state immediately consistent after any view render. */
-var originalShowView=window.showView;
-window.showView=function(name){
-  var args=arguments,result;
-  try{result=originalShowView?originalShowView.apply(this,args):undefined}catch(e){console.warn(e);return false}
-  if(name==='control'||name==='settings')setTimeout(function(){
-    try{if(typeof loadControl==='function')loadControl();}catch(e){}
-    try{if(typeof loadSettings==='function' && name==='settings')loadSettings();}catch(e){}
-    try{if(typeof applyBranding==='function')applyBranding();}catch(e){}
-  },0);
-  if(name==='communication')setTimeout(function(){try{window.dlimansEnsureCloud&&window.dlimansEnsureCloud().then(function(){if(typeof startDlimansChat==='function')startDlimansChat()})}catch(e){}},0);
-  return result;
-};
-
+  /* Avoid reduced-motion rules disabling the admin-selected blinking effect. */
+  try{
+    var mq=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)');
+    if(mq&&mq.matches)document.documentElement.dataset.dlimansReducedMotion='1';
+  }catch(e){}
 })();
 </script>
+
 </body>
 </html>

@@ -2013,14 +2013,29 @@ function changeQty(id,d){
 function clearCart(){cart=[];renderCart()}
 function cartTotal(){return cart.reduce((s,i)=>s+i.qty*i.price,0)}
 function renderCart(){
- document.getElementById('cartList').innerHTML=cart.map(i=>{
-  const p=state.products.find(x=>x.id===i.productId);return `<div class="cart-row">
-   <div><b>${escapeHTML(p?.name||'Deleted product')}</b><div class="small">${money(i.price)} × ${i.qty}</div></div>
-   <div class="qty"><button class="btn sm" onclick="changeQty('${i.productId}',-1)">−</button><b>${i.qty}</b><button class="btn sm" onclick="changeQty('${i.productId}',1)">+</button></div>
-   <button class="btn sm danger" onclick="cart=cart.filter(x=>x.productId!=='${i.productId}');renderCart()">×</button>
-  </div>`
- }).join('')||'<div class="muted">Cart is empty</div>';
- document.getElementById('cartTotal').textContent=money(cartTotal());
+ const rows=document.getElementById('cartList');
+ const totalEl=document.getElementById('cartTotal');
+
+ /* The new professional POS no longer contains the old cartList/cartTotal
+    elements. The old renderer must therefore be safe when those elements
+    are absent, while still updating the new POS cart. */
+ if(rows){
+   rows.innerHTML=cart.map(i=>{
+    const p=state.products.find(x=>String(x.id)===String(i.productId));
+    return `<div class="cart-row">
+     <div><b>${escapeHTML(p?.name||'Deleted product')}</b><div class="small">${money(i.price)} × ${i.qty}</div></div>
+     <div class="qty"><button class="btn sm" onclick="changeQty('${escapeHTML(i.productId)}',-1)">−</button><b>${i.qty}</b><button class="btn sm" onclick="changeQty('${escapeHTML(i.productId)}',1)">+</button></div>
+     <button class="btn sm danger" onclick="cart=cart.filter(x=>String(x.productId)!==String('${escapeHTML(i.productId)}'));renderCart()">×</button>
+    </div>`
+   }).join('')||'<div class="muted">Cart is empty</div>';
+ }
+ if(totalEl) totalEl.textContent=money(cartTotal());
+
+ /* Always synchronize the professional POS, but never let its renderer break
+    the original cart operation. */
+ try{
+   if(typeof window.renderProfessionalCart==='function') window.renderProfessionalCart();
+ }catch(e){console.warn('Professional cart render:',e)}
 }
 function confirmSale(){
  if(!cart.length){toast('Add a product first');return}
@@ -4933,7 +4948,7 @@ button{min-height:38px}
     });
     box.innerHTML=filtered.length?filtered.map(p=>{
       const id=productId(p);
-      return `<button type="button" class="product-tile" data-pro-product="${esc(id)}" onclick="professionalAddProduct('${esc(id)}')">
+      return `<button type="button" class="product-tile" data-pro-product="${esc(id)}" onclick="professionalAddProduct(this.dataset.proProduct)">
         ${p.image?`<img class="product-img" src="${esc(p.image)}" alt="">`:'<div class="product-img">📦</div>'}
         <strong>${esc(productName(p))}</strong>
         <span class="small">${esc(p.sku||p.barcode||'')}</span>
@@ -4944,30 +4959,39 @@ button{min-height:38px}
 
   window.professionalAddProduct=function(id){
     const p=(state.products||[]).find(x=>String(x.id)===String(id)||productId(x)===String(id));
-    if(!p)return;
-    try{
-      /* Prefer the existing business logic. Then verify that the live cart
-         actually changed; if a legacy ID-type mismatch prevented it, use the
-         same cart structure directly. */
-      const before=getCart().length;
-      if(typeof addToCart==='function') addToCart(p.id);
-      else if(typeof addProductToCart==='function') addProductToCart(p.id);
-      else if(typeof addProduct==='function') addProduct(p.id);
+    if(!p){if(typeof toast==='function')toast('Product not found');return;}
+    const stock=Number(p.stock);
+    if(Number.isFinite(stock) && stock<=0){
+      if(typeof toast==='function')toast('Product is out of stock');
+      return;
+    }
 
-      const found=getCart().find(x=>String(x.productId??x.id)===String(p.id));
-      if(!found){
-        const live=getCart();
-        const existing=live.find(x=>String(x.productId)===String(p.id));
-        if(existing) existing.qty=Math.max(1,Number(existing.qty||1)+1);
-        else live.push({productId:p.id,qty:1,price:Number(p.price||0)});
-        try{if(typeof save==='function')save()}catch(e){}
+    try{
+      /* Use the application's actual cart array. This is the same cart used
+         by sales/checkout, so the new POS cannot become disconnected from
+         the existing business logic. */
+      const item=cart.find(x=>String(x.productId)===String(p.id));
+      if(item){
+        if(Number.isFinite(stock) && Number(item.qty||0)>=stock){
+          if(typeof toast==='function')toast('Not enough stock');
+          return;
+        }
+        item.qty=Number(item.qty||0)+1;
+        item.price=Number(item.price??p.price??0);
+      }else{
+        cart.push({productId:p.id,qty:1,price:Number(p.price||0)});
       }
+
       try{renderCart()}catch(e){}
-      setTimeout(renderProfessionalPOS,0);
-    }catch(e){console.warn('Professional POS add:',e);if(typeof toast==='function')toast('Could not add product');}
+      try{window.renderProfessionalCart()}catch(e){}
+      try{saveAppSession({cartCount:cart.length})}catch(e){}
+    }catch(e){
+      console.error('Professional POS add:',e);
+      if(typeof toast==='function')toast('Could not add product');
+    }
   };
 
-  window.renderProfessionalCart=function(){
+  window.renderProfessionalCart=  window.renderProfessionalCart=function(){
     const box=document.getElementById('dlimansProCart');if(!box)return;
     const cart=getCart();
     if(!cart.length){box.innerHTML='<div class="pos-pro-empty">🛒 Cart is empty.<br>Select a product to begin.</div>';}

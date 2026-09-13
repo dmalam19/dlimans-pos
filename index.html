@@ -804,6 +804,68 @@ body.has-wallpaper #app{position:relative;z-index:1}
 #view-pos > .pos-layout > #dlimansProfessionalPOS{display:grid!important}
 </style>
 
+
+<style id="dlimans-pos-reference-v4">
+#view-pos .dlimans-pos-reference-layout{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.58fr) minmax(340px,.92fr);
+  grid-template-rows:minmax(0,1fr) auto;
+  gap:9px;
+  align-items:stretch;
+}
+#view-pos .dlimans-pos-sale-panel,#view-pos .dlimans-pos-products-panel{
+  min-width:0;min-height:0;margin:0!important;
+  border-radius:10px;
+}
+#view-pos .dlimans-pos-sale-panel{display:flex;flex-direction:column}
+#view-pos .dlimans-pos-sale-top{display:grid;grid-template-columns:1fr auto;gap:7px;padding:7px 8px;border-bottom:1px solid var(--border)}
+#view-pos .dlimans-customer-row{display:grid;grid-template-columns:1fr auto;gap:5px}
+#view-pos .dlimans-invoice-chip{display:flex;align-items:center;padding:0 10px;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:10px;white-space:nowrap}
+#view-pos .dlimans-pos-table-head{display:grid;grid-template-columns:minmax(0,1.4fr) 120px 105px 30px;gap:5px;padding:7px 8px;font-weight:800;font-size:10px;border-bottom:1px solid var(--border);color:var(--muted)}
+#view-pos .dlimans-pos-cart{flex:1;min-height:220px;max-height:420px;overflow:auto;padding:5px 7px}
+#view-pos .dlimans-cart-row{display:grid;grid-template-columns:minmax(0,1.4fr) 120px 105px 30px;gap:5px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--border)}
+#view-pos .dlimans-cart-row .qty{display:grid;grid-template-columns:25px 1fr 25px;align-items:center;gap:3px}
+#view-pos .dlimans-cart-row .qty button{height:25px;padding:0}
+#view-pos .dlimans-pos-totals{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:6px 8px;border-top:1px solid var(--border);font-size:9px}
+#view-pos .dlimans-pos-totals>div{display:flex;justify-content:space-between;gap:3px}
+#view-pos .dlimans-pos-sale-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:6px 8px}
+#view-pos .dlimans-pay-summary{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:6px;padding:6px 8px;border-top:1px solid var(--border);align-items:center}
+#view-pos .dlimans-pay-summary>div{display:flex;justify-content:space-between;gap:5px;font-size:10px}
+#view-pos .dlimans-grand-total{font-size:11px!important}.dlimans-grand-total strong{font-size:20px;color:var(--accent)}
+#view-pos .dlimans-pos-products-panel{display:flex;flex-direction:column}
+#view-pos .dlimans-products-title,#view-pos .dlimans-recent-head{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:8px 9px;border-bottom:1px solid var(--border)}
+#view-pos .dlimans-products-title h3,#view-pos .dlimans-recent-head h3{margin:0;font-size:12px}
+#view-pos .dlimans-product-search{display:grid;grid-template-columns:1fr auto;gap:5px;padding:7px}
+#view-pos .dlimans-brand-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:5px 7px;overflow:auto;max-height:370px}
+#view-pos .dlimans-brand-grid .product-tile{min-width:0!important;margin:0!important;padding:6px!important;min-height:110px!important;border-radius:7px!important}
+#view-pos .dlimans-brand-grid .product-img{width:42px!important;height:42px!important;min-height:42px!important;margin:auto}
+#view-pos .dlimans-brand-grid .product-tile strong{font-size:9px!important;line-height:1.1!important}
+#view-pos .dlimans-brand-grid .product-tile .small{font-size:7px!important}
+#view-pos .dlimans-brand-grid .product-tile b{font-size:9px!important}
+#view-pos .dlimans-recent-block{border-top:1px solid var(--border);margin-top:auto}
+#view-pos .dlimans-recent-list{max-height:170px;overflow:auto;padding:6px}
+#view-pos .dlimans-recent-item{display:grid;grid-template-columns:1fr auto;gap:6px;padding:6px;border:1px solid var(--border);border-radius:7px;background:var(--panel);margin-bottom:4px}
+#view-pos .dlimans-recent-item strong{display:block;color:var(--accent);font-size:10px}
+#view-pos .dlimans-recent-item .pos-pro-recent-meta{font-size:8px}
+#view-pos .dlimans-pos-action-strip{grid-column:1/-1;display:flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid var(--border);border-radius:9px;background:var(--card);overflow:auto}
+#view-pos .dlimans-pos-action-strip .btn{white-space:nowrap;min-height:34px;padding:6px 9px}
+#view-pos .dlimans-strip-total{margin-left:auto;min-width:150px;text-align:right;font-size:10px}
+#view-pos .dlimans-strip-total strong{display:block;font-size:18px;color:var(--accent)}
+@media(max-width:900px){
+  #view-pos .dlimans-pos-reference-layout{display:flex!important;flex-direction:column}
+  #view-pos .dlimans-pos-products-panel{order:1}
+  #view-pos .dlimans-pos-sale-panel{order:2}
+  #view-pos .dlimans-pos-action-strip{order:3}
+  #view-pos .dlimans-brand-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:390px}
+  #view-pos .dlimans-pos-cart{min-height:200px}
+  #view-pos .dlimans-pos-table-head,#view-pos .dlimans-cart-row{grid-template-columns:minmax(0,1fr) 90px 80px 25px}
+  #view-pos .dlimans-pos-sale-fields{grid-template-columns:1fr 1fr}
+  #view-pos .dlimans-pos-totals{grid-template-columns:1fr 1fr}
+  #view-pos .dlimans-pay-summary{grid-template-columns:1fr 1fr}
+  #view-pos .dlimans-grand-total{grid-column:1/-1}
+}
+</style>
+
 </head>
 <body>
 
@@ -916,119 +978,102 @@ body.has-wallpaper #app{position:relative;z-index:1}
 
       <section class="view" id="view-pos">
         <div class="section-title"><div><h2>POS / New Sale</h2><div class="small">Search, scan, hold, resume and confirm sales</div></div><div class="row"><button class="btn" onclick="holdSale()">⏸ Hold</button><button class="btn" onclick="openHeld()">▶ Resume</button></div></div>
-        <div class="pos-layout">
-          <div class="card">
-            <div class="row">
-              <input id="posSearch" class="grow" placeholder="🔎 Search product / SKU / barcode" oninput="queuePOSRender()">
-              <button class="btn" onclick="scanBarcode()">▣ Scan</button>
-            </div>
-            <div style="height:10px"></div>
-            <div class="product-grid" id="posProducts"></div>
-          </div>
-          <div class="card pos-recent-transactions-card" style="margin-top:12px">
-            <div class="section-title">
-              <div>
-                <h3>🧾 Recent Transactions</h3>
-                <div class="small">Latest completed sales</div>
-              </div>
-              <div class="row" style="gap:6px">
-                <button id="posRecentToggle" class="btn sm" type="button" onclick="togglePOSRecentTransactions()" aria-expanded="true">⌃ Collapse</button>
-                <button class="btn sm" type="button" onclick="showView('sales')">View All</button>
-              </div>
-            </div>
-            <div id="posRecentTransactionsWrap">
-              <div id="posRecentTransactions" class="pos-recent-transactions"></div>
-            </div>
-          </div>
-          
-<div class="pos-pro-shell" id="dlimansProfessionalPOS">
-  <section class="pos-pro-card">
-    <div class="pos-pro-head">
-      <h3>🛒 Current Sale</h3>
-      <button class="btn sm" type="button" onclick="clearCart()">Clear</button>
+        <div class="pos-layout dlimans-pos-reference-layout">
+  <!-- LEFT: Customer + cart, matching the reference POS structure -->
+  <section class="card dlimans-pos-sale-panel">
+    <div class="dlimans-pos-sale-top">
+      <div class="dlimans-customer-row">
+        <select id="proCustomerSelect" class="input">
+          <option value="">Walk-in Customer</option>
+        </select>
+        <button class="btn sm" type="button" onclick="showView('customers')">＋</button>
+      </div>
+      <div class="dlimans-invoice-chip" id="proInvoiceChip">New Sale</div>
     </div>
-    <div class="pos-pro-body">
-      <div class="pos-pro-customer-grid">
-        <input id="proCustomerName" class="input" placeholder="Customer name">
-        <select id="proPaymentMethod" class="input">
-          <option>Cash</option><option>Transfer</option><option>Card</option><option>POS</option>
-        </select>
-      </div>
-      <div class="pos-pro-customer-grid">
-        <input id="proCustomerNote" class="input" placeholder="Customer note">
-        <input id="proDiscountInput" class="input" type="number" min="0" step="0.01" placeholder="Discount">
-      </div>
-      <div class="pos-pro-customer-grid">
-        <input id="proPaidInput" class="input" type="number" min="0" step="0.01" placeholder="Amount paid">
-        <select id="proDueMode" class="input">
-          <option value="Auto Due">Auto Due</option><option value="Paid">Paid</option><option value="Due">Due</option>
-        </select>
-      </div>
-      <div class="pos-pro-cart" id="dlimansProCart">
-        <div class="pos-pro-empty">🛒 Cart is empty.<br>Select a product to begin.</div>
-      </div>
-      <div class="pos-pro-summary">
-        <div class="row" style="justify-content:space-between"><span>Items</span><b id="proItemsCount">0</b></div>
-        <div class="row" style="justify-content:space-between"><span>Subtotal</span><b id="proSubtotal">₦0.00</b></div>
-        <div class="row" style="justify-content:space-between"><span>Discount</span><b id="proDiscount">₦0.00</b></div>
-        <div class="row" style="justify-content:space-between"><span>Paid</span><b id="proPaid">₦0.00</b></div>
-        <div class="row" style="justify-content:space-between"><span>Due</span><b id="proDue">₦0.00</b></div>
-        <div class="pos-pro-total" id="proTotal">₦0.00</div>
-        <div class="pos-pro-actions">
-          <button class="btn" type="button" onclick="holdSale()">⏸ Hold</button>
-          <button class="btn primary" type="button" onclick="completeSale()">✓ COMPLETE SALE</button>
-        </div>
-      </div>
+
+    <div class="dlimans-pos-table-head">
+      <span>Product</span>
+      <span>Quantity</span>
+      <span>Subtotal</span>
+      <span>×</span>
+    </div>
+
+    <div class="dlimans-pos-cart" id="dlimansProCart">
+      <div class="pos-pro-empty">🛒 Cart is empty.<br>Select a product to begin.</div>
+    </div>
+
+    <div class="dlimans-pos-totals">
+      <div><span>Items:</span><b id="proItemsCount">0</b></div>
+      <div><span>Total:</span><b id="proSubtotal">₦0.00</b></div>
+      <div><span>Discount (-):</span><b id="proDiscount">₦0.00</b></div>
+      <div><span>Order Tax (+):</span><b>₦0.00</b></div>
+      <div><span>Shipping (+):</span><b>₦0.00</b></div>
+    </div>
+
+    <div class="dlimans-pos-sale-fields">
+      <input id="proCustomerName" class="input" placeholder="Customer name">
+      <select id="proPaymentMethod" class="input">
+        <option>Cash</option><option>Card</option><option>POS</option><option>Transfer</option>
+      </select>
+      <input id="proCustomerNote" class="input" placeholder="Customer note">
+      <input id="proDiscountInput" class="input" type="number" min="0" step="0.01" placeholder="Discount">
+      <input id="proPaidInput" class="input" type="number" min="0" step="0.01" placeholder="Amount paid">
+      <select id="proDueMode" class="input">
+        <option value="Auto Due">Auto Due</option><option value="Paid">Paid</option><option value="Due">Due</option>
+      </select>
+    </div>
+
+    <div class="dlimans-pay-summary">
+      <div><span>Paid</span><b id="proPaid">₦0.00</b></div>
+      <div><span>Due</span><b id="proDue">₦0.00</b></div>
+      <div class="dlimans-grand-total"><span>Total Payable</span><strong id="proTotal">₦0.00</strong></div>
     </div>
   </section>
 
-  <section class="pos-pro-card">
-    <div class="pos-pro-head">
-      <h3>🔎 Products</h3>
-      <button class="btn sm" type="button" onclick="focusPOSProductSearch()">Scan / Search</button>
-    </div>
-    <div class="pos-pro-body">
-      <div class="pos-pro-search">
-        <input id="proProductSearch" class="input" placeholder="Enter product name / SKU / barcode" oninput="renderProfessionalProducts()">
-        <button class="btn" type="button" onclick="focusPOSProductSearch()">🔎</button>
-      </div>
-      <div id="dlimansProProducts" class="pos-pro-products"></div>
-    </div>
-  </section>
-
-  <section class="pos-pro-card pos-pro-recent-col">
-    <div class="pos-pro-head">
+  <!-- RIGHT: Search + product/brand grid + recent transactions -->
+  <section class="card dlimans-pos-products-panel">
+    <div class="dlimans-products-title">
       <div>
-        <h3>🧾 Recent Transactions</h3>
-        <div class="small">Latest completed sales</div>
+        <h3>Products / Brands</h3>
+        <div class="small">Search product name, SKU or barcode</div>
       </div>
-      <div class="row" style="gap:5px">
-        <button id="proRecentToggle" class="btn sm pos-pro-collapse" type="button" onclick="toggleProfessionalRecent()">⌃</button>
-        <button class="btn sm" type="button" onclick="showView('sales')">View All</button>
-      </div>
+      <button class="btn sm" type="button" onclick="scanBarcode()">▣ Scan</button>
     </div>
-    <div id="proRecentWrap" class="pos-pro-body">
-      <div id="dlimansProRecent" class="pos-pro-recent"></div>
+
+    <div class="dlimans-product-search">
+      <input id="proProductSearch" class="input" placeholder="Enter Product name / SKU / Scan bar code" oninput="renderProfessionalProducts()">
+      <button class="btn" type="button" onclick="focusPOSProductSearch()">🔎</button>
+    </div>
+
+    <div id="dlimansProProducts" class="dlimans-brand-grid"></div>
+
+    <div class="dlimans-recent-block">
+      <div class="dlimans-recent-head">
+        <div><h3>🧾 Recent Transactions</h3><div class="small">Latest completed sales</div></div>
+        <div class="row" style="gap:5px">
+          <button id="proRecentToggle" class="btn sm" type="button" onclick="toggleProfessionalRecent()">⌃</button>
+          <button class="btn sm" type="button" onclick="showView('sales')">View All</button>
+        </div>
+      </div>
+      <div id="proRecentWrap">
+        <div id="dlimansProRecent" class="dlimans-recent-list"></div>
+      </div>
     </div>
   </section>
-</div>
 
-<div class="card cart">
-            <div class="section-title"><h3>Current Cart</h3><button class="btn sm danger" onclick="clearCart()">Clear</button></div>
-            <div class="cart-list" id="cartList"></div>
-            <div class="grid grid2" style="margin-top:10px">
-              <input id="customerName" placeholder="Customer name">
-              <select id="paymentMethod"><option>Cash</option><option>Card</option><option>POS</option><option>Transfer</option></select>
-            </div>
-            <div style="margin-top:8px"><textarea id="customerNote" placeholder="Customer note"></textarea></div>
-            <div class="grid grid2" style="margin-top:8px">
-              <input id="paidAmount" type="number" min="0" placeholder="Amount paid">
-              <select id="dueMode"><option value="auto">Auto Due</option><option value="full">Full Payment</option></select>
-            </div>
-            <div class="total-box" id="cartTotal">₦0</div>
-            <button class="btn primary" style="width:100%;padding:14px" onclick="confirmSale()">✓ CONFIRM SALE</button>
-          </div>
-        </div>
+  <!-- Bottom action strip, matching the reference terminal -->
+  <div class="dlimans-pos-action-strip">
+    <button class="btn" type="button" onclick="dlimansClickLegacy(/draft/i)">📝 Draft</button>
+    <button class="btn" type="button" onclick="dlimansClickLegacy(/quotation/i)">📋 Quotation</button>
+    <button class="btn" type="button" onclick="holdSale()">⏸ Suspended</button>
+    <button class="btn" type="button" onclick="dlimansQuickPay('Credit Sale')">💳 Credit Sale</button>
+    <button class="btn" type="button" onclick="dlimansQuickPay('Card')">💳 Card</button>
+    <button class="btn" type="button" onclick="dlimansQuickPay('POS')">🖥 POS</button>
+    <button class="btn primary" type="button" onclick="dlimansQuickPay('Cash')">₦ Cash</button>
+    <button class="btn danger" type="button" onclick="clearCart()">✕ Cancel</button>
+    <div class="dlimans-strip-total"><span>Total Payable:</span><strong id="proStripTotal">₦0.00</strong></div>
+  </div>
+</div>
       </section>
 
       <section class="view" id="view-held">
@@ -2739,6 +2784,29 @@ button *,
 
 
 
+
+
+<script id="dlimans-pos-reference-actions-v1">
+(function(){
+  window.dlimansClickLegacy=function(re){
+    const buttons=[...document.querySelectorAll('#view-pos button')].filter(b=>{
+      const t=(b.textContent||'').trim(); return re.test(t) && !b.closest('.dlimans-pos-reference-layout');
+    });
+    if(buttons[0]) buttons[0].click();
+    else if(typeof toast==='function') toast('This action is not available in the current build.');
+  };
+  window.dlimansQuickPay=function(method){
+    const sel=document.getElementById('proPaymentMethod');
+    if(sel && ['Cash','Card','POS','Transfer'].includes(method)) sel.value=method;
+    if(method==='Credit Sale'){
+      const due=document.getElementById('proDueMode'); if(due) due.value='Due';
+      const paid=document.getElementById('proPaidInput'); if(paid) paid.value='0';
+    }
+    try{renderProfessionalPOS()}catch(e){}
+    setTimeout(()=>{try{completeSale()}catch(e){}},20);
+  };
+})();
+</script>
 
 </body></html>`);
  win.document.close()
@@ -4901,15 +4969,15 @@ button{min-height:38px}
       box.innerHTML=cart.map((c,i)=>{
         const name=esc(productName(c));
         const qty=cartQty(c), line=cartLine(c), price=productPrice(c);
-        return `<div class="pos-pro-recent-item">
-          <div><strong>${name}</strong><div class="pos-pro-recent-meta">${moneySafe(price)} × ${qty}</div></div>
-          <div style="text-align:right"><strong>${moneySafe(line)}</strong>
-            <div class="row" style="gap:4px;justify-content:flex-end;margin-top:5px">
-              <button class="btn sm" type="button" onclick="professionalChangeQty(${i},-1)">−</button>
-              <button class="btn sm" type="button" onclick="professionalChangeQty(${i},1)">+</button>
-              <button class="btn sm danger" type="button" onclick="professionalRemoveCart(${i})">×</button>
-            </div>
+        return `<div class="dlimans-cart-row">
+          <div><strong>${name}</strong><div class="pos-pro-recent-meta">${moneySafe(price)} each</div></div>
+          <div class="qty">
+            <button class="btn sm" type="button" onclick="professionalChangeQty(${i},-1)">−</button>
+            <span style="text-align:center">${qty}</span>
+            <button class="btn sm" type="button" onclick="professionalChangeQty(${i},1)">+</button>
           </div>
+          <strong>${moneySafe(line)}</strong>
+          <button class="btn sm danger" type="button" onclick="professionalRemoveCart(${i})">×</button>
         </div>`;
       }).join('');
     }
@@ -4924,9 +4992,10 @@ button{min-height:38px}
     const pp=document.getElementById('proPaid');if(pp)pp.textContent=moneySafe(paid);
     const pdu=document.getElementById('proDue');if(pdu)pdu.textContent=moneySafe(due);
     const pt=document.getElementById('proTotal');if(pt)pt.textContent=moneySafe(total);
+    const st=document.getElementById('proStripTotal');if(st)st.textContent=moneySafe(total);
   };
 
-  window.professionalChangeQty=function(i,delta){
+  window.professionalChangeQty=window.professionalChangeQty=function(i,delta){
     const c=getCart()[i];if(!c)return;
     try{
       const fn=delta>0?(window.incrementCartItem||window.increaseQty||window.changeQty):(window.decrementCartItem||window.decreaseQty||window.changeQty);

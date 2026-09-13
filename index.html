@@ -2787,40 +2787,6 @@ button *,
 
 
 
-<script id="dlimans-pos-barcode-v1">
-(function(){
-  window.dlimansBarcodeScan=function(){
-    try{
-      if(typeof scanBarcode==='function' && scanBarcode!==window.dlimansBarcodeScan){
-        return scanBarcode();
-      }
-    }catch(e){}
-    const input=document.getElementById('proProductSearch');
-    if(input){
-      input.focus();
-      input.placeholder='Scan / enter barcode, SKU or product name';
-      if(typeof toast==='function')toast('Ready: scan barcode into the product search box.');
-    }
-  };
-})();
-</script>
-
-
-<script id="dlimans-pos-sync-v2">
-(function(){
-  const orig=window.renderCart;
-  if(typeof orig==='function' && !orig.__dlimansProWrapped){
-    const w=function(){
-      const r=orig.apply(this,arguments);
-      try{setTimeout(window.renderProfessionalPOS,0)}catch(e){}
-      return r;
-    };
-    w.__dlimansProWrapped=true;
-    window.renderCart=w;
-  }
-})();
-</script>
-
 </body></html>`);
  win.document.close()
 }
@@ -5156,28 +5122,40 @@ button{min-height:38px}
 
 
 
-<script id="dlimans-pos-reference-actions-v1">
+
+
+<script id="dlimans-pos-barcode-v1">
 (function(){
-  window.dlimansClickLegacy=function(re){
-    const buttons=[...document.querySelectorAll('#view-pos button')].filter(b=>{
-      const t=(b.textContent||'').trim();
-      return re.test(t) && !b.closest('.dlimans-pos-reference-layout');
-    });
-    if(buttons[0]) buttons[0].click();
-    else if(typeof toast==='function') toast('This action is not available in the current build.');
-  };
-  window.dlimansQuickPay=function(method){
-    const sel=document.getElementById('proPaymentMethod');
-    if(sel && ['Cash','Card','POS','Transfer'].includes(method)) sel.value=method;
-    if(method==='Credit Sale'){
-      const due=document.getElementById('proDueMode'); if(due) due.value='Due';
-      const paid=document.getElementById('proPaidInput'); if(paid) paid.value='0';
-    }
-    try{renderProfessionalPOS()}catch(e){}
-    setTimeout(function(){try{completeSale()}catch(e){}},20);
+  window.dlimansBarcodeScan=function(){
+    try{
+      if(typeof scanBarcode==='function' && scanBarcode!==window.dlimansBarcodeScan){ return scanBarcode(); }
+    }catch(e){}
+    const input=document.getElementById('proProductSearch');
+    if(input){ input.focus(); input.placeholder='Scan / enter barcode, SKU or product name'; if(typeof toast==='function')toast('Ready: scan barcode into the product search box.'); }
   };
 })();
 </script>
-
+<script id="dlimans-pos-sync-v2">
+(function(){
+  const orig=window.renderCart;
+  if(typeof orig==='function' && !orig.__dlimansProWrapped){
+    const w=function(){ const r=orig.apply(this,arguments); try{setTimeout(window.renderProfessionalPOS,0)}catch(e){} return r; };
+    w.__dlimansProWrapped=true; window.renderCart=w;
+  }
+})();
+</script>
+<script id="dlimans-pos-reference-actions-v1">
+(function(){
+  window.dlimansClickLegacy=function(re){
+    const buttons=[...document.querySelectorAll('#view-pos button')].filter(b=>{ const t=(b.textContent||'').trim(); return re.test(t) && !b.closest('.dlimans-pos-reference-layout'); });
+    if(buttons[0]) buttons[0].click(); else if(typeof toast==='function') toast('This action is not available in the current build.');
+  };
+  window.dlimansQuickPay=function(method){
+    const sel=document.getElementById('proPaymentMethod'); if(sel && ['Cash','Card','POS','Transfer'].includes(method)) sel.value=method;
+    if(method==='Credit Sale'){ const due=document.getElementById('proDueMode'); if(due) due.value='Due'; const paid=document.getElementById('proPaidInput'); if(paid) paid.value='0'; }
+    try{renderProfessionalPOS()}catch(e){} setTimeout(function(){try{completeSale()}catch(e){}},20);
+  };
+})();
+</script>
 </body>
 </html>

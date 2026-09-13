@@ -704,6 +704,55 @@ body.has-wallpaper::after{
 body.has-wallpaper #app{position:relative;z-index:1}
 </style>
 
+
+<style id="dlimans-pos-pro-layout-v1">
+/* ===== Dlimans POS professional workspace ===== */
+#view-pos .pos-pro-shell{display:grid;grid-template-columns:minmax(300px,1.08fr) minmax(300px,1fr) minmax(280px,.9fr);gap:12px;align-items:stretch}
+#view-pos .pos-pro-card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);min-width:0}
+#view-pos .pos-pro-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border-bottom:1px solid var(--border)}
+#view-pos .pos-pro-head h3{margin:0;font-size:14px;color:var(--text-strong)}
+#view-pos .pos-pro-body{padding:10px}
+#view-pos .pos-pro-search{display:grid;grid-template-columns:1fr auto;gap:7px;margin-bottom:9px}
+#view-pos .pos-pro-search input{min-width:0}
+#view-pos .pos-pro-cart{min-height:310px;max-height:430px;overflow:auto}
+#view-pos .pos-pro-cart .cart-table{width:100%}
+#view-pos .pos-pro-summary{border-top:1px solid var(--border);margin-top:8px;padding-top:8px}
+#view-pos .pos-pro-total{font-size:22px;font-weight:900;color:var(--accent);text-align:right}
+#view-pos .pos-pro-paybar{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}
+#view-pos .pos-pro-paybar .btn{min-width:0}
+#view-pos .pos-pro-products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-height:575px;overflow:auto;padding-right:2px}
+#view-pos .pos-pro-products .product-tile{min-width:0;margin:0!important}
+#view-pos .pos-pro-recent{max-height:575px;overflow:auto}
+#view-pos .pos-pro-recent-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--panel);margin-bottom:7px}
+#view-pos .pos-pro-recent-item strong{display:block;color:var(--accent)}
+#view-pos .pos-pro-recent-meta{font-size:10px;color:var(--muted);margin-top:3px}
+#view-pos .pos-pro-empty{padding:35px 10px;text-align:center;color:var(--muted)}
+#view-pos .pos-pro-customer-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+#view-pos .pos-pro-actions{display:grid;grid-template-columns:1fr 1.3fr;gap:7px;margin-top:8px}
+#view-pos .pos-pro-actions .btn{min-height:44px}
+#view-pos .pos-pro-collapse{font-size:11px}
+#view-pos .pos-pro-mobile-products{display:none}
+
+@media(max-width:1100px){
+  #view-pos .pos-pro-shell{grid-template-columns:1fr 1fr}
+  #view-pos .pos-pro-recent-col{grid-column:1/-1}
+  #view-pos .pos-pro-recent{max-height:280px}
+}
+@media(max-width:700px){
+  #view-pos .pos-pro-shell{display:flex;flex-direction:column}
+  #view-pos .pos-pro-products{grid-template-columns:repeat(2,minmax(0,1fr));max-height:470px}
+  #view-pos .pos-pro-cart{min-height:220px;max-height:360px}
+  #view-pos .pos-pro-paybar{grid-template-columns:1fr 1fr}
+  #view-pos .pos-pro-customer-grid{grid-template-columns:1fr 1fr}
+  #view-pos .pos-pro-recent{max-height:260px}
+}
+</style>
+
+
+<style id="dlimans-pos-legacy-hide">
+#view-pos > .card.products,#view-pos > .card.cart{display:none!important}
+</style>
+
 </head>
 <body>
 
@@ -840,7 +889,69 @@ body.has-wallpaper #app{position:relative;z-index:1}
               <div id="posRecentTransactions" class="pos-recent-transactions"></div>
             </div>
           </div>
-          <div class="card cart">
+          
+<div class="pos-pro-shell" id="dlimansProfessionalPOS">
+  <section class="pos-pro-card">
+    <div class="pos-pro-head">
+      <h3>🛒 Current Sale</h3>
+      <button class="btn sm" type="button" onclick="clearCart()">Clear</button>
+    </div>
+    <div class="pos-pro-body">
+      <div class="pos-pro-customer-grid">
+        <input id="proCustomerName" class="input" placeholder="Customer name">
+        <select id="proPaymentMethod" class="input">
+          <option>Cash</option><option>Transfer</option><option>Card</option><option>POS</option>
+        </select>
+      </div>
+      <input id="proCustomerNote" class="input" placeholder="Customer note" style="width:100%;margin-bottom:8px">
+      <div class="pos-pro-cart" id="dlimansProCart">
+        <div class="pos-pro-empty">🛒 Cart is empty.<br>Select a product to begin.</div>
+      </div>
+      <div class="pos-pro-summary">
+        <div class="row" style="justify-content:space-between"><span>Items</span><b id="proItemsCount">0</b></div>
+        <div class="row" style="justify-content:space-between"><span>Subtotal</span><b id="proSubtotal">₦0.00</b></div>
+        <div class="row" style="justify-content:space-between"><span>Discount</span><b id="proDiscount">₦0.00</b></div>
+        <div class="pos-pro-total" id="proTotal">₦0.00</div>
+        <div class="pos-pro-actions">
+          <button class="btn" type="button" onclick="holdSale()">⏸ Hold</button>
+          <button class="btn primary" type="button" onclick="completeSale()">✓ COMPLETE SALE</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pos-pro-card">
+    <div class="pos-pro-head">
+      <h3>🔎 Products</h3>
+      <button class="btn sm" type="button" onclick="focusPOSProductSearch()">Scan / Search</button>
+    </div>
+    <div class="pos-pro-body">
+      <div class="pos-pro-search">
+        <input id="proProductSearch" class="input" placeholder="Enter product name / SKU / barcode" oninput="renderProfessionalProducts()">
+        <button class="btn" type="button" onclick="focusPOSProductSearch()">🔎</button>
+      </div>
+      <div id="dlimansProProducts" class="pos-pro-products"></div>
+    </div>
+  </section>
+
+  <section class="pos-pro-card pos-pro-recent-col">
+    <div class="pos-pro-head">
+      <div>
+        <h3>🧾 Recent Transactions</h3>
+        <div class="small">Latest completed sales</div>
+      </div>
+      <div class="row" style="gap:5px">
+        <button id="proRecentToggle" class="btn sm pos-pro-collapse" type="button" onclick="toggleProfessionalRecent()">⌃</button>
+        <button class="btn sm" type="button" onclick="showView('sales')">View All</button>
+      </div>
+    </div>
+    <div id="proRecentWrap" class="pos-pro-body">
+      <div id="dlimansProRecent" class="pos-pro-recent"></div>
+    </div>
+  </section>
+</div>
+
+<div class="card cart">
             <div class="section-title"><h3>Current Cart</h3><button class="btn sm danger" onclick="clearCart()">Clear</button></div>
             <div class="cart-list" id="cartList"></div>
             <div class="grid grid2" style="margin-top:10px">
@@ -2564,6 +2675,185 @@ button *,
 
 
 
+
+
+<script id="dlimans-pos-pro-js">
+(function(){
+  'use strict';
+
+  function esc(v){
+    return typeof escapeHTML==='function' ? escapeHTML(String(v??'')) :
+      String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+  function n(v){const x=Number(v);return Number.isFinite(x)?x:0}
+  function getCart(){
+    return Array.isArray(window.state?.cart)?window.state.cart:
+           Array.isArray(window.cart)?window.cart:[];
+  }
+  function productId(p){return String(p?.id??p?.sku??p?.barcode??'')}
+  function productName(p){return p?.name||p?.productName||'Product'}
+  function productPrice(p){return n(p?.price??p?.sellingPrice??p?.salePrice??0)}
+  function cartQty(c){return n(c?.qty??c?.quantity??1)}
+  function cartLine(c){
+    return n(c?.total) || productPrice(c)*cartQty(c)
+  }
+  function moneySafe(v){
+    try{return typeof money==='function'?money(v):('₦'+n(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))}
+    catch(e){return '₦'+n(v).toFixed(2)}
+  }
+
+  window.focusPOSProductSearch=function(){
+    setTimeout(()=>document.getElementById('proProductSearch')?.focus(),20);
+  };
+
+  window.renderProfessionalProducts=function(){
+    const box=document.getElementById('dlimansProProducts'); if(!box)return;
+    const q=(document.getElementById('proProductSearch')?.value||'').trim().toLowerCase();
+    const products=Array.isArray(state?.products)?state.products:[];
+    const filtered=products.filter(p=>{
+      const s=[p.name,p.sku,p.barcode,p.code,p.brand].map(x=>String(x||'')).join(' ').toLowerCase();
+      return !q||s.includes(q);
+    });
+    box.innerHTML=filtered.length?filtered.map(p=>{
+      const id=productId(p);
+      return `<button type="button" class="product-tile" data-pro-product="${esc(id)}" onclick="professionalAddProduct('${esc(id)}')">
+        ${p.image?`<img class="product-img" src="${esc(p.image)}" alt="">`:'<div class="product-img">📦</div>'}
+        <strong>${esc(productName(p))}</strong>
+        <span class="small">${esc(p.sku||p.barcode||'')}</span>
+        <b>${moneySafe(productPrice(p))}</b>
+      </button>`;
+    }).join(''):'<div class="pos-pro-empty" style="grid-column:1/-1">📦 No matching products.</div>';
+  };
+
+  window.professionalAddProduct=function(id){
+    const p=(state.products||[]).find(x=>productId(x)===String(id));
+    if(!p)return;
+    try{
+      if(typeof addToCart==='function'){addToCart(p.id);renderProfessionalPOS();return}
+      if(typeof addProductToCart==='function'){addProductToCart(p.id);renderProfessionalPOS();return}
+      if(typeof addProduct==='function'){addProduct(p.id);renderProfessionalPOS();return}
+    }catch(e){console.warn('Professional POS add:',e)}
+  };
+
+  window.renderProfessionalCart=function(){
+    const box=document.getElementById('dlimansProCart');if(!box)return;
+    const cart=getCart();
+    if(!cart.length){box.innerHTML='<div class="pos-pro-empty">🛒 Cart is empty.<br>Select a product to begin.</div>';}
+    else{
+      box.innerHTML=cart.map((c,i)=>{
+        const name=esc(productName(c));
+        const qty=cartQty(c), line=cartLine(c), price=productPrice(c);
+        return `<div class="pos-pro-recent-item">
+          <div><strong>${name}</strong><div class="pos-pro-recent-meta">${moneySafe(price)} × ${qty}</div></div>
+          <div style="text-align:right"><strong>${moneySafe(line)}</strong>
+            <div class="row" style="gap:4px;justify-content:flex-end;margin-top:5px">
+              <button class="btn sm" type="button" onclick="professionalChangeQty(${i},-1)">−</button>
+              <button class="btn sm" type="button" onclick="professionalChangeQty(${i},1)">+</button>
+              <button class="btn sm danger" type="button" onclick="professionalRemoveCart(${i})">×</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    const subtotal=cart.reduce((a,c)=>a+cartLine(c),0);
+    const discount=n(state?.cartDiscount??state?.discount??0);
+    const total=Math.max(0,subtotal-discount);
+    document.getElementById('proItemsCount').textContent=String(cart.reduce((a,c)=>a+cartQty(c),0));
+    document.getElementById('proSubtotal').textContent=moneySafe(subtotal);
+    document.getElementById('proDiscount').textContent=moneySafe(discount);
+    document.getElementById('proTotal').textContent=moneySafe(total);
+  };
+
+  window.professionalChangeQty=function(i,delta){
+    const c=getCart()[i];if(!c)return;
+    try{
+      const fn=delta>0?(window.incrementCartItem||window.increaseQty||window.changeQty):(window.decrementCartItem||window.decreaseQty||window.changeQty);
+      if(typeof fn==='function'){fn(c.id??c.productId??c.sku,Math.abs(delta));renderProfessionalPOS();return}
+      c.qty=Math.max(0,cartQty(c)+delta);
+      if(c.qty===0)getCart().splice(i,1);
+      if(typeof save==='function')save();
+      renderProfessionalPOS();
+    }catch(e){console.warn('Cart qty:',e)}
+  };
+
+  window.professionalRemoveCart=function(i){
+    const c=getCart()[i];if(!c)return;
+    try{
+      const id=c.id??c.productId??c.sku;
+      if(typeof removeFromCart==='function'){removeFromCart(id);renderProfessionalPOS();return}
+      if(typeof removeCartItem==='function'){removeCartItem(id);renderProfessionalPOS();return}
+      getCart().splice(i,1);if(typeof save==='function')save();renderProfessionalPOS();
+    }catch(e){console.warn('Cart remove:',e)}
+  };
+
+  window.renderProfessionalRecent=function(){
+    const box=document.getElementById('dlimansProRecent');if(!box)return;
+    const arr=Array.isArray(state?.sales)?state.sales.slice().reverse().slice(0,12):[];
+    box.innerHTML=arr.length?arr.map(s=>{
+      const total=n(s.total??s.grandTotal??s.amount);
+      return `<div class="pos-pro-recent-item">
+        <div><strong>${esc(s.invoice||s.invoiceNo||s.id||'Sale')}</strong>
+        <div class="pos-pro-recent-meta">${esc(s.customer||'Walk-in')} · ${esc(fmtDate(s.date||s.createdAt||Date.now()))}</div></div>
+        <div style="text-align:right"><strong>${moneySafe(total)}</strong>
+        <div class="pos-pro-recent-meta">${esc(s.payment||s.paymentMethod||'Cash')}</div></div>
+      </div>`;
+    }).join(''):'<div class="pos-pro-empty">🧾 No transactions yet.</div>';
+  };
+
+  window.toggleProfessionalRecent=function(){
+    const wrap=document.getElementById('proRecentWrap'),btn=document.getElementById('proRecentToggle');
+    if(!wrap)return;
+    const hidden=wrap.style.display==='none';
+    wrap.style.display=hidden?'block':'none';
+    if(btn)btn.textContent=hidden?'⌃':'⌄';
+  };
+
+  window.renderProfessionalPOS=function(){
+    try{renderProfessionalProducts()}catch(e){}
+    try{renderProfessionalCart()}catch(e){}
+    try{renderProfessionalRecent()}catch(e){}
+    const cn=document.getElementById('proCustomerName');
+    const note=document.getElementById('proCustomerNote');
+    if(cn&&!cn.value && state?.cartCustomer)cn.value=state.cartCustomer;
+    if(note&&!note.value && state?.cartNote)note.value=state.cartNote;
+  };
+
+  // Try to delegate complete/hold actions to the existing implementation.
+  window.completeSale=function(){
+    const legacy=window.completeCurrentSale||window.finalizeSale||window.completeCurrentCart||window.checkout;
+    if(typeof legacy==='function')return legacy();
+    const btns=[...document.querySelectorAll('#view-pos button')].filter(b=>/complete sale|confirm sale|checkout/i.test(b.textContent||''));
+    if(btns[0] && btns[0]!==document.activeElement){btns[0].click();setTimeout(renderProfessionalPOS,80);return}
+    if(typeof toast==='function')toast('Use the existing Confirm Sale action.');
+  };
+  window.holdSale=function(){
+    const legacy=window.holdCurrentSale||window.holdCart||window.saveDraftSale;
+    if(typeof legacy==='function')return legacy();
+    const b=[...document.querySelectorAll('#view-pos button')].find(x=>/hold/i.test(x.textContent||''));
+    if(b){b.click();setTimeout(renderProfessionalPOS,80)}else if(typeof toast==='function')toast('Hold sale is not available in this build.');
+  };
+
+  // Keep new POS controls in sync after existing app refreshes.
+  const oldRefresh=window.refreshAll;
+  if(typeof oldRefresh==='function'&&!oldRefresh.__proWrapped){
+    const wrapped=function(){const r=oldRefresh.apply(this,arguments);setTimeout(renderProfessionalPOS,30);return r};
+    wrapped.__proWrapped=true;window.refreshAll=wrapped;
+  }
+
+  const oldShow=window.showView;
+  if(typeof oldShow==='function'&&!oldShow.__proWrapped){
+    const wrapped=function(name){
+      const r=oldShow.apply(this,arguments);
+      if(name==='pos')setTimeout(renderProfessionalPOS,50);
+      return r;
+    };
+    wrapped.__proWrapped=true;window.showView=wrapped;
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(renderProfessionalPOS,100));
+  window.addEventListener('load',()=>setTimeout(renderProfessionalPOS,180));
+})();
+</script>
 
 </body></html>`);
  win.document.close()

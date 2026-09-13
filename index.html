@@ -2786,28 +2786,6 @@ button *,
 
 
 
-<script id="dlimans-pos-reference-actions-v1">
-(function(){
-  window.dlimansClickLegacy=function(re){
-    const buttons=[...document.querySelectorAll('#view-pos button')].filter(b=>{
-      const t=(b.textContent||'').trim(); return re.test(t) && !b.closest('.dlimans-pos-reference-layout');
-    });
-    if(buttons[0]) buttons[0].click();
-    else if(typeof toast==='function') toast('This action is not available in the current build.');
-  };
-  window.dlimansQuickPay=function(method){
-    const sel=document.getElementById('proPaymentMethod');
-    if(sel && ['Cash','Card','POS','Transfer'].includes(method)) sel.value=method;
-    if(method==='Credit Sale'){
-      const due=document.getElementById('proDueMode'); if(due) due.value='Due';
-      const paid=document.getElementById('proPaidInput'); if(paid) paid.value='0';
-    }
-    try{renderProfessionalPOS()}catch(e){}
-    setTimeout(()=>{try{completeSale()}catch(e){}},20);
-  };
-})();
-</script>
-
 </body></html>`);
  win.document.close()
 }
@@ -5114,6 +5092,30 @@ button{min-height:38px}
 })();
 </script>
 
+
+
+<script id="dlimans-pos-reference-actions-v1">
+(function(){
+  window.dlimansClickLegacy=function(re){
+    const buttons=[...document.querySelectorAll('#view-pos button')].filter(b=>{
+      const t=(b.textContent||'').trim();
+      return re.test(t) && !b.closest('.dlimans-pos-reference-layout');
+    });
+    if(buttons[0]) buttons[0].click();
+    else if(typeof toast==='function') toast('This action is not available in the current build.');
+  };
+  window.dlimansQuickPay=function(method){
+    const sel=document.getElementById('proPaymentMethod');
+    if(sel && ['Cash','Card','POS','Transfer'].includes(method)) sel.value=method;
+    if(method==='Credit Sale'){
+      const due=document.getElementById('proDueMode'); if(due) due.value='Due';
+      const paid=document.getElementById('proPaidInput'); if(paid) paid.value='0';
+    }
+    try{renderProfessionalPOS()}catch(e){}
+    setTimeout(function(){try{completeSale()}catch(e){}},20);
+  };
+})();
+</script>
 
 </body>
 </html>

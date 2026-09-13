@@ -2677,184 +2677,6 @@ button *,
 
 
 
-<script id="dlimans-pos-pro-js">
-(function(){
-  'use strict';
-
-  function esc(v){
-    return typeof escapeHTML==='function' ? escapeHTML(String(v??'')) :
-      String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-  }
-  function n(v){const x=Number(v);return Number.isFinite(x)?x:0}
-  function getCart(){
-    return Array.isArray(window.state?.cart)?window.state.cart:
-           Array.isArray(window.cart)?window.cart:[];
-  }
-  function productId(p){return String(p?.id??p?.sku??p?.barcode??'')}
-  function productName(p){return p?.name||p?.productName||'Product'}
-  function productPrice(p){return n(p?.price??p?.sellingPrice??p?.salePrice??0)}
-  function cartQty(c){return n(c?.qty??c?.quantity??1)}
-  function cartLine(c){
-    return n(c?.total) || productPrice(c)*cartQty(c)
-  }
-  function moneySafe(v){
-    try{return typeof money==='function'?money(v):('₦'+n(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))}
-    catch(e){return '₦'+n(v).toFixed(2)}
-  }
-
-  window.focusPOSProductSearch=function(){
-    setTimeout(()=>document.getElementById('proProductSearch')?.focus(),20);
-  };
-
-  window.renderProfessionalProducts=function(){
-    const box=document.getElementById('dlimansProProducts'); if(!box)return;
-    const q=(document.getElementById('proProductSearch')?.value||'').trim().toLowerCase();
-    const products=Array.isArray(state?.products)?state.products:[];
-    const filtered=products.filter(p=>{
-      const s=[p.name,p.sku,p.barcode,p.code,p.brand].map(x=>String(x||'')).join(' ').toLowerCase();
-      return !q||s.includes(q);
-    });
-    box.innerHTML=filtered.length?filtered.map(p=>{
-      const id=productId(p);
-      return `<button type="button" class="product-tile" data-pro-product="${esc(id)}" onclick="professionalAddProduct('${esc(id)}')">
-        ${p.image?`<img class="product-img" src="${esc(p.image)}" alt="">`:'<div class="product-img">📦</div>'}
-        <strong>${esc(productName(p))}</strong>
-        <span class="small">${esc(p.sku||p.barcode||'')}</span>
-        <b>${moneySafe(productPrice(p))}</b>
-      </button>`;
-    }).join(''):'<div class="pos-pro-empty" style="grid-column:1/-1">📦 No matching products.</div>';
-  };
-
-  window.professionalAddProduct=function(id){
-    const p=(state.products||[]).find(x=>productId(x)===String(id));
-    if(!p)return;
-    try{
-      if(typeof addToCart==='function'){addToCart(p.id);renderProfessionalPOS();return}
-      if(typeof addProductToCart==='function'){addProductToCart(p.id);renderProfessionalPOS();return}
-      if(typeof addProduct==='function'){addProduct(p.id);renderProfessionalPOS();return}
-    }catch(e){console.warn('Professional POS add:',e)}
-  };
-
-  window.renderProfessionalCart=function(){
-    const box=document.getElementById('dlimansProCart');if(!box)return;
-    const cart=getCart();
-    if(!cart.length){box.innerHTML='<div class="pos-pro-empty">🛒 Cart is empty.<br>Select a product to begin.</div>';}
-    else{
-      box.innerHTML=cart.map((c,i)=>{
-        const name=esc(productName(c));
-        const qty=cartQty(c), line=cartLine(c), price=productPrice(c);
-        return `<div class="pos-pro-recent-item">
-          <div><strong>${name}</strong><div class="pos-pro-recent-meta">${moneySafe(price)} × ${qty}</div></div>
-          <div style="text-align:right"><strong>${moneySafe(line)}</strong>
-            <div class="row" style="gap:4px;justify-content:flex-end;margin-top:5px">
-              <button class="btn sm" type="button" onclick="professionalChangeQty(${i},-1)">−</button>
-              <button class="btn sm" type="button" onclick="professionalChangeQty(${i},1)">+</button>
-              <button class="btn sm danger" type="button" onclick="professionalRemoveCart(${i})">×</button>
-            </div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-    const subtotal=cart.reduce((a,c)=>a+cartLine(c),0);
-    const discount=n(state?.cartDiscount??state?.discount??0);
-    const total=Math.max(0,subtotal-discount);
-    document.getElementById('proItemsCount').textContent=String(cart.reduce((a,c)=>a+cartQty(c),0));
-    document.getElementById('proSubtotal').textContent=moneySafe(subtotal);
-    document.getElementById('proDiscount').textContent=moneySafe(discount);
-    document.getElementById('proTotal').textContent=moneySafe(total);
-  };
-
-  window.professionalChangeQty=function(i,delta){
-    const c=getCart()[i];if(!c)return;
-    try{
-      const fn=delta>0?(window.incrementCartItem||window.increaseQty||window.changeQty):(window.decrementCartItem||window.decreaseQty||window.changeQty);
-      if(typeof fn==='function'){fn(c.id??c.productId??c.sku,Math.abs(delta));renderProfessionalPOS();return}
-      c.qty=Math.max(0,cartQty(c)+delta);
-      if(c.qty===0)getCart().splice(i,1);
-      if(typeof save==='function')save();
-      renderProfessionalPOS();
-    }catch(e){console.warn('Cart qty:',e)}
-  };
-
-  window.professionalRemoveCart=function(i){
-    const c=getCart()[i];if(!c)return;
-    try{
-      const id=c.id??c.productId??c.sku;
-      if(typeof removeFromCart==='function'){removeFromCart(id);renderProfessionalPOS();return}
-      if(typeof removeCartItem==='function'){removeCartItem(id);renderProfessionalPOS();return}
-      getCart().splice(i,1);if(typeof save==='function')save();renderProfessionalPOS();
-    }catch(e){console.warn('Cart remove:',e)}
-  };
-
-  window.renderProfessionalRecent=function(){
-    const box=document.getElementById('dlimansProRecent');if(!box)return;
-    const arr=Array.isArray(state?.sales)?state.sales.slice().reverse().slice(0,12):[];
-    box.innerHTML=arr.length?arr.map(s=>{
-      const total=n(s.total??s.grandTotal??s.amount);
-      return `<div class="pos-pro-recent-item">
-        <div><strong>${esc(s.invoice||s.invoiceNo||s.id||'Sale')}</strong>
-        <div class="pos-pro-recent-meta">${esc(s.customer||'Walk-in')} · ${esc(fmtDate(s.date||s.createdAt||Date.now()))}</div></div>
-        <div style="text-align:right"><strong>${moneySafe(total)}</strong>
-        <div class="pos-pro-recent-meta">${esc(s.payment||s.paymentMethod||'Cash')}</div></div>
-      </div>`;
-    }).join(''):'<div class="pos-pro-empty">🧾 No transactions yet.</div>';
-  };
-
-  window.toggleProfessionalRecent=function(){
-    const wrap=document.getElementById('proRecentWrap'),btn=document.getElementById('proRecentToggle');
-    if(!wrap)return;
-    const hidden=wrap.style.display==='none';
-    wrap.style.display=hidden?'block':'none';
-    if(btn)btn.textContent=hidden?'⌃':'⌄';
-  };
-
-  window.renderProfessionalPOS=function(){
-    try{renderProfessionalProducts()}catch(e){}
-    try{renderProfessionalCart()}catch(e){}
-    try{renderProfessionalRecent()}catch(e){}
-    const cn=document.getElementById('proCustomerName');
-    const note=document.getElementById('proCustomerNote');
-    if(cn&&!cn.value && state?.cartCustomer)cn.value=state.cartCustomer;
-    if(note&&!note.value && state?.cartNote)note.value=state.cartNote;
-  };
-
-  // Try to delegate complete/hold actions to the existing implementation.
-  window.completeSale=function(){
-    const legacy=window.completeCurrentSale||window.finalizeSale||window.completeCurrentCart||window.checkout;
-    if(typeof legacy==='function')return legacy();
-    const btns=[...document.querySelectorAll('#view-pos button')].filter(b=>/complete sale|confirm sale|checkout/i.test(b.textContent||''));
-    if(btns[0] && btns[0]!==document.activeElement){btns[0].click();setTimeout(renderProfessionalPOS,80);return}
-    if(typeof toast==='function')toast('Use the existing Confirm Sale action.');
-  };
-  window.holdSale=function(){
-    const legacy=window.holdCurrentSale||window.holdCart||window.saveDraftSale;
-    if(typeof legacy==='function')return legacy();
-    const b=[...document.querySelectorAll('#view-pos button')].find(x=>/hold/i.test(x.textContent||''));
-    if(b){b.click();setTimeout(renderProfessionalPOS,80)}else if(typeof toast==='function')toast('Hold sale is not available in this build.');
-  };
-
-  // Keep new POS controls in sync after existing app refreshes.
-  const oldRefresh=window.refreshAll;
-  if(typeof oldRefresh==='function'&&!oldRefresh.__proWrapped){
-    const wrapped=function(){const r=oldRefresh.apply(this,arguments);setTimeout(renderProfessionalPOS,30);return r};
-    wrapped.__proWrapped=true;window.refreshAll=wrapped;
-  }
-
-  const oldShow=window.showView;
-  if(typeof oldShow==='function'&&!oldShow.__proWrapped){
-    const wrapped=function(name){
-      const r=oldShow.apply(this,arguments);
-      if(name==='pos')setTimeout(renderProfessionalPOS,50);
-      return r;
-    };
-    wrapped.__proWrapped=true;window.showView=wrapped;
-  }
-
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(renderProfessionalPOS,100));
-  window.addEventListener('load',()=>setTimeout(renderProfessionalPOS,180));
-})();
-</script>
-
 </body></html>`);
  win.document.close()
 }
@@ -4934,6 +4756,185 @@ button{min-height:38px}
 })();
 </script>
 
+
+<script id="dlimans-pos-pro-js">
+(function(){
+  'use strict';
+
+  function esc(v){
+    return typeof escapeHTML==='function' ? escapeHTML(String(v??'')) :
+      String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+  function n(v){const x=Number(v);return Number.isFinite(x)?x:0}
+  function getCart(){
+    return Array.isArray(window.state?.cart)?window.state.cart:
+           Array.isArray(window.cart)?window.cart:[];
+  }
+  function productId(p){return String(p?.id??p?.sku??p?.barcode??'')}
+  function productName(p){return p?.name||p?.productName||'Product'}
+  function productPrice(p){return n(p?.price??p?.sellingPrice??p?.salePrice??0)}
+  function cartQty(c){return n(c?.qty??c?.quantity??1)}
+  function cartLine(c){
+    return n(c?.total) || productPrice(c)*cartQty(c)
+  }
+  function moneySafe(v){
+    try{return typeof money==='function'?money(v):('₦'+n(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))}
+    catch(e){return '₦'+n(v).toFixed(2)}
+  }
+
+  window.focusPOSProductSearch=function(){
+    setTimeout(()=>document.getElementById('proProductSearch')?.focus(),20);
+  };
+
+  window.renderProfessionalProducts=function(){
+    const box=document.getElementById('dlimansProProducts'); if(!box)return;
+    const q=(document.getElementById('proProductSearch')?.value||'').trim().toLowerCase();
+    const products=Array.isArray(state?.products)?state.products:[];
+    const filtered=products.filter(p=>{
+      const s=[p.name,p.sku,p.barcode,p.code,p.brand].map(x=>String(x||'')).join(' ').toLowerCase();
+      return !q||s.includes(q);
+    });
+    box.innerHTML=filtered.length?filtered.map(p=>{
+      const id=productId(p);
+      return `<button type="button" class="product-tile" data-pro-product="${esc(id)}" onclick="professionalAddProduct('${esc(id)}')">
+        ${p.image?`<img class="product-img" src="${esc(p.image)}" alt="">`:'<div class="product-img">📦</div>'}
+        <strong>${esc(productName(p))}</strong>
+        <span class="small">${esc(p.sku||p.barcode||'')}</span>
+        <b>${moneySafe(productPrice(p))}</b>
+      </button>`;
+    }).join(''):'<div class="pos-pro-empty" style="grid-column:1/-1">📦 No matching products.</div>';
+  };
+
+  window.professionalAddProduct=function(id){
+    const p=(state.products||[]).find(x=>productId(x)===String(id));
+    if(!p)return;
+    try{
+      if(typeof addToCart==='function'){addToCart(p.id);renderProfessionalPOS();return}
+      if(typeof addProductToCart==='function'){addProductToCart(p.id);renderProfessionalPOS();return}
+      if(typeof addProduct==='function'){addProduct(p.id);renderProfessionalPOS();return}
+    }catch(e){console.warn('Professional POS add:',e)}
+  };
+
+  window.renderProfessionalCart=function(){
+    const box=document.getElementById('dlimansProCart');if(!box)return;
+    const cart=getCart();
+    if(!cart.length){box.innerHTML='<div class="pos-pro-empty">🛒 Cart is empty.<br>Select a product to begin.</div>';}
+    else{
+      box.innerHTML=cart.map((c,i)=>{
+        const name=esc(productName(c));
+        const qty=cartQty(c), line=cartLine(c), price=productPrice(c);
+        return `<div class="pos-pro-recent-item">
+          <div><strong>${name}</strong><div class="pos-pro-recent-meta">${moneySafe(price)} × ${qty}</div></div>
+          <div style="text-align:right"><strong>${moneySafe(line)}</strong>
+            <div class="row" style="gap:4px;justify-content:flex-end;margin-top:5px">
+              <button class="btn sm" type="button" onclick="professionalChangeQty(${i},-1)">−</button>
+              <button class="btn sm" type="button" onclick="professionalChangeQty(${i},1)">+</button>
+              <button class="btn sm danger" type="button" onclick="professionalRemoveCart(${i})">×</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    const subtotal=cart.reduce((a,c)=>a+cartLine(c),0);
+    const discount=n(state?.cartDiscount??state?.discount??0);
+    const total=Math.max(0,subtotal-discount);
+    document.getElementById('proItemsCount').textContent=String(cart.reduce((a,c)=>a+cartQty(c),0));
+    document.getElementById('proSubtotal').textContent=moneySafe(subtotal);
+    document.getElementById('proDiscount').textContent=moneySafe(discount);
+    document.getElementById('proTotal').textContent=moneySafe(total);
+  };
+
+  window.professionalChangeQty=function(i,delta){
+    const c=getCart()[i];if(!c)return;
+    try{
+      const fn=delta>0?(window.incrementCartItem||window.increaseQty||window.changeQty):(window.decrementCartItem||window.decreaseQty||window.changeQty);
+      if(typeof fn==='function'){fn(c.id??c.productId??c.sku,Math.abs(delta));renderProfessionalPOS();return}
+      c.qty=Math.max(0,cartQty(c)+delta);
+      if(c.qty===0)getCart().splice(i,1);
+      if(typeof save==='function')save();
+      renderProfessionalPOS();
+    }catch(e){console.warn('Cart qty:',e)}
+  };
+
+  window.professionalRemoveCart=function(i){
+    const c=getCart()[i];if(!c)return;
+    try{
+      const id=c.id??c.productId??c.sku;
+      if(typeof removeFromCart==='function'){removeFromCart(id);renderProfessionalPOS();return}
+      if(typeof removeCartItem==='function'){removeCartItem(id);renderProfessionalPOS();return}
+      getCart().splice(i,1);if(typeof save==='function')save();renderProfessionalPOS();
+    }catch(e){console.warn('Cart remove:',e)}
+  };
+
+  window.renderProfessionalRecent=function(){
+    const box=document.getElementById('dlimansProRecent');if(!box)return;
+    const arr=Array.isArray(state?.sales)?state.sales.slice().reverse().slice(0,12):[];
+    box.innerHTML=arr.length?arr.map(s=>{
+      const total=n(s.total??s.grandTotal??s.amount);
+      return `<div class="pos-pro-recent-item">
+        <div><strong>${esc(s.invoice||s.invoiceNo||s.id||'Sale')}</strong>
+        <div class="pos-pro-recent-meta">${esc(s.customer||'Walk-in')} · ${esc(fmtDate(s.date||s.createdAt||Date.now()))}</div></div>
+        <div style="text-align:right"><strong>${moneySafe(total)}</strong>
+        <div class="pos-pro-recent-meta">${esc(s.payment||s.paymentMethod||'Cash')}</div></div>
+      </div>`;
+    }).join(''):'<div class="pos-pro-empty">🧾 No transactions yet.</div>';
+  };
+
+  window.toggleProfessionalRecent=function(){
+    const wrap=document.getElementById('proRecentWrap'),btn=document.getElementById('proRecentToggle');
+    if(!wrap)return;
+    const hidden=wrap.style.display==='none';
+    wrap.style.display=hidden?'block':'none';
+    if(btn)btn.textContent=hidden?'⌃':'⌄';
+  };
+
+  window.renderProfessionalPOS=function(){
+    try{renderProfessionalProducts()}catch(e){}
+    try{renderProfessionalCart()}catch(e){}
+    try{renderProfessionalRecent()}catch(e){}
+    const cn=document.getElementById('proCustomerName');
+    const note=document.getElementById('proCustomerNote');
+    if(cn&&!cn.value && state?.cartCustomer)cn.value=state.cartCustomer;
+    if(note&&!note.value && state?.cartNote)note.value=state.cartNote;
+  };
+
+  // Try to delegate complete/hold actions to the existing implementation.
+  window.completeSale=function(){
+    const legacy=window.completeCurrentSale||window.finalizeSale||window.completeCurrentCart||window.checkout;
+    if(typeof legacy==='function')return legacy();
+    const btns=[...document.querySelectorAll('#view-pos button')].filter(b=>/complete sale|confirm sale|checkout/i.test(b.textContent||''));
+    if(btns[0] && btns[0]!==document.activeElement){btns[0].click();setTimeout(renderProfessionalPOS,80);return}
+    if(typeof toast==='function')toast('Use the existing Confirm Sale action.');
+  };
+  window.holdSale=function(){
+    const legacy=window.holdCurrentSale||window.holdCart||window.saveDraftSale;
+    if(typeof legacy==='function')return legacy();
+    const b=[...document.querySelectorAll('#view-pos button')].find(x=>/hold/i.test(x.textContent||''));
+    if(b){b.click();setTimeout(renderProfessionalPOS,80)}else if(typeof toast==='function')toast('Hold sale is not available in this build.');
+  };
+
+  // Keep new POS controls in sync after existing app refreshes.
+  const oldRefresh=window.refreshAll;
+  if(typeof oldRefresh==='function'&&!oldRefresh.__proWrapped){
+    const wrapped=function(){const r=oldRefresh.apply(this,arguments);setTimeout(renderProfessionalPOS,30);return r};
+    wrapped.__proWrapped=true;window.refreshAll=wrapped;
+  }
+
+  const oldShow=window.showView;
+  if(typeof oldShow==='function'&&!oldShow.__proWrapped){
+    const wrapped=function(name){
+      const r=oldShow.apply(this,arguments);
+      if(name==='pos')setTimeout(renderProfessionalPOS,50);
+      return r;
+    };
+    wrapped.__proWrapped=true;window.showView=wrapped;
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(renderProfessionalPOS,100));
+  window.addEventListener('load',()=>setTimeout(renderProfessionalPOS,180));
+})();
+</script>
+
 <script id="dlimans-final-recent-wallpaper">
 (function(){
   function fix(){
@@ -4944,6 +4945,7 @@ button{min-height:38px}
   document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fix,60)});
 })();
 </script>
+
 
 </body>
 </html>

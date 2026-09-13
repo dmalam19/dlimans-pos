@@ -750,7 +750,7 @@ body.has-wallpaper #app{position:relative;z-index:1}
 
 
 <style id="dlimans-pos-legacy-hide">
-#view-pos > .card.products,#view-pos > .card.cart{display:none!important}
+
 </style>
 
 
@@ -796,13 +796,6 @@ body.has-wallpaper #app{position:relative;z-index:1}
 }
 </style>
 
-
-
-<style id="dlimans-hide-legacy-pos-cards-v2">
-/* Keep the POS container alive; hide only the old duplicated cards. */
-#view-pos > .pos-layout > .card{display:none!important}
-#view-pos > .pos-layout > #dlimansProfessionalPOS{display:grid!important}
-</style>
 
 
 <style id="dlimans-pos-reference-v4">
@@ -864,6 +857,12 @@ body.has-wallpaper #app{position:relative;z-index:1}
   #view-pos .dlimans-pay-summary{grid-template-columns:1fr 1fr}
   #view-pos .dlimans-grand-total{grid-column:1/-1}
 }
+</style>
+
+
+<style id="dlimans-pos-visibility-safety-v5">
+#view-pos .dlimans-pos-reference-layout{visibility:visible!important;opacity:1!important}
+#view-pos .dlimans-pos-sale-panel,#view-pos .dlimans-pos-products-panel{visibility:visible!important;opacity:1!important}
 </style>
 
 </head>
